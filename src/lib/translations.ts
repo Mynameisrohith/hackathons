@@ -101,6 +101,15 @@ export const translations = {
     emptyCartRedirect: 'Redirecting you to your cart.',
     orderError: 'Order failed',
     orderErrorDesc: 'There was an issue placing your order. Please try again.',
+    deliveryDetails: 'Delivery Details',
+    dispatchedFrom: 'Dispatched from',
+    distance: 'Distance',
+    estimatedDelivery: 'Estimated Delivery',
+    showMap: 'Show Map',
+    hideMap: 'Hide Map',
+    checkingNearbyStores: 'Checking for nearby stores...',
+    locationAccessDenied: 'Location Access Denied',
+    locationAccessDeniedDesc: 'Please enable location services in your browser to see delivery estimates.',
     
     // Order Success
     orderSuccessTitle: 'Thank You for Your Order!',
@@ -326,6 +335,15 @@ export const translations = {
     emptyCartRedirect: 'आपको आपकी कार्ट पर रीडायरेक्ट किया जा रहा है।',
     orderError: 'आदेश विफल',
     orderErrorDesc: 'आपका आदेश देने में कोई समस्या हुई। कृपया पुन: प्रयास करें।',
+    deliveryDetails: 'वितरण विवरण',
+    dispatchedFrom: 'से भेजा गया',
+    distance: 'दूरी',
+    estimatedDelivery: 'अनुमानित डिलीवरी',
+    showMap: 'नक्शा दिखाओ',
+    hideMap: 'नक्शा छिपाएं',
+    checkingNearbyStores: 'आस-पास के स्टोर की जाँच हो रही है...',
+    locationAccessDenied: 'स्थान पहुँच अस्वीकृत',
+    locationAccessDeniedDesc: 'डिलीवरी अनुमान देखने के लिए कृपया अपने ब्राउज़र में स्थान सेवाएं सक्षम करें।',
 
     // Order Success
     orderSuccessTitle: 'आपके आदेश के लिए धन्यवाद!',

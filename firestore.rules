@@ -14,6 +14,7 @@
  * - /products/{productId}: A top-level collection of products, publicly readable but only manageable by administrators.
  * - /sales/{saleId}: A top-level collection of sales transactions, publicly readable. Any authenticated user can create a sale, but only admins can modify or delete transactions.
  * - /roles_admin/{userId}: A collection where the existence of a document signifies that the user is an administrator. This provides a centralized and performant way to check for admin privileges.
+ * - /stores/{storeId}: Contains physical store locations, publicly readable but admin-only for writes.
  *
  * Key Security Decisions:
  * - User Isolation: Listing users is explicitly disallowed to protect user privacy. A user can only access their own document within the `/users` collection.
@@ -53,7 +54,7 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
-        request.auth.token.email == 'drohith7080@gmail.com'
+        request.auth.token.email == 'ddrohith7080@gmail.com'
       );
     }
 
@@ -168,6 +169,16 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update: if false;
       allow delete: if isAdmin() && resource != null;
+    }
+    
+    /**
+     * @description Manages physical store locations. Publicly readable, admin-only writes.
+     * @path /stores/{storeId}
+     */
+    match /stores/{storeId} {
+        allow get: if true;
+        allow list: if true;
+        allow create, update, delete: if isAdmin();
     }
   }
 }

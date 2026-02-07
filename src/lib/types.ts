@@ -58,6 +58,15 @@ export interface CartItem {
   createdAt: Timestamp;
 }
 
+export interface Store {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  phone: string;
+}
+
 export interface Order {
   id: string; // Document ID from Firestore
   userId: string;
@@ -71,6 +80,8 @@ export interface Order {
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
   createdAt: Timestamp;
+  nearestStoreId: string;
+  deliveryEstimate: string;
 }
 
 

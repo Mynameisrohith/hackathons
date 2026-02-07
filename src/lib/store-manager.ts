@@ -25,7 +25,8 @@ export async function addPlaceAsStore(firestore: Firestore, place: Place) {
                 placeId: place.place_id,
                 active: true,
                 createdAt: serverTimestamp(),
-                phone: place.formatted_phone_number || ''
+                phone: place.formatted_phone_number || '',
+                stock: {}, // Initialize with empty stock
             });
             toast({ title: 'Success', description: `${place.name} has been added as a registered dealer.` });
         } else {

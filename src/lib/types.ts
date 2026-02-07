@@ -6,6 +6,13 @@ export interface Coordinates {
   longitude: number;
 }
 
+export type UserRoleType = 'admin' | 'dealer' | 'delivery' | 'customer';
+
+export interface UserRole {
+  role: UserRoleType;
+  storeId?: string; // For dealers
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -26,7 +33,8 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  stock: number;
+  // stock is now managed in the store documents
+  // stock: number; 
   description: string;
   imageUrl: string;
   categoryId: string;
@@ -59,7 +67,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl: string;
-  stock: number;
+  // stock: number; // Removed as stock is now store-dependent
   createdAt: Timestamp;
 }
 
@@ -73,6 +81,7 @@ export interface Store {
   placeId?: string;
   active?: boolean;
   createdAt?: Timestamp;
+  stock: { [productId: string]: number }; // Map of productId to quantity
 }
 
 export interface Order {
@@ -90,7 +99,7 @@ export interface Order {
   longitude: number;
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
-  orderStatus: 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  orderStatus: 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Not Deliverable';
   deliveryStatus?: 'Assigned' | 'Picked' | 'Out for Delivery' | 'Delivered';
   deliveryBoyLat?: number;
   deliveryBoyLng?: number;
@@ -98,15 +107,32 @@ export interface Order {
   cancellationReason?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  dealerName: string;
-  dealerAddress: string;
-  dealerLat: number;
-  dealerLng: number;
+  
+  // Logistics Fields
+  dealerId?: string;
+  dealerName?: string;
+  dealerAddress?: string;
+  dealerLat?: number;
+  dealerLng?: number;
   dealerPlaceId?: string;
+  
+  deliveryBoyId?: string;
   deliveryBoyName?: string;
   deliveryBoyPhone?: string;
+
   feedback?: string;
   rating?: number;
+
+  // Stock Routing Fields
+  assignedHubId?: string;
+  stockConfirmed: boolean;
+}
+
+export interface DeliveryLocation {
+    id: string; // same as delivery boy user id
+    latitude: number;
+    longitude: number;
+    updatedAt: Timestamp;
 }
 
 
@@ -186,6 +212,8 @@ export interface Dealer {
     distance: number;
     rating?: number;
     userRatingsTotal?: number;
+    // Added for stock checking
+    stock?: { [productId: string]: number };
 }
 
 

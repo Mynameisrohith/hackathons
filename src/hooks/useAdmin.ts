@@ -1,25 +1,26 @@
+"use client";
 
-'use client';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import type { UserRole } from "@/lib/types";
 
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-
-export function useAdmin() {
+export function useRole() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const adminDocRef = useMemoFirebase(() => {
+  const roleDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return doc(firestore, 'roles_admin', user.uid);
+    return doc(firestore, "roles", user.uid);
   }, [user, firestore]);
 
-  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
-  
-  // Hardcoded email for super-admin fallback
-  const isHardcodedAdmin = user?.email === 'drohith7080@gmail.com';
+  const { data: role, isLoading: isRoleLoading } = useDoc<UserRole>(roleDocRef);
 
-  const isAdmin = !!adminRole || isHardcodedAdmin;
-  const isLoading = isUserLoading || (user ? isAdminRoleLoading : false);
+  const isLoading = isUserLoading || (user ? isRoleLoading : false);
 
-  return { isAdmin, isLoading };
+  return {
+    user,
+    role: role?.role || null,
+    storeId: role?.storeId || null,
+    isLoading,
+  };
 }

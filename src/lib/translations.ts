@@ -193,7 +193,7 @@ export const translations = {
     // Admin Feedback
     feedbackCenterDesc: "Review and manage customer feedback for all delivered orders.",
     noFeedbackDesc: "Customer feedback will appear here once they submit reviews for delivered orders.",
-
+    
     // Admin Fraud
     fraudMonitoringDesc: "AI-powered analysis of reviews and orders to detect suspicious activity.",
     keyConcerns: "Key Concerns",

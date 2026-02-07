@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/sidebar";
 import { RetailSparkIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { useUser, useAuth } from "@/firebase";
+import { useUser, useAuth, useFirestore } from "@/firebase";
 import { useEffect } from "react";
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -88,12 +89,36 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { user, isUserLoading } = useUser();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const router = useRouter();
+  const firestore = useFirestore();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (user && firestore) {
+      const userDocRef = doc(firestore, "users", user.uid);
+      const checkAndCreateProfile = async () => {
+        const docSnap = await getDoc(userDocRef);
+        if (!docSnap.exists()) {
+          try {
+            await setDoc(userDocRef, {
+              id: user.uid,
+              displayName: user.displayName || "New User",
+              email: user.email,
+              photoURL: user.photoURL || "",
+              creationTime: serverTimestamp(),
+            });
+          } catch (error) {
+            console.error("Error creating user profile:", error);
+          }
+        }
+      };
+      checkAndCreateProfile();
+    }
+  }, [user, firestore]);
 
   const getPageTitle = () => {
     const allItems = [...menuItems];

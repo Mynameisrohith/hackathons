@@ -1,6 +1,11 @@
 
 import type { Timestamp } from "firebase/firestore";
 
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -77,6 +82,8 @@ export interface Order {
   address: string;
   city: string;
   pincode: string;
+  latitude: number;
+  longitude: number;
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
   createdAt: Timestamp;

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -70,14 +71,20 @@ import { Textarea } from "@/components/ui/textarea";
 const categorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
+  imageUrl: z.string().url("Please enter a valid image URL."),
 });
 
 function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => void; firestore: Firestore }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof categorySchema>>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", imageUrl: "" },
   });
+
+  useEffect(() => {
+    // Set a random image URL on mount to avoid hydration errors
+    form.setValue('imageUrl', `https://picsum.photos/seed/${Math.random()}/400/300`);
+  }, [form]);
 
   async function onSubmit(values: z.infer<typeof categorySchema>) {
     setIsSubmitting(true);
@@ -103,7 +110,7 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto p-2">
         <FormField
           control={form.control}
           name="name"
@@ -125,6 +132,19 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea placeholder="A short description of the category." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image URL</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://example.com/image.png" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -158,6 +178,15 @@ function CategoryRow({ category, firestore }: { category: Category, firestore: F
 
   return (
     <TableRow>
+      <TableCell>
+        <Image
+            src={category.imageUrl}
+            alt={category.name}
+            width={40}
+            height={40}
+            className="rounded-md object-cover"
+        />
+      </TableCell>
       <TableCell className="font-medium">{category.name}</TableCell>
       <TableCell>{category.description}</TableCell>
       <TableCell>
@@ -271,6 +300,7 @@ export default function CategoriesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Created At</TableHead>
@@ -281,6 +311,7 @@ export default function CategoriesPage() {
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
+                    <TableCell><Skeleton className="h-10 w-10 rounded-md" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
@@ -293,7 +324,7 @@ export default function CategoriesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No categories found. Add one to get started!
                   </TableCell>
                 </TableRow>

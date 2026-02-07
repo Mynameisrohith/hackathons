@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -43,9 +44,10 @@
         "properties": {
           "name": { "type": "string", "description": "Name of the category." },
           "description": { "type": "string", "description": "Description of the category." },
+          "imageUrl": { "type": "string", "format": "uri", "description": "URL of the category image." },
           "createdAt": { "type": "string", "format": "date-time" }
         },
-        "required": ["name"]
+        "required": ["name", "description", "imageUrl"]
     },
     "Product": {
         "title": "Product",

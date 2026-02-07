@@ -84,7 +84,7 @@ service cloud.firestore {
     // ----------------------------------------------------------------------
 
     /**
-     * @description Manages user profile documents, cart, and orders. Access is restricted to the document owner.
+     * @description Manages user profile documents and cart. Access is restricted to the document owner.
      * @path /users/{userId}
      */
     match /users/{userId} {
@@ -101,24 +101,19 @@ service cloud.firestore {
       match /cart/{cartItemId} {
         allow read, write: if isOwner(userId);
       }
-      
-      /**
-       * @description Secures the 'orders' subcollection. This rule is critical for both
-       * individual user access and admin collection group queries.
-       */
-      match /orders/{orderId} {
-        // This rule allows admins to perform collection group queries on 'orders'.
-        // It's simple and doesn't use get() or exists(), making it valid for 'list'.
+    }
+    
+    /**
+     * @description Secures the 'orders' collection group. This is the primary rule for all 'orders' collections.
+     * `list` is restricted to admins for collection group queries.
+     * `get`, `update`, `delete` are allowed for owners or admins.
+     * `create` is allowed for owners.
+     */
+    match /{path=**}/orders/{orderId} {
         allow list: if request.auth.token.email == 'drohith7080@gmail.com';
-        
-        // This rule allows a user to get their own order, or an admin to get any order.
-        // It's safe to use isAdmin() here because 'get' is not a collection group query.
-        allow get: if isAdmin() || (isOwner(userId) && resource.data.userId == userId);
-        
-        // WRITE RULES
-        allow create: if isOwner(userId);
-        allow update, delete: if isAdmin() || isOwner(userId);
-      }
+        allow get: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+        allow update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
     }
 
     /**

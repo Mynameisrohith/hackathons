@@ -124,6 +124,19 @@ service cloud.firestore {
     }
 
     /**
+     * @description Manages product reviews. Publicly readable for all users.
+     * Any signed-in user can create a review, but only admins can modify or delete.
+     * @path /reviews/{reviewId}
+     */
+    match /reviews/{reviewId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
      * @description Manages administrator roles. Only other admins can view or modify the list of admins.
      * Users can check their own admin status.
      * @path /roles_admin/{userId}

@@ -76,6 +76,20 @@
         },
         "required": ["productId", "productName", "quantity", "totalAmount"]
     },
+    "Review": {
+        "title": "Review",
+        "type": "object",
+        "description": "Represents a product review.",
+        "properties": {
+          "productId": { "type": "string" },
+          "productName": { "type": "string" },
+          "rating": { "type": "number" },
+          "comment": { "type": "string" },
+          "userId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["productId", "productName", "rating", "comment", "userId"]
+    },
     "Role": {
         "title": "Role",
         "type": "object",
@@ -153,6 +167,22 @@
             {
               "name": "saleId",
               "description": "The unique identifier for the sale transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores product reviews. Publicly readable. Any authenticated user can create a review.",
+          "params": [
+            {
+              "name": "reviewId",
+              "description": "The unique identifier for the review."
             }
           ]
         }

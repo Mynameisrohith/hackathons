@@ -116,7 +116,7 @@ service cloud.firestore {
      * @path /{path=**}/orders/{orderId}
      */
     match /{path=**}/orders/{orderId} {
-        allow read: if isAdmin();
+        allow read: if request.auth != null && (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || request.auth.token.email == 'drohith7080@gmail.com');
     }
 
 

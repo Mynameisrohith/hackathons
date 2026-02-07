@@ -6,7 +6,7 @@ export function useAdmin() {
 
   // This is a temporary, client-side check.
   // For production, you should use a more secure method like custom claims.
-  const isHardcodedAdmin = user?.email === 'ddrohith7080@gmail.com';
+  const isHardcodedAdmin = user?.email === 'drohith7080@gmail.com';
 
   return { isAdmin: isHardcodedAdmin, isLoading: isUserLoading };
 }

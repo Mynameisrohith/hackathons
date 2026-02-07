@@ -25,7 +25,6 @@ export interface Product {
   description: string;
   imageUrl: string;
   categoryId: string;
-  categoryName: string;
   createdAt: Timestamp;
 }
 

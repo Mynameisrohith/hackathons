@@ -60,10 +60,9 @@
           "description": { "type": "string" },
           "imageUrl": { "type": "string", "format": "uri" },
           "categoryId": { "type": "string" },
-          "categoryName": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" }
         },
-        "required": ["name", "price", "stock", "categoryId", "categoryName", "imageUrl", "description"]
+        "required": ["name", "price", "stock", "categoryId", "imageUrl", "description"]
     },
     "Sale": {
         "title": "Sale",
@@ -118,7 +117,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information.  Authorization is based on path ownership.",
+          "description": "Stores user profile information. Authorization is based on path ownership.",
           "params": [
             {
               "name": "userId",

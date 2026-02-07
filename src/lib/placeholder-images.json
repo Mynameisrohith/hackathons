@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "electronics-1",
+      "description": "A modern smartphone on a clean background.",
+      "imageUrl": "https://images.unsplash.com/photo-1605188378873-3ddf764e6fff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzbWFydHBob25lJTIwdGVjaHxlbnwwfHx8fDE3NzAzODE5NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "smartphone tech"
+    },
+    {
+      "id": "fashion-1",
+      "description": "A stylish leather jacket.",
+      "imageUrl": "https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxsZWF0aGVyJTIwamFja2V0fGVufDB8fHx8MTc3MDM3OTMzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "leather jacket"
+    },
+    {
+      "id": "home-1",
+      "description": "A minimalist wooden desk.",
+      "imageUrl": "https://images.unsplash.com/photo-1518655048521-f130df041f66?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwZGVza3xlbnwwfHx8fDE3NzAzOTAwOTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "minimalist desk"
+    },
+    {
+      "id": "books-1",
+      "description": "A stack of old books.",
+      "imageUrl": "https://images.unsplash.com/photo-1479142506502-19b3a3b7ff33?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxvbGQlMjBib29rc3xlbnwwfHx8fDE3NzA0NjkxNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "old books"
+    }
+  ]
 }

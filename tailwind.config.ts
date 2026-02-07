@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -89,8 +90,8 @@ export default {
           },
         },
         'card-enter': {
-            from: { opacity: '0', transform: 'translateY(20px)' },
-            to: { opacity: '1', transform: 'translateY(0)' },
+            from: { opacity: '0', transform: 'translateY(10px) scale(0.98)' },
+            to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         glow: {
             '0%, 100%': { boxShadow: '0 0 5px hsl(var(--glow-color-high)), 0 0 10px hsl(var(--glow-color-high))' },
@@ -108,11 +109,17 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'card-enter': 'card-enter 0.7s ease-out forwards',
+        'card-enter': 'card-enter 0.5s ease-out forwards',
         glow: 'glow 2.5s ease-in-out infinite',
         'subtle-pulse': 'subtle-pulse 2.5s ease-in-out infinite',
         'fraud-glow': 'fraud-glow 2s ease-in-out infinite',
       },
+      backgroundImage: {
+        'grid-slate-900': `linear-gradient(white 2px, transparent 2px), linear-gradient(to right, white 2px, hsl(var(--background)) 2px)`,
+      },
+      backgroundSize: {
+        'grid-slate-900': '5rem 5rem'
+      }
     },
   },
   plugins: [require('tailwindcss-animate')],

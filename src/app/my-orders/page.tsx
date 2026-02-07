@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useUser, useFirestore, useCollection } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Order, UserProfile } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Package, CheckCircle, Truck, Star, XCircle, AlertTriangle, Send } from 'lucide-react';
+import { Package, CheckCircle, Truck, Star, XCircle, AlertTriangle, Send, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -29,6 +29,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 import { sendEmail } from '@/lib/email-client';
+import Link from 'next/link';
 
 const statusTimeline: { [key in Order['orderStatus']]: { step: number; icon: React.ElementType } } = {
     Pending: { step: 1, icon: Package },
@@ -246,7 +247,7 @@ export default function MyOrdersPage() {
         }
     }, [searchParams, router, t]);
 
-    const ordersQuery = useMemo(() => {
+    const ordersQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
         return query(collection(firestore, 'users', user.uid, 'orders'), orderBy('createdAt', 'desc'));
     }, [user, firestore]);

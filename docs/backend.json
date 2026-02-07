@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user within the RetailSpark application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile photo.",
+          "format": "uri"
+        },
+        "creationTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.  Authorization is based on path ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information (name, price, stock, createdAt).",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales/{saleId}",
+        "definition": {
+          "entityName": "Sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "Stores sales transaction data (productId, productName, quantity, totalAmount, createdAt).",
+          "params": [
+            {
+              "name": "saleId",
+              "description": "The unique identifier for the sale transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/Role"
+          },
+          "description": "Marks a user as an administrator. Existence of the document grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who is an administrator."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support a retail management application with a focus on products, sales, and analytics. User data is stored under the `/users/{userId}` path to maintain data isolation and ownership. Product and sales data are stored in top-level collections, which simplifies querying and aggregation for analytics, avoiding the need for complex joins or subcollection queries. To support Authorization Independence, especially for role management (though not immediately used but ready for future expansion), a dedicated `/roles_admin/{userId}` collection is used to denote administrator roles. This approach enhances security rule simplicity and debuggability by eliminating the need for `get()` calls within the rules and facilitating atomic operations.  The chosen structure enables straightforward `list` operations for products and sales data, making the application's data accessible and manageable without compromising security. While the current specification doesn't include collaborative data, the structure can easily accommodate membership-based authorization by adding relevant fields to the product or sale documents if needed in the future."
+  }
+}

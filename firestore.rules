@@ -1,0 +1,145 @@
+/**
+ * This ruleset enforces a hybrid security model for a retail application.
+ *
+ * Core Philosophy:
+ * The security model is designed to be secure by default while providing flexibility for application features. It combines three primary access control patterns:
+ * 1. User Ownership: User data is strictly private and can only be accessed or modified by the user who owns it.
+ * 2. Role-Based Access Control (RBAC): A dedicated '/roles_admin' collection manages administrator privileges. Admins have full control over global data collections.
+ * 3. Public Read with Restricted Writes: Global data, such as products and sales, is publicly readable to support the retail storefront and analytics, but write operations are strictly controlled.
+ *
+ * Data Structure:
+ * - /users/{userId}: Contains private user profile information, strictly isolated to the owning user.
+ * - /products/{productId}: A top-level collection of products, publicly readable but only manageable by administrators.
+ * - /sales/{saleId}: A top-level collection of sales transactions, publicly readable. Any authenticated user can create a sale, but only admins can modify or delete transactions.
+ * - /roles_admin/{userId}: A collection where the existence of a document signifies that the user is an administrator. This provides a centralized and performant way to check for admin privileges.
+ *
+ * Key Security Decisions:
+ * - User Isolation: Listing users is explicitly disallowed to protect user privacy. A user can only access their own document within the `/users` collection.
+ * - Admin Supremacy: Administrators, defined in `/roles_admin`, have privileged access to manage global collections like `/products` and `/sales`. This role is managed by other admins.
+ * - Default Secure: The default posture is to deny access. Rules explicitly grant permissions on a per-collection basis.
+ * - Write Integrity: All write operations (`create`, `update`, `delete`) are protected. There are no open writes. Relational integrity (e.g., ensuring a user's ID in their document matches their path ID) is enforced on creation and maintained as immutable on update.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------------
+    // Helper Functions
+    // ----------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the foundation for the ownership-based security model.
+     * @param userId The user ID to check against the request's auth UID.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the requesting user has administrative privileges.
+     * Admin status is granted by the existence of a document for the user
+     * in the /roles_admin collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Validates that the user ID within a new user document matches the
+     * document's ID in the path. This enforces relational integrity on create.
+     * @param userId The user ID from the path.
+     */
+    function hasValidUserIdOnCreate(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * Validates that the user ID within a user document is not being changed.
+     * This enforces immutability for critical relational fields on update.
+     */
+    function userIdIsImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    // ----------------------------------------------------------------------
+    // Collection Rules
+    // ----------------------------------------------------------------------
+
+    /**
+     * @description Manages user profile documents. Access is restricted to the document owner.
+     * @path /users/{userId}
+     * @allow (get) An authenticated user reads their own profile. auth.uid == userId.
+     * @allow (create) An authenticated user creates their own profile for the first time. auth.uid == userId.
+     * @deny (list) A user attempts to list all user profiles in the collection.
+     * @deny (update) A user tries to modify another user's profile. auth.uid != userId.
+     * @principle Restricts access to a user's own data tree and enforces self-creation.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
+      allow update: if isOwner(userId) && resource != null && userIdIsImmutable();
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages product listings. Publicly readable, but only writable by admins.
+     * @path /products/{productId}
+     * @allow (list) Any user, including unauthenticated ones, can list all products.
+     * @allow (create) An administrator creates a new product document.
+     * @deny (create) A regular authenticated user attempts to create a product.
+     * @deny (delete) A regular user attempts to delete a product.
+     * @principle Implements public read access with role-based write restrictions.
+     */
+    match /products/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Manages sales transaction records. Publicly readable for analytics.
+     * Any signed-in user can create a sale, but only admins can modify or delete records.
+     * @path /sales/{saleId}
+     * @allow (list) Any user, including unauthenticated ones, can list sales for analytics.
+     * @allow (create) An authenticated user creates a new sale record (e.g., makes a purchase).
+     * @deny (update) A regular user tries to modify a sale after it has been created.
+     * @deny (delete) A regular user tries to delete a sale transaction.
+     * @principle Supports public read and user-driven creation, with admin-only modification for data integrity.
+     */
+    match /sales/{saleId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Manages administrator roles. Only other admins can view or modify the list of admins.
+     * @path /roles_admin/{userId}
+     * @allow (create) An existing admin adds a new user to the admin roles.
+     * @allow (delete) An existing admin removes another user's admin privileges.
+     * @deny (get) A non-admin user tries to check if another user is an admin.
+     * @deny (list) A non-admin user tries to get a list of all administrators.
+     * @principle Secures role management by restricting access to users who already hold the role.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if isAdmin() && resource != null;
+    }
+  }
+}

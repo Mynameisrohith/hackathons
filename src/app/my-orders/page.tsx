@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Package, CheckCircle, Truck, Star, XCircle, AlertTriangle, Send, Loader2, Clock, Boxes, CloudRain } from 'lucide-react';
+import { Package, CheckCircle, Truck, Star, XCircle, AlertTriangle, Send, Loader2, Clock, Boxes, CloudRain, MapPin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -233,6 +234,7 @@ function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProf
     };
     
     const canCancel = order.orderStatus === 'Pending' || order.orderStatus === 'Packed';
+    const canTrack = order.orderStatus === 'Out for Delivery' || order.orderStatus === 'Delivered';
 
     return (
         <Card className="card-glass animate-card-enter">
@@ -273,12 +275,12 @@ function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProf
                 </div>
                 {order.orderStatus === 'Delivered' && <FeedbackForm order={order} userProfile={userProfile}/>}
             </CardContent>
-            {canCancel && (
-                 <CardFooter>
+            <CardFooter className="flex-wrap gap-4">
+                {canCancel && (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" disabled={isCancelling}>
-                                {isCancelling ? <Loader2 className="animate-spin" /> : <XCircle />}
+                                {isCancelling ? <Loader2 className="animate-spin mr-2" /> : <XCircle className="mr-2" />}
                                 {t('cancelOrder')}
                             </Button>
                         </AlertDialogTrigger>
@@ -293,8 +295,16 @@ function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProf
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                </CardFooter>
-            )}
+                )}
+                {canTrack && (
+                    <Button asChild>
+                        <Link href={`/track/${order.id}`}>
+                            <MapPin className="mr-2"/>
+                            Track Order
+                        </Link>
+                    </Button>
+                )}
+            </CardFooter>
         </Card>
     )
 }

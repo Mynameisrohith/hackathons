@@ -91,6 +91,10 @@ export interface Order {
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
   orderStatus: 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  deliveryStatus?: 'Assigned' | 'Picked' | 'Out for Delivery' | 'Delivered';
+  deliveryBoyLat?: number;
+  deliveryBoyLng?: number;
+  estimatedArrivalMinutes?: number;
   cancellationReason?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;

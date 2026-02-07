@@ -80,23 +80,6 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------------------------
-    // Collection Group Rules
-    // ----------------------------------------------------------------------
-    
-    /**
-     * @description Secures collection group queries for 'orders'.
-     * This rule MUST NOT use get() or exists().
-     */
-    match /{path=**}/orders/{orderId} {
-        // Allows a hardcoded administrator to list all orders across all users for the admin panel.
-        allow list: if request.auth.token.email == 'drohith7080@gmail.com';
-        
-        // Deny get/write at this general level. Specific paths will override these.
-        allow get: if false;
-        allow write: if false;
-    }
-
-    // ----------------------------------------------------------------------
     // Collection Rules
     // ----------------------------------------------------------------------
 
@@ -120,17 +103,19 @@ service cloud.firestore {
       }
       
       /**
-       * @description This block secures direct document access for a specific order.
-       * The collection group 'list' permission is handled separately above.
+       * @description Secures the 'orders' subcollection. This rule is critical for both
+       * individual user access and admin collection group queries.
        */
       match /orders/{orderId} {
-        // `list` is handled by the collection group rule and is implicitly denied here.
+        // This rule allows admins to perform collection group queries on 'orders'.
+        // It's simple and doesn't use get() or exists(), making it valid for 'list'.
+        allow list: if request.auth.token.email == 'drohith7080@gmail.com';
         
-        // Allows an admin (role or hardcoded) OR the document owner to get a single order.
-        // This is safe because `get` is not a collection group query.
+        // This rule allows a user to get their own order, or an admin to get any order.
+        // It's safe to use isAdmin() here because 'get' is not a collection group query.
         allow get: if isAdmin() || (isOwner(userId) && resource.data.userId == userId);
         
-        // WRITE RULES:
+        // WRITE RULES
         allow create: if isOwner(userId);
         allow update, delete: if isAdmin() || isOwner(userId);
       }

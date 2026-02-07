@@ -26,7 +26,7 @@ const useDashboardStats = () => {
     const isLoading = isAdminLoading || loadingOrders || loadingSales;
 
     const stats = useMemo(() => {
-        if (!orders || !sales) return null;
+        if (isLoading || !orders || !sales) return null;
 
         const totalRevenue = sales.reduce((acc, sale) => acc + sale.totalAmount, 0);
         const totalOrders = orders.length;
@@ -57,7 +57,7 @@ const useDashboardStats = () => {
                 { name: 'Cancelled', value: statusCounts['Cancelled'] || 0 },
             ]
         };
-    }, [orders, sales]);
+    }, [orders, sales, isLoading]);
 
     return { stats, isLoading };
 };

@@ -53,21 +53,13 @@ service cloud.firestore {
     function isRoleAdmin() {
       return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
-    
-    /**
-     * Checks if the user is an admin based on a hardcoded email address.
-     * IMPORTANT: This provides a fallback super-admin. 
-     * For production, it's recommended to manage all admins via the /roles_admin collection.
-     */
-    function isHardcodedAdmin() {
-      return request.auth.token.email == 'drohith7080@gmail.com';
-    }
 
     /**
      * Checks if the requesting user has administrative privileges by combining role-based and hardcoded checks.
+     * NOTE: This function cannot be used in collection group queries because isRoleAdmin() uses exists().
      */
     function isAdmin() {
-      return isSignedIn() && (isRoleAdmin() || isHardcodedAdmin());
+      return isSignedIn() && (isRoleAdmin() || request.auth.token.email == 'drohith7080@gmail.com');
     }
 
     /**
@@ -128,8 +120,9 @@ service cloud.firestore {
      * @path /{path=**}/orders/{orderId}
      */
     match /{path=**}/orders/{orderId} {
-        // The exists() function is not supported in collection group queries.
-        // Therefore, we must inline the check for the hardcoded admin email.
+        // Collection group queries do not support functions that use `get()` or `exists()`.
+        // Therefore, we cannot use the full `isAdmin()` helper here.
+        // We must rely on checks that only use the `request` object, like checking token claims or a hardcoded email.
         allow read: if request.auth != null && request.auth.token.email == 'drohith7080@gmail.com';
     }
 

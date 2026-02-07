@@ -37,7 +37,7 @@ const useAnalyticsData = () => {
     const isLoading = isAdminLoading || loadingOrders || loadingProducts || loadingCategories || loadingReviews;
 
     const analytics = useMemo(() => {
-        if (!orders || !products || !categories) return null;
+        if (isLoading || !orders || !products || !categories) return null;
 
         const monthlyRevenue = Array(12).fill(0);
         orders.forEach(order => {
@@ -73,7 +73,7 @@ const useAnalyticsData = () => {
 
         return { monthlyRevenue, categoryDistribution, salesByCity, topProducts, recentReviews };
 
-    }, [orders, products, categories, reviews]);
+    }, [orders, products, categories, reviews, isLoading]);
 
     return { analytics, isLoading };
 }

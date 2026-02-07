@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -43,6 +44,7 @@ function OrderRow({ order }: { order: Order }) {
             id: order.userId,
             email: order.userEmail,
             displayName: order.customerName,
+            photoURL: '' // Not available on order, but can be added if needed
         };
     }, [order]);
 

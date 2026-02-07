@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Store, User, Truck } from 'lucide-react';
 import { DeliveryTruckIcon } from '@/components/icons';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const mapContainerStyle = {
     width: '100%',
@@ -29,6 +30,7 @@ export default function LiveTrackingPage() {
     const { t } = useLanguage();
     const firestore = useFirestore();
     const [activeMarker, setActiveMarker] = useState<string | null>(null);
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
     const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
@@ -36,14 +38,14 @@ export default function LiveTrackingPage() {
     });
     
     const activeOrdersQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !isAdmin) return null;
         return query(
             collectionGroup(firestore, 'orders'),
             where('orderStatus', '==', 'Out for Delivery')
         );
-    }, [firestore]);
+    }, [firestore, isAdmin]);
 
-    const { data: activeOrders, isLoading } = useCollection<Order>(activeOrdersQuery);
+    const { data: activeOrders, isLoading: isLoadingOrders } = useCollection<Order>(activeOrdersQuery);
 
     const bounds = useMemo(() => {
         if (!activeOrders || activeOrders.length === 0 || typeof window === 'undefined') return undefined;
@@ -57,6 +59,8 @@ export default function LiveTrackingPage() {
         });
         return b;
     }, [activeOrders]);
+
+    const isLoading = isAdminLoading || isLoadingOrders;
 
     if (loadError) return <div>Map cannot be loaded right now, sorry.</div>;
 

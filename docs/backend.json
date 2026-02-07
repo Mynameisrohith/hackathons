@@ -124,7 +124,8 @@
             "latitude": { "type": "number" },
             "longitude": { "type": "number" },
             "address": { "type": "string" },
-            "phone": { "type": "string" }
+            "phone": { "type": "string" },
+            "placeId": { "type": "string" }
         },
         "required": ["name", "latitude", "longitude", "address"]
     },
@@ -146,10 +147,13 @@
             "paymentMethod": { "type": "string", "enum": ["COD", "Card", "UPI"] },
             "paymentStatus": { "type": "string", "enum": ["Pending", "Paid", "Failed"] },
             "createdAt": { "type": "string", "format": "date-time" },
-            "nearestStoreId": { "type": "string" },
-            "deliveryEstimate": { "type": "string" }
+            "dealerName": { "type": "string" },
+            "dealerAddress": { "type": "string" },
+            "dealerLat": { "type": "number" },
+            "dealerLng": { "type": "number" },
+            "dealerPlaceId": { "type": "string" }
         },
-        "required": ["userId", "items", "totalAmount", "customerName", "phone", "address", "city", "pincode", "latitude", "longitude", "paymentMethod", "paymentStatus", "nearestStoreId", "deliveryEstimate"]
+        "required": ["userId", "items", "totalAmount", "customerName", "phone", "address", "city", "pincode", "latitude", "longitude", "paymentMethod", "paymentStatus", "dealerName", "dealerAddress", "dealerLat", "dealerLng"]
     }
   },
   "auth": {
@@ -288,13 +292,13 @@
         "definition": {
           "entityName": "Store",
           "schema": { "$ref": "#/backend/entities/Store" },
-          "description": "Stores physical store locations. Publicly readable, but only manageable by administrators.",
+          "description": "Stores physical store locations (dealers). Publicly readable, but only manageable by administrators.",
           "params": [
             { "name": "storeId", "description": "The unique ID for the store." }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure supports a retail management application with products, categories, sales, and analytics. User data is isolated under `/users/{userId}`. Products, categories, and sales are in top-level collections for easy querying. A dedicated `/roles_admin/{userId}` collection manages administrator roles, enhancing security and simplifying rules by avoiding `get()` calls. The addition of user-specific `cart` and `orders` sub-collections ensures data privacy and scalability for the marketplace features. A new `stores` collection is added to manage physical store locations for proximity-based features. The `Order` entity now includes latitude and longitude for precise delivery location tracking."
+    "reasoning": "The Firestore data structure supports a retail management application with products, categories, sales, and analytics. User data is isolated under `/users/{userId}`. Products, categories, and sales are in top-level collections for easy querying. A dedicated `/roles_admin/{userId}` collection manages administrator roles, enhancing security and simplifying rules by avoiding `get()` calls. The addition of user-specific `cart` and `orders` sub-collections ensures data privacy and scalability for the marketplace features. A new `stores` collection is added to manage physical store locations for proximity-based features. The `Order` entity now includes detailed information about the dispatching dealer."
   }
 }

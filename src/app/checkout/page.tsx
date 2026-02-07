@@ -7,21 +7,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart } from '@/context/CartContext';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
+import { writeBatch, doc, serverTimestamp, collection } from 'firebase/firestore';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowRight, ArrowLeft, Check, AlertTriangle, Truck, XCircle } from 'lucide-react';
-import type { Order, CartItem, Store, Coordinates } from '@/lib/types';
+import { Loader2, ArrowLeft, Check } from 'lucide-react';
+import type { Order, CartItem, Dealer } from '@/lib/types';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
-import { getHaversineDistance } from '@/lib/geolocation';
-import { Skeleton } from '@/components/ui/skeleton';
 import { AddressAutocomplete, GeocodedAddress } from '@/components/AddressAutocomplete';
+import { DealerDiscovery } from '@/components/DealerDiscovery';
 
 const addressSchema = z.object({
   customerName: z.string().min(2, 'Name is required'),
@@ -32,89 +31,6 @@ const addressSchema = z.object({
 });
 
 type CheckoutStep = 'address' | 'payment';
-
-type NearestStoreInfo = {
-    store: Store;
-    distance: number;
-    deliveryEstimate: string;
-};
-
-function NearestStoreCard({
-    storeInfo,
-    isLoading
-}: {
-    storeInfo: NearestStoreInfo | null,
-    isLoading: boolean
-}) {
-    const { t } = useLanguage();
-    const [mapVisible, setMapVisible] = useState(false);
-
-    if (isLoading) {
-        return (
-            <Card>
-                <CardHeader><CardTitle>{t('checkingNearbyStores')}</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-4 w-1/3" />
-                </CardContent>
-            </Card>
-        )
-    }
-
-    if (!storeInfo) {
-        return (
-            <Card className="border-red-500/50 bg-red-50/50 dark:bg-red-950/20">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                        <XCircle size={20} /> {t('noStoresFoundTitle')}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">{t('noStoresFoundDesc')}</p>
-                </CardContent>
-            </Card>
-        )
-    }
-    
-    const { store, distance, deliveryEstimate } = storeInfo;
-    return (
-        <Card className="animate-card-enter">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Truck size={22} /> {t('deliveryDetails')}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <p className="font-medium">{t('dispatchedFrom')}: <span className="text-primary">{store.name}</span></p>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{t('distance')}</span>
-                    <span className="font-semibold text-foreground">{distance.toFixed(1)} km</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{t('estimatedDelivery')}</span>
-                    <span className="font-semibold text-foreground">{deliveryEstimate}</span>
-                </div>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-2">
-                <Button variant="link" className="p-0 h-auto" onClick={() => setMapVisible(!mapVisible)}>
-                    {mapVisible ? t('hideMap') : t('showMap')}
-                </Button>
-                {mapVisible && (
-                    <div className="w-full aspect-video overflow-hidden rounded-md border animate-accordion-down">
-                            <iframe
-                            width="100%"
-                            height="100%"
-                            loading="lazy"
-                            allowFullScreen
-                            src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${store.latitude},${store.longitude}`}>
-                        </iframe>
-                    </div>
-                )}
-            </CardFooter>
-        </Card>
-    )
-}
 
 export default function CheckoutPage() {
   const { t } = useLanguage();
@@ -127,12 +43,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Card' | 'UPI'>('COD');
   const [isProcessing, setIsProcessing] = useState(false);
   const [addressDetails, setAddressDetails] = useState<GeocodedAddress | null>(null);
-
-  const storesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'stores');
-  }, [firestore]);
-  const { data: stores, isLoading: isLoadingStores } = useCollection<Store>(storesQuery);
+  const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
@@ -152,33 +63,6 @@ export default function CheckoutPage() {
     }
   }, [items, isCartLoading, router, t]);
 
-
-  const nearestStore = useMemo(() => {
-    if (!addressDetails || !stores || stores.length === 0) {
-        return null;
-    }
-
-    let closest: { store: Store; distance: number } | null = null;
-    const userCoords = { latitude: addressDetails.lat, longitude: addressDetails.lng };
-
-    for (const store of stores) {
-        const distance = getHaversineDistance(userCoords, { latitude: store.latitude, longitude: store.longitude });
-        if (!closest || distance < closest.distance) {
-            closest = { store, distance };
-        }
-    }
-    
-    if (closest) {
-        const deliveryTime = 20 + Math.round(closest.distance * 5); // 20 mins base + 5 mins/km
-        return {
-            ...closest,
-            deliveryEstimate: `${deliveryTime} - ${deliveryTime + 15} min`,
-        };
-    }
-    return null;
-  }, [addressDetails, stores]);
-
-
   const processAddress = (data: z.infer<typeof addressSchema>) => {
     if (!addressDetails) {
         toast({ title: t('geocodeError'), description: t('geocodeErrorDesc'), variant: 'destructive' });
@@ -188,7 +72,7 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!user || !firestore || !items || !addressDetails) return;
+    if (!user || !firestore || !items || !addressDetails || !selectedDealer) return;
     setIsProcessing(true);
 
     const addressData = form.getValues();
@@ -210,8 +94,11 @@ export default function CheckoutPage() {
       paymentMethod,
       paymentStatus: 'Pending',
       createdAt: serverTimestamp() as any,
-      nearestStoreId: nearestStore?.store.id ?? 'N/A',
-      deliveryEstimate: nearestStore?.deliveryEstimate ?? 'N/A',
+      dealerName: selectedDealer.name,
+      dealerAddress: selectedDealer.address,
+      dealerLat: selectedDealer.latitude,
+      dealerLng: selectedDealer.longitude,
+      dealerPlaceId: selectedDealer.placeId,
     };
 
     try {
@@ -279,39 +166,41 @@ export default function CheckoutPage() {
             </div>
 
             <div className={cn('transition-opacity duration-300', step === 'address' && 'hidden')}>
-                <h2 className="mb-4 text-xl font-semibold">{t('paymentMethod')}</h2>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                    <Label htmlFor="cod" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
-                        <RadioGroupItem value="COD" id="cod" />
-                        <div className="ml-4">
-                            <p className="font-medium">{t('cashOnDelivery')}</p>
-                            <p className="text-sm text-muted-foreground">{t('cashOnDeliveryDesc')}</p>
-                        </div>
-                    </Label>
-                    <Label htmlFor="card" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
-                        <RadioGroupItem value="Card" id="card" />
-                        <div className="ml-4">
-                            <p className="font-medium">{t('creditDebitCard')}</p>
-                            <p className="text-sm text-muted-foreground">{t('creditDebitCardDesc')}</p>
-                        </div>
-                    </Label>
-                    <Label htmlFor="upi" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
-                        <RadioGroupItem value="UPI" id="upi" />
-                        <div className="ml-4">
-                            <p className="font-medium">{t('upi')}</p>
-                            <p className="text-sm text-muted-foreground">{t('upiDesc')}</p>
-                        </div>
-                    </Label>
-                </RadioGroup>
-                <div className="mt-8 flex items-center gap-4">
-                    <Button variant="outline" onClick={() => setStep('address')}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> {t('backToAddress')}
-                    </Button>
-                    <Button onClick={handlePlaceOrder} disabled={isProcessing || !nearestStore} className="w-full">
-                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {t('placeOrder')} - ${cartTotal.toFixed(2)}
-                    </Button>
-                </div>
+              {addressDetails && (
+                <DealerDiscovery
+                  userLocation={addressDetails}
+                  onDealerSelect={setSelectedDealer}
+                />
+              )}
+              
+              <div className="mt-8">
+                  <h2 className="mb-4 text-xl font-semibold">{t('paymentMethod')}</h2>
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                      <Label htmlFor="cod" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
+                          <RadioGroupItem value="COD" id="cod" />
+                          <div className="ml-4">
+                              <p className="font-medium">{t('cashOnDelivery')}</p>
+                              <p className="text-sm text-muted-foreground">{t('cashOnDeliveryDesc')}</p>
+                          </div>
+                      </Label>
+                      <Label htmlFor="card" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
+                          <RadioGroupItem value="Card" id="card" disabled/>
+                          <div className="ml-4">
+                              <p className="font-medium">{t('creditDebitCard')} <span className="text-xs text-muted-foreground">({t('comingSoon')})</span></p>
+                              <p className="text-sm text-muted-foreground">{t('creditDebitCardDesc')}</p>
+                          </div>
+                      </Label>
+                  </RadioGroup>
+                  <div className="mt-8 flex items-center gap-4">
+                      <Button variant="outline" onClick={() => setStep('address')}>
+                          <ArrowLeft className="mr-2 h-4 w-4" /> {t('backToAddress')}
+                      </Button>
+                      <Button onClick={handlePlaceOrder} disabled={isProcessing || !selectedDealer} className="w-full">
+                          {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          {t('placeOrder')} - ${cartTotal.toFixed(2)}
+                      </Button>
+                  </div>
+              </div>
             </div>
         </div>
 
@@ -342,9 +231,6 @@ export default function CheckoutPage() {
                     </div>
                 </CardContent>
             </Card>
-            {step === 'payment' && (
-                <NearestStoreCard storeInfo={nearestStore} isLoading={isLoadingStores} />
-            )}
         </div>
       </div>
     </div>

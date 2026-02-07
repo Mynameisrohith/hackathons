@@ -69,7 +69,10 @@ export interface Store {
   latitude: number;
   longitude: number;
   address: string;
-  phone: string;
+  phone?: string;
+  placeId?: string;
+  active?: boolean;
+  createdAt?: Timestamp;
 }
 
 export interface Order {
@@ -87,8 +90,11 @@ export interface Order {
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
   createdAt: Timestamp;
-  nearestStoreId: string;
-  deliveryEstimate: string;
+  dealerName: string;
+  dealerAddress: string;
+  dealerLat: number;
+  dealerLng: number;
+  dealerPlaceId?: string;
 }
 
 
@@ -138,4 +144,34 @@ export interface MarketAnalysis {
     volatility: 'Stable' | 'Moderate' | 'Volatile';
     volatilityScore: number;
     businessImpactLabel: string;
+}
+
+// From Google Places API
+export interface Place {
+    id: string;
+    place_id: string;
+    name: string;
+    vicinity: string;
+    geometry: {
+        location: {
+            lat: number;
+            lng: number;
+        };
+    };
+    rating?: number;
+    user_ratings_total?: number;
+    formatted_phone_number?: string;
+}
+
+export interface Dealer {
+    id: string;
+    placeId?: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    status: 'Registered' | 'New';
+    distance: number;
+    rating?: number;
+    userRatingsTotal?: number;
 }

@@ -46,12 +46,17 @@ export default function AdminFeedbackPage() {
         return query(
             collection(firestore, 'reviews'),
             where('rating', '<', 3), // Example: filter for low ratings
-            orderBy('rating', 'asc'),
-            orderBy('createdAt', 'desc')
+            orderBy('rating', 'asc')
         );
     }, [firestore, isAdmin]);
 
     const { data: lowRatedReviews, isLoading: isLoadingFeedback } = useCollection<Review>(feedbackQuery);
+    
+    const sortedReviews = React.useMemo(() => {
+        if (!lowRatedReviews) return [];
+        // Sort by date descending on the client, as the primary sort (by rating) is done by Firestore
+        return [...lowRatedReviews].sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+    }, [lowRatedReviews]);
 
     const isLoading = isAdminLoading || isLoadingFeedback;
 
@@ -67,9 +72,9 @@ export default function AdminFeedbackPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                 </div>
-            ) : lowRatedReviews && lowRatedReviews.length > 0 ? (
+            ) : sortedReviews && sortedReviews.length > 0 ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {lowRatedReviews.map(review => (
+                    {sortedReviews.map(review => (
                         <FeedbackCard key={review.id} review={review} />
                     ))}
                 </div>

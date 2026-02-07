@@ -20,8 +20,8 @@ export async function POST(request: Request) {
     } = process.env;
 
     if (!EMAIL_USER || !EMAIL_PASS || !ADMIN_EMAIL) {
-        console.error("Email environment variables are not set. Halting function.");
-        return NextResponse.json({ message: "Server configuration error: Email credentials missing." }, { status: 500 });
+        console.warn("Email environment variables not set. Email sending is disabled. See README.md for setup instructions.");
+        return NextResponse.json({ message: "Email sending is disabled due to missing configuration." }, { status: 200 });
     }
 
     const transporter = nodemailer.createTransport({

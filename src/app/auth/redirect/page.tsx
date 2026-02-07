@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -18,7 +19,7 @@ function AccessDenied() {
                 </div>
                 <AlertTitle className="text-2xl">Access Denied</AlertTitle>
                 <AlertDescription className="mt-2">
-                You do not have a role assigned to you. Please contact an administrator to get access.
+                You do not have the required role to access this page. Please contact an administrator.
                 </AlertDescription>
                 <Button variant="secondary" className="mt-6" onClick={() => router.push('/')}>Go to Homepage</Button>
             </Alert>
@@ -51,12 +52,13 @@ export default function AuthRedirectPage() {
         router.replace("/delivery/dashboard");
         break;
       default:
-        // For users with no role, they stay on this page which shows AccessDenied
+        // For users with no role, they are customers. Redirect to homepage.
+        router.replace("/");
         break;
     }
   }, [role, isLoading, router, user]);
 
-  if (isLoading) {
+  if (isLoading || !role) { // Show loading spinner while role is being determined OR if user has no role and is being redirected
     return (
       <div className="flex h-screen items-center justify-center">
         <RetailSparkIcon className="size-12 animate-spin text-primary" />
@@ -64,15 +66,6 @@ export default function AuthRedirectPage() {
     );
   }
 
-  // If not loading and still no role, show access denied.
-  if (!role) {
-      return <AccessDenied />;
-  }
-
-  // Fallback loading state
-  return (
-     <div className="flex h-screen items-center justify-center">
-        <RetailSparkIcon className="size-12 animate-spin text-primary" />
-      </div>
-  );
+  // If not loading and still a role that's not handled (which shouldn't happen), show access denied.
+  return <AccessDenied />;
 }

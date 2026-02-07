@@ -18,7 +18,7 @@
  *
  * Key Security Decisions:
  * - User Isolation: A user can only access their own document within the `/users` collection. Admins can list users for management purposes.
- * - Admin Supremacy: Administrators, defined in `/roles`, have privileged access to manage global collections.
+ * - Admin Supremacy: Administrators, defined in `/roles` or by email, have privileged access to manage global collections.
  * - Default Secure: The default posture is to deny access. Rules explicitly grant permissions on a per-collection basis.
  * - Write Integrity: All write operations (`create`, `update`, `delete`) are protected.
  * - Collection Group Query Constraint: The 'list' rule for the 'orders' collection group is now a combined rule to support both admin and user queries, avoiding the `get()` call which is disallowed in list rules.
@@ -56,19 +56,19 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the requesting user has administrative privileges.
-     * NOTE: This function cannot be used in collection group or list queries because isRoleAdmin() uses get().
-     */
-    function isAdmin() {
-      return isRoleAdmin();
-    }
-
-    /**
      * Checks if the user is the hardcoded admin by email.
-     * This is the primary mechanism for list queries where get() is not allowed.
+     * This is a primary mechanism for list queries where get() is not allowed.
      */
     function isAdminByEmail() {
       return request.auth.token.email == 'drohith7080@gmail.com';
+    }
+
+    /**
+     * Checks if the requesting user has administrative privileges.
+     * This combines both role-based and email-based admin checks.
+     */
+    function isAdmin() {
+      return isRoleAdmin() || isAdminByEmail();
     }
 
     /**
@@ -112,31 +112,24 @@ service cloud.firestore {
       }
       
       /**
-       * @description User's own orders. This rule handles direct document operations for owners.
-       * List operations are handled by the more general collection group rule below.
+       * @description User's own orders. This rule handles direct document operations and list queries for owners.
        * @path /users/{userId}/orders/{orderId}
        */
       match /orders/{orderId} {
-        // A user can read their own order document directly.
-        allow get: if isOwner(userId);
-        // A user can create an order for themselves.
-        allow create: if isOwner(userId);
-        // A user can update their order (e.g., for feedback, or to cancel).
-        allow update: if isOwner(userId);
+        // A user can perform all operations on their own orders.
+        allow read, write: if isOwner(userId);
         // A user cannot delete their order history.
         allow delete: if false;
       }
     }
     
     /**
-     * @description Secures the 'orders' collection group for both admin and user queries.
-     * This single rule handles all `list` operations on any 'orders' collection.
+     * @description Secures the 'orders' collection group for ADMIN queries.
+     * This rule allows admins to perform list operations across all users' orders.
      */
     match /{path=**}/orders/{orderId} {
-        // This 'list' rule handles BOTH the admin's collection group query AND a user's query on their own single 'orders' collection.
-        // It works by checking if the user is the admin OR if they are the owner of the path segment.
-        // `path` is a variable bound by the wildcard `{path=**}`. For a path like `/users/someUserId`, `path[0]` is 'users' and `path[1]` is 'someUserId'.
-        allow list: if isAdminByEmail() || (path[0] == 'users' && isOwner(path[1]));
+        // This 'list' rule handles the admin's collection group query.
+        allow list: if isAdminByEmail();
 
         // These rules allow admins to manage any order document directly.
         // User access is handled by the more specific rule at /users/{userId}/orders/{orderId}.

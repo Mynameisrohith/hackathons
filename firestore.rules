@@ -1,3 +1,4 @@
+
 /**
  * This ruleset enforces a hybrid security model for a retail application.
  *
@@ -99,13 +100,13 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages product listings. Publicly readable, but only writable by admins.
+     * @description Manages product listings. Publicly readable. Any signed-in user can create a product.
      * @path /products/{productId}
      */
     match /products/{productId} {
       allow get: if true;
       allow list: if true;
-      allow create: if isAdmin();
+      allow create: if isSignedIn();
       allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
     }

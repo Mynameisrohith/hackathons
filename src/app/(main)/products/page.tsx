@@ -340,7 +340,7 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const firestore = useFirestore();
-  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
     if (!firestore) return;
@@ -402,19 +402,17 @@ export default function ProductsPage() {
               An overview of all products in your inventory.
             </CardDescription>
           </div>
-          {!isAdminLoading && isAdmin && (
-            <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
-                <DialogTrigger asChild>
-                <Button><PlusCircle className="mr-2"/>Add Product</Button>
-                </DialogTrigger>
-                <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New Product</DialogTitle>
-                </DialogHeader>
-                {firestore && <AddProductForm setOpen={setFormOpen} firestore={firestore} categories={categories} />}
-                </DialogContent>
-            </Dialog>
-          )}
+          <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
+              <DialogTrigger asChild>
+              <Button><PlusCircle className="mr-2"/>Add Product</Button>
+              </DialogTrigger>
+              <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Add New Product</DialogTitle>
+              </DialogHeader>
+              {firestore && <AddProductForm setOpen={setFormOpen} firestore={firestore} categories={categories} />}
+              </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <Table>

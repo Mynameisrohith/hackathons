@@ -4,7 +4,6 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { v4 as uuidv4 } from 'uuid';
 import {
   collection,
   addDoc,
@@ -12,8 +11,9 @@ import {
   query,
   serverTimestamp,
   Timestamp,
+  Firestore,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import {
   Product,
   Review,
@@ -88,17 +88,7 @@ const reviewSchema = z.object({
   comment: z.string().min(10, "Comment must be at least 10 characters long."),
 });
 
-// Mock user ID generation for demo purposes
-const getOrSetUserId = () => {
-    let userId = localStorage.getItem('retail-spark-userId');
-    if (!userId) {
-        userId = uuidv4();
-        localStorage.setItem('retail-spark-userId', userId);
-    }
-    return userId;
-}
-
-function AddReviewForm({ products, setOpen }: { products: Product[], setOpen: (open: boolean) => void }) {
+function AddReviewForm({ products, setOpen, firestore, userId }: { products: Product[], setOpen: (open: boolean) => void, firestore: Firestore, userId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof reviewSchema>>({
     resolver: zodResolver(reviewSchema),
@@ -111,10 +101,10 @@ function AddReviewForm({ products, setOpen }: { products: Product[], setOpen: (o
     if (!selectedProduct) return;
 
     try {
-      await addDoc(collection(db, "reviews"), {
+      await addDoc(collection(firestore, "reviews"), {
         ...values,
         productName: selectedProduct.name,
-        userId: getOrSetUserId(),
+        userId: userId,
         createdAt: serverTimestamp(),
       });
       toast({ title: "Success", description: "Review submitted successfully." });
@@ -375,13 +365,14 @@ export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
+  const firestore = useFirestore();
+  const { user } = useUser();
 
   useEffect(() => {
-    // Ensure a user ID exists for the session
-    getOrSetUserId();
+    if (!firestore) return;
 
-    const productsQuery = query(collection(db, "products"));
-    const reviewsQuery = query(collection(db, "reviews"));
+    const productsQuery = query(collection(firestore, "products"));
+    const reviewsQuery = query(collection(firestore, "reviews"));
     
     let productsLoaded = false;
     let reviewsLoaded = false;
@@ -402,7 +393,7 @@ export default function ReviewsPage() {
       unsubProducts();
       unsubReviews();
     };
-  }, []);
+  }, [firestore]);
 
   const fraudMetrics: FraudMetrics | null = useMemo(() => {
       if (reviews.length < 5) return null;
@@ -497,14 +488,14 @@ export default function ReviewsPage() {
             <CardDescription>Share your experience with a product.</CardDescription>
             </CardHeader>
             <CardContent>
-            {isLoading ? <Skeleton className="h-64 w-full"/> : (
+            {isLoading || !user || !firestore ? <Skeleton className="h-64 w-full"/> : (
                 <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
                     <DialogTrigger asChild>
                         <Button className="w-full"><PlusCircle className="mr-2"/>Add Your Review</Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader><DialogTitle>New Review</DialogTitle></DialogHeader>
-                        <AddReviewForm products={products} setOpen={setFormOpen} />
+                        <AddReviewForm products={products} setOpen={setFormOpen} firestore={firestore} userId={user.uid} />
                     </DialogContent>
                 </Dialog>
             )}

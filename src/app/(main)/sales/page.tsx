@@ -11,8 +11,9 @@ import {
   serverTimestamp,
   writeBatch,
   doc,
+  Firestore,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useFirestore } from "@/firebase";
 import {
   Card,
   CardContent,
@@ -57,7 +58,7 @@ const saleSchema = z.object({
     .positive("Quantity must be a positive number."),
 });
 
-function RecordSaleForm({ products }: { products: Product[] }) {
+function RecordSaleForm({ products, firestore }: { products: Product[]; firestore: Firestore }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof saleSchema>>({
     resolver: zodResolver(saleSchema),
@@ -92,9 +93,9 @@ function RecordSaleForm({ products }: { products: Product[] }) {
     
     setIsSubmitting(true);
     try {
-      const batch = writeBatch(db);
+      const batch = writeBatch(firestore);
       
-      const saleRef = doc(collection(db, "sales"));
+      const saleRef = doc(collection(firestore, "sales"));
       batch.set(saleRef, {
         productId: values.productId,
         productName: selectedProduct.name,
@@ -103,7 +104,7 @@ function RecordSaleForm({ products }: { products: Product[] }) {
         createdAt: serverTimestamp(),
       });
       
-      const productRef = doc(db, "products", values.productId);
+      const productRef = doc(firestore, "products", values.productId);
       batch.update(productRef, {
         stock: selectedProduct.stock - values.quantity,
       });
@@ -179,10 +180,13 @@ export default function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
   useEffect(() => {
-    const productsQuery = query(collection(db, "products"));
-    const salesQuery = query(collection(db, "sales"));
+    if (!firestore) return;
+
+    const productsQuery = query(collection(firestore, "products"));
+    const salesQuery = query(collection(firestore, "sales"));
     
     const unsubProducts = onSnapshot(productsQuery, (snapshot) => {
         setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
@@ -197,7 +201,7 @@ export default function SalesPage() {
       unsubProducts();
       unsubSales();
     };
-  }, []);
+  }, [firestore]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -207,7 +211,7 @@ export default function SalesPage() {
           <CardDescription>Select a product and quantity to record a sale.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-64 w-full"/> : <RecordSaleForm products={products} />}
+          {isLoading || !firestore ? <Skeleton className="h-64 w-full"/> : <RecordSaleForm products={products} firestore={firestore} />}
         </CardContent>
       </Card>
       <Card className="md:col-span-1">

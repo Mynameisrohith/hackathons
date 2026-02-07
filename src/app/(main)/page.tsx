@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { collection, onSnapshot, query, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useFirestore } from "@/firebase";
 import type { Product, Sale, ProductAnalysis, MarketAnalysis } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -130,7 +130,8 @@ const BusinessHealthIndicator = ({ score, isLoading }: { score: number, isLoadin
 
 // Market Trend Overview Component
 const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysis, isLoading: boolean }) => {
-    const animatedGrowth = useAnimatedCounter(isLoading || !analysis ? 0 : analysis.weeklyGrowth, 1500);
+    const growth = analysis?.weeklyGrowth ?? 0;
+    const animatedGrowth = useAnimatedCounter(isLoading ? 0 : growth, 1500);
 
     if (isLoading || !analysis) {
         return (
@@ -422,10 +423,13 @@ export default function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
   useEffect(() => {
-    const productsQuery = query(collection(db, "products"));
-    const salesQuery = query(collection(db, "sales"));
+    if (!firestore) return;
+
+    const productsQuery = query(collection(firestore, "products"));
+    const salesQuery = query(collection(firestore, "sales"));
 
     let productLoaded = false;
     let salesLoaded = false;
@@ -457,7 +461,7 @@ export default function DashboardPage() {
       unsubSales();
       clearTimeout(timer);
     };
-  }, []);
+  }, [firestore]);
 
   const analytics = useMemo(() => {
     if (products.length === 0) {

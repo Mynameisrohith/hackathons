@@ -13,8 +13,9 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  Firestore,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useFirestore } from "@/firebase";
 import {
   Card,
   CardContent,
@@ -69,7 +70,7 @@ const productSchema = z.object({
   stock: z.coerce.number().int().min(0, "Stock cannot be negative."),
 });
 
-function AddProductForm({ setOpen }: { setOpen: (open: boolean) => void }) {
+function AddProductForm({ setOpen, firestore }: { setOpen: (open: boolean) => void; firestore: Firestore }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
@@ -79,7 +80,7 @@ function AddProductForm({ setOpen }: { setOpen: (open: boolean) => void }) {
   async function onSubmit(values: z.infer<typeof productSchema>) {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "products"), {
+      await addDoc(collection(firestore, "products"), {
         ...values,
         createdAt: serverTimestamp(),
       });
@@ -148,13 +149,13 @@ function AddProductForm({ setOpen }: { setOpen: (open: boolean) => void }) {
   );
 }
 
-function ProductRow({ product }: { product: Product }) {
+function ProductRow({ product, firestore }: { product: Product, firestore: Firestore }) {
   const [stock, setStock] = useState(product.stock);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleDelete = async () => {
     try {
-      await deleteDoc(doc(db, "products", product.id));
+      await deleteDoc(doc(firestore, "products", product.id));
       toast({
         title: "Success",
         description: `Product "${product.name}" deleted.`,
@@ -173,7 +174,7 @@ function ProductRow({ product }: { product: Product }) {
     if (stock === product.stock) return;
     setIsUpdating(true);
     try {
-        await updateDoc(doc(db, "products", product.id), { stock });
+        await updateDoc(doc(firestore, "products", product.id), { stock });
         toast({ title: "Success", description: "Stock updated." });
     } catch(e) {
         toast({ variant: "destructive", title: "Error", description: "Failed to update stock." });
@@ -234,9 +235,11 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
+  const firestore = useFirestore();
 
   useEffect(() => {
-    const q = query(collection(db, "products"));
+    if (!firestore) return;
+    const q = query(collection(firestore, "products"));
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
@@ -257,7 +260,7 @@ export default function ProductsPage() {
       }
     );
     return () => unsubscribe();
-  }, []);
+  }, [firestore]);
 
   return (
     <div className="grid gap-6">
@@ -277,7 +280,7 @@ export default function ProductsPage() {
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
               </DialogHeader>
-              <AddProductForm setOpen={setFormOpen} />
+              {firestore && <AddProductForm setOpen={setFormOpen} firestore={firestore} />}
             </DialogContent>
           </Dialog>
         </CardHeader>
@@ -305,7 +308,7 @@ export default function ProductsPage() {
                 ))
               ) : products.length > 0 ? (
                 products.map((product) => (
-                  <ProductRow key={product.id} product={product} />
+                  <ProductRow key={product.id} product={product} firestore={firestore!} />
                 ))
               ) : (
                 <TableRow>

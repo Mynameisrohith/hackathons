@@ -41,6 +41,7 @@ body {
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 231 48% 48%;
+    --glow-color-high: 0 100% 80%;
   }
   .dark {
     --background: 222 47% 11%;
@@ -75,6 +76,7 @@ body {
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 27%;
     --sidebar-ring: 231 48% 58%;
+    --glow-color-high: 0 84.2% 60.2%;
   }
 }
 
@@ -85,4 +87,14 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+    .card-glass {
+        @apply border border-white/20 bg-card/50 backdrop-blur-lg;
+    }
+    .animate-card-enter {
+        animation: card-enter 0.7s ease-out forwards;
+        animation-delay: var(--card-delay, 0s);
+    }
 }

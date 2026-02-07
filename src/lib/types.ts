@@ -16,3 +16,11 @@ export interface Sale {
   totalAmount: number;
   createdAt: Timestamp;
 }
+
+export interface ProductAnalysis extends Product {
+  salesVelocity: number;
+  daysUntilStockout: number;
+  riskLevel: 'High' | 'Medium' | 'Low' | 'N/A';
+  isOverstocked: boolean;
+  suggestedRestock: number;
+}

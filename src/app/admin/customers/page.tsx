@@ -4,8 +4,8 @@
 import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAdmin } from '@/hooks/useAdmin';
-import { collection, query } from 'firebase/firestore';
-import type { UserProfile } from '@/lib/types';
+import { collectionGroup, query } from 'firebase/firestore';
+import type { Order } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,37 +13,54 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User as UserIcon } from 'lucide-react';
 
-interface CustomerStat extends UserProfile {
+// This will be a derived interface, not extending UserProfile directly
+interface CustomerStat {
+    id: string; // userId
+    displayName: string;
+    email: string;
     totalOrders: number;
     totalSpent: number;
+    // photoURL is removed
 }
 
 const useCustomerData = () => {
     const firestore = useFirestore();
     const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-    const usersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'users')) : null, [firestore, isAdmin]);
-    const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'orders')) : null, [firestore, isAdmin]);
-
-    const { data: users, isLoading: loadingUsers } = useCollection<UserProfile>(usersQuery);
-    const { data: orders, isLoading: loadingOrders } = useCollection<any>(ordersQuery);
+    const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collectionGroup(firestore, 'orders')) : null, [firestore, isAdmin]);
+    const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
 
     const customerStats: CustomerStat[] | null = useMemo(() => {
-        if (!users || !orders) return null;
+        if (!orders) return null;
 
-        return users.map(user => {
-            const userOrders = orders.filter(order => order.userId === user.id);
-            const totalOrders = userOrders.length;
-            const totalSpent = userOrders.reduce((acc, order) => acc + order.totalAmount, 0);
-            return {
-                ...user,
-                totalOrders,
-                totalSpent,
-            };
-        }).sort((a,b) => b.totalSpent - a.totalSpent);
-    }, [users, orders]);
+        const customerMap = new Map<string, {
+            id: string;
+            displayName: string;
+            email: string;
+            totalOrders: number;
+            totalSpent: number;
+        }>();
+
+        orders.forEach(order => {
+            if (!customerMap.has(order.userId)) {
+                customerMap.set(order.userId, {
+                    id: order.userId,
+                    displayName: order.customerName,
+                    email: order.userEmail,
+                    totalOrders: 0,
+                    totalSpent: 0,
+                });
+            }
+
+            const customer = customerMap.get(order.userId)!;
+            customer.totalOrders += 1;
+            customer.totalSpent += order.totalAmount;
+        });
+
+        return Array.from(customerMap.values()).sort((a,b) => b.totalSpent - a.totalSpent);
+    }, [orders]);
     
-    const isLoading = isAdminLoading || loadingUsers || loadingOrders;
+    const isLoading = isAdminLoading || loadingOrders;
 
     return { customerStats, isLoading, isAdmin };
 };
@@ -97,7 +114,8 @@ export default function AdminCustomersPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={customer.photoURL || ''} alt={customer.displayName} />
+                                                {/* No photoURL available */}
+                                                <AvatarImage src={''} alt={customer.displayName} />
                                                 <AvatarFallback>
                                                     {customer.displayName ? customer.displayName.charAt(0).toUpperCase() : <UserIcon />}
                                                 </AvatarFallback>

@@ -80,43 +80,16 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------------------------
-    // Collection Group Rules
-    // ----------------------------------------------------------------------
-
-    /**
-     * @description Secures all reads and writes for the 'orders' collection group.
-     * This is the single source of truth for order security.
-     */
-    match /{path=**}/orders/{orderId} {
-      // RULE FOR `list` (COLLECTION GROUP QUERY):
-      // Must be compatible with collection group queries (no `get()` or `exists()`).
-      // Allows an administrator to list all orders across all users.
-      allow list: if request.auth != null && request.auth.token.email == 'drohith7080@gmail.com';
-
-      // RULE FOR `get` (SINGLE DOCUMENT READ):
-      // Can use `resource.data` because it operates on a single, known document.
-      // Allows an admin to get any order, or a user to get their own order.
-      allow get: if (request.auth != null && request.auth.token.email == 'drohith7080@gmail.com') || (request.auth.uid == resource.data.userId);
-
-      // WRITE RULES (Not subject to collection group query constraints):
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth.uid == resource.data.userId || (request.auth != null && request.auth.token.email == 'drohith7080@gmail.com');
-      allow delete: if request.auth != null && request.auth.token.email == 'drohith7080@gmail.com';
-    }
-
-
-    // ----------------------------------------------------------------------
     // Collection Rules
     // ----------------------------------------------------------------------
 
     /**
-     * @description Manages user profile documents and cart. Access is restricted to the document owner.
-     * NOTE: The `orders` subcollection is now secured entirely by the collection group rule above.
+     * @description Manages user profile documents, cart, and orders. Access is restricted to the document owner.
      * @path /users/{userId}
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if false; // Prevents listing all users
       allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
       allow update: if isOwner(userId) && resource != null && userIdIsImmutable();
       allow delete: if isOwner(userId) && resource != null;
@@ -127,6 +100,27 @@ service cloud.firestore {
        */
       match /cart/{cartItemId} {
         allow read, write: if isOwner(userId);
+      }
+      
+      /**
+       * @description User's orders. This rule block secures both direct access and collection group queries.
+       * @path /users/{userId}/orders/{orderId}
+       */
+      match /orders/{orderId} {
+        // RULE FOR `list` (COLLECTION GROUP QUERY):
+        // Must be compatible with collection group queries (no `get()` or `exists()`).
+        // Allows a hardcoded administrator to list all orders across all users for the admin panel.
+        allow list: if request.auth != null && request.auth.token.email == 'drohith7080@gmail.com';
+        
+        // RULE FOR `get` (SINGLE DOCUMENT READ):
+        // Allows an admin (role or hardcoded) OR the document owner to get a single order.
+        // This can use `isAdmin()` because `get` is not a collection group query.
+        allow get: if isAdmin() || (isOwner(userId) && resource.data.userId == userId);
+        
+        // WRITE RULES:
+        // Allow owner to create. Allow owner or admin to update/delete.
+        allow create: if isOwner(userId);
+        allow update, delete: if isAdmin() || isOwner(userId);
       }
     }
 

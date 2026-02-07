@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, updateDoc, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, addDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import type { CartItem, Product } from '@/lib/types';
 import { useDebouncedCallback } from 'use-debounce';
 

@@ -80,6 +80,20 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------------------------
+    // Collection Group Rules
+    // ----------------------------------------------------------------------
+
+    /**
+     * @description Secures collection group queries for 'orders'.
+     * This rule allows an administrator to list all orders across all users.
+     * It's placed at the root level and does not use get() or exists() to remain compatible.
+     */
+    match /{path=**}/orders/{orderId} {
+      allow list: if request.auth != null && request.auth.token.email == 'drohith7080@gmail.com';
+    }
+
+
+    // ----------------------------------------------------------------------
     // Collection Rules
     // ----------------------------------------------------------------------
 
@@ -103,14 +117,15 @@ service cloud.firestore {
       }
 
       /**
-       * @description User's orders. Can be read by the owner or an admin. Can only be updated by an admin.
-       * @path /users/{userId}/orders/{orderId}
+       * @description Rules for direct access to a user's orders subcollection.
        */
       match /orders/{orderId} {
-        // This rule allows an admin to perform a collection group query on 'orders'.
-        // It's also evaluated for single-document reads.
-        // Crucially, it does NOT use get() or exists(), making it compatible with collection group queries.
-        allow read: if isOwner(userId) || (request.auth != null && request.auth.token.email == 'drohith7080@gmail.com');
+        // A user can get their own order. An admin can get any order.
+        allow get: if isOwner(userId) || isAdmin();
+        
+        // A user can list their own orders. An admin can list any single user's orders.
+        // This rule does NOT cover collection group queries.
+        allow list: if isOwner(userId) || isAdmin();
 
         // Write operations are not part of collection group queries, so they CAN use the `isAdmin()` helper.
         allow create: if isOwner(userId);

@@ -130,6 +130,8 @@ const BusinessHealthIndicator = ({ score, isLoading }: { score: number, isLoadin
 
 // Market Trend Overview Component
 const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysis, isLoading: boolean }) => {
+    const animatedGrowth = useAnimatedCounter(isLoading || !analysis ? 0 : analysis.weeklyGrowth, 1500);
+
     if (isLoading || !analysis) {
         return (
             <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 flex flex-col justify-center animate-card-enter" style={{ animationDelay: '0.1s' }}>
@@ -146,7 +148,6 @@ const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysi
     }
 
     const { weeklyGrowth, volatility, businessImpactLabel } = analysis;
-    const animatedGrowth = useAnimatedCounter(weeklyGrowth, 1500);
     const isPositive = weeklyGrowth >= 0;
 
     const volatilityStyles = {

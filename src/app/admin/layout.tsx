@@ -46,6 +46,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/context/LanguageContext";
+import { toast } from "@/hooks/use-toast";
 
 const menuItems = [
   { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutGrid },

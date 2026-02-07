@@ -22,6 +22,7 @@ export const translations = {
     adminPanel: 'Admin Panel',
     copyright: '© {year} RetailSpark. All rights reserved.',
     tagline: 'Your Modern AI-Powered eCommerce Marketplace.',
+    myOrders: 'My Orders',
 
     // Home Page
     heroTitle: 'Discover Your Next Favorite Thing',
@@ -132,7 +133,6 @@ export const translations = {
     // Order Success
     orderSuccessTitle: 'Thank You for Your Order!',
     orderSuccessDesc: 'We have received your order and are getting it ready for you. A confirmation has been sent to your email.',
-    orderId: 'Order ID',
 
     // Login Page
     adminSignIn: 'Sign In',
@@ -148,6 +148,7 @@ export const translations = {
     logout: 'Log out',
     saveChanges: 'Save Changes',
     saving: 'Saving...',
+    orders: 'Orders',
 
     // Admin Analytics
     welcomeAdmin: 'Welcome to your Admin Dashboard!',
@@ -242,15 +243,41 @@ export const translations = {
     // Admin Sales
     recordNewSale: 'Record a New Sale',
     recordSaleDesc: 'Select a product and quantity to record a sale.',
-    // quantity: 'Quantity', - Already defined
-    // total: 'Total: ${total}', - Already defined
+    qty: 'Qty',
     recordSale: 'Record Sale',
     recording: 'Recording...',
     salesHistory: 'Sales History',
     salesHistoryDesc: 'A log of all past sales transactions.',
-    qty: 'Qty',
     date: 'Date',
     noSales: 'No sales recorded yet.',
+
+    // Admin Orders
+    manageOrdersDesc: 'View and manage all customer orders.',
+    noOrdersFound: 'No orders found with the current filter.',
+
+    // My Orders
+    myOrdersDesc: 'Track your recent orders and view your order history.',
+    placedOn: 'Placed on {date}',
+    orderId: 'Order ID',
+    orderCancelled: 'Order Cancelled',
+    pending: 'Pending',
+    packed: 'Packed',
+    outfordelivery: 'Out for Delivery',
+    delivered: 'Delivered',
+    startShopping: 'Start Shopping',
+    noOrdersDesc: 'You haven\'t placed any orders yet. Let\'s change that!',
+    cancelOrder: 'Cancel Order',
+    confirmCancel: 'Confirm Cancellation',
+    confirmCancelDesc: 'Are you sure you want to cancel this order? This action cannot be undone.',
+    goBack: 'Go Back',
+    yesCancel: 'Yes, Cancel Order',
+    cancelError: 'Failed to cancel the order. Please try again.',
+    shareYourFeedback: 'Share Your Feedback',
+    yourRating: 'Your Rating',
+    feedbackPlaceholder: 'Tell us about your experience...',
+    submitFeedback: 'Submit Feedback',
+    feedbackSubmitted: 'Thank you for your feedback!',
+    feedbackError: 'Failed to submit feedback.',
 
     // NEW KEYS FOR EXPANSION
     // New Pages
@@ -317,6 +344,7 @@ export const translations = {
     adminPanel: 'ನಿರ್ವಾಹಕ ಫಲಕ',
     copyright: '© {year} ರಿಟೇಲ್‌ಸ್ಪಾರ್ಕ್. ಎಲ್ಲ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ.',
     tagline: 'ನಿಮ್ಮ ಆಧುನಿಕ AI-ಚಾಲಿತ ಇ-ಕಾಮರ್ಸ್ ಮಾರುಕಟ್ಟೆ.',
+    myOrders: 'ನನ್ನ ಆರ್ಡರ್‌ಗಳು',
 
     // Home Page
     heroTitle: 'ನಿಮ್ಮ ಮುಂದಿನ ನೆಚ್ಚಿನ ವಸ್ತುವನ್ನು ಅನ್ವೇಷಿಸಿ',
@@ -427,7 +455,6 @@ export const translations = {
     // Order Success
     orderSuccessTitle: 'ನಿಮ್ಮ ಆರ್ಡರ್‌ಗೆ ಧನ್ಯವಾದಗಳು!',
     orderSuccessDesc: 'ನಿಮ್ಮ ಆರ್ಡರ್ ನಮಗೆ ತಲುಪಿದೆ ಮತ್ತು ನಾವು ಅದನ್ನು ಸಿದ್ಧಪಡಿಸುತ್ತಿದ್ದೇವೆ. ನಿಮ್ಮ ಇಮೇಲ್‌ಗೆ ದೃಢೀಕರಣವನ್ನು ಕಳುಹಿಸಲಾಗಿದೆ.',
-    orderId: 'ಆರ್ಡರ್ ಐಡಿ',
 
     // Login Page
     adminSignIn: 'ಸೈನ್ ಇನ್ ಮಾಡಿ',
@@ -443,6 +470,7 @@ export const translations = {
     logout: 'ಲಾಗ್ ಔಟ್',
     saveChanges: 'ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ',
     saving: 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...',
+    orders: 'ಆರ್ಡರ್‌ಗಳು',
 
     // Admin Analytics
     welcomeAdmin: 'ನಿಮ್ಮ ನಿರ್ವಾಹಕ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಸುಸ್ವಾಗತ!',
@@ -543,6 +571,35 @@ export const translations = {
     salesHistoryDesc: 'ಹಿಂದಿನ ಎಲ್ಲಾ ಮಾರಾಟ ವಹಿವಾಟುಗಳ ದಾಖಲೆ.',
     date: 'ದಿನಾಂಕ',
     noSales: 'ಇನ್ನೂ ಯಾವುದೇ ಮಾರಾಟ ದಾಖಲಾಗಿಲ್ಲ.',
+
+    // Admin Orders
+    manageOrdersDesc: 'ಎಲ್ಲಾ ಗ್ರಾಹಕರ ಆದೇಶಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ನಿರ್ವಹಿಸಿ.',
+    noOrdersFound: 'ಪ್ರಸ್ತುತ ಫಿಲ್ಟರ್‌ನೊಂದಿಗೆ ಯಾವುದೇ ಆದೇಶಗಳು ಕಂಡುಬಂದಿಲ್ಲ.',
+
+    // My Orders
+    myOrdersDesc: 'ನಿಮ್ಮ ಇತ್ತೀಚಿನ ಆರ್ಡರ್‌ಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ ಮತ್ತು ನಿಮ್ಮ ಆರ್ಡರ್ ಇತಿಹಾಸವನ್ನು ವೀಕ್ಷಿಸಿ.',
+    placedOn: '{date} ರಂದು ಇರಿಸಲಾಗಿದೆ',
+    orderId: 'ಆರ್ಡರ್ ಐಡಿ',
+    orderCancelled: 'ಆರ್ಡರ್ ರದ್ದುಗೊಂಡಿದೆ',
+    pending: 'ಬಾಕಿ ಇದೆ',
+    packed: 'ಪ್ಯಾಕ್ ಮಾಡಲಾಗಿದೆ',
+    outfordelivery: 'ವಿತರಣೆಗಾಗಿ ಹೊರಟಿದೆ',
+    delivered: 'ವಿತರಿಸಲಾಗಿದೆ',
+    startShopping: 'ಖರೀದಿ ಪ್ರಾರಂಭಿಸಿ',
+    noOrdersDesc: 'ನೀವು ಇನ್ನೂ ಯಾವುದೇ ಆರ್ಡರ್‌ಗಳನ್ನು ಮಾಡಿಲ್ಲ. ಅದನ್ನು ಬದಲಾಯಿಸೋಣ!',
+    cancelOrder: 'ಆರ್ಡರ್ ರದ್ದುಮಾಡಿ',
+    confirmCancel: 'ರದ್ದತಿಯನ್ನು ಖಚಿತಪಡಿಸಿ',
+    confirmCancelDesc: 'ಈ ಆರ್ಡರ್ ಅನ್ನು ರದ್ದುಮಾಡಲು ನೀವು ಖಚಿತವಾಗಿರುವಿರಾ? ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತಿರುಗಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+    goBack: 'ಹಿಂದಕ್ಕೆ ಹೋಗಿ',
+    yesCancel: 'ಹೌದು, ಆರ್ಡರ್ ರದ್ದುಮಾಡಿ',
+    cancelError: 'ಆರ್ಡರ್ ರದ್ದುಮಾಡಲು ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+    shareYourFeedback: 'ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ',
+    yourRating: 'ನಿಮ್ಮ ರೇಟಿಂಗ್',
+    feedbackPlaceholder: 'ನಿಮ್ಮ ಅನುಭವದ ಬಗ್ಗೆ ನಮಗೆ ತಿಳಿಸಿ...',
+    submitFeedback: 'ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಿ',
+    feedbackSubmitted: 'ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು!',
+    feedbackError: 'ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಲು ವಿಫಲವಾಗಿದೆ.',
+
 
      // NEW KEYS FOR EXPANSION
     // New Pages

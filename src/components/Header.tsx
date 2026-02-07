@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { RetailSparkIcon } from './icons';
 import { SearchBar } from './SearchBar';
 import { Button } from './ui/button';
-import { ShoppingCart, User, ChevronDown, Menu } from 'lucide-react';
+import { ShoppingCart, User, ChevronDown, Menu, Package } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { Badge } from './ui/badge';
@@ -96,11 +96,20 @@ function UserButton() {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link href="/admin/analytics">
-                    {t('adminPanel')}
-                </Link>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                    <Link href="/my-orders">
+                        <Package className="mr-2 h-4 w-4" />
+                        <span>{t('myOrders')}</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/admin/analytics">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>{t('adminPanel')}</span>
+                    </Link>
+                </DropdownMenuItem>
+            </DropdownMenuGroup>
         </DropdownMenuContent>
     </DropdownMenu>
   );

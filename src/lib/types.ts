@@ -78,6 +78,7 @@ export interface Store {
 export interface Order {
   id: string; // Document ID from Firestore
   userId: string;
+  userEmail: string;
   items: Omit<CartItem, 'id' | 'createdAt' | 'stock'>[];
   totalAmount: number;
   customerName: string;
@@ -89,14 +90,19 @@ export interface Order {
   longitude: number;
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
-  deliveryStatus: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  orderStatus: 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   cancellationReason?: string;
   createdAt: Timestamp;
+  updatedAt: Timestamp;
   dealerName: string;
   dealerAddress: string;
   dealerLat: number;
   dealerLng: number;
   dealerPlaceId?: string;
+  deliveryBoyName?: string;
+  deliveryBoyPhone?: string;
+  feedback?: string;
+  rating?: number;
 }
 
 
@@ -176,4 +182,11 @@ export interface Dealer {
     distance: number;
     rating?: number;
     userRatingsTotal?: number;
+}
+
+
+export type EmailPayload = {
+    emailType: 'order-confirmation' | 'status-update' | 'feedback-request' | 'cancellation-notification' | 'new-order-admin';
+    order: Order;
+    user: UserProfile;
 }

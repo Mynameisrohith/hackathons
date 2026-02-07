@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart } from '@/context/CartContext';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useDoc } from '@/firebase';
 import { writeBatch, doc, serverTimestamp, collection } from 'firebase/firestore';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Loader2, ArrowLeft, Check } from 'lucide-react';
-import type { Order, CartItem, Dealer } from '@/lib/types';
+import type { Order, CartItem, Dealer, UserProfile } from '@/lib/types';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import { AddressAutocomplete, GeocodedAddress } from '@/components/AddressAutocomplete';
 import { DealerDiscovery } from '@/components/DealerDiscovery';
+import { sendEmail } from '@/lib/email-client';
 
 const addressSchema = z.object({
   customerName: z.string().min(2, 'Name is required'),
@@ -44,6 +45,10 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [addressDetails, setAddressDetails] = useState<GeocodedAddress | null>(null);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
+  
+  const userDocRef = useMemo(() => user ? doc(firestore!, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
@@ -72,7 +77,7 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!user || !firestore || !items || !addressDetails || !selectedDealer) return;
+    if (!user || !firestore || !items || !addressDetails || !selectedDealer || !userProfile) return;
     setIsProcessing(true);
 
     const addressData = form.getValues();
@@ -84,8 +89,12 @@ export default function CheckoutPage() {
       imageUrl: item.imageUrl,
     }));
 
-    const newOrder: Omit<Order, 'id'> = {
+    const orderRef = doc(collection(firestore, 'users', user.uid, 'orders'));
+
+    const newOrder: Order = {
+      id: orderRef.id,
       userId: user.uid,
+      userEmail: user.email || '',
       items: orderItems,
       totalAmount: cartTotal,
       ...addressData,
@@ -93,7 +102,9 @@ export default function CheckoutPage() {
       longitude: addressDetails.lng,
       paymentMethod,
       paymentStatus: 'Pending',
-      createdAt: serverTimestamp() as any,
+      orderStatus: 'Pending',
+      createdAt: new Date() as any, // Will be replaced by server timestamp
+      updatedAt: new Date() as any, // Will be replaced by server timestamp
       dealerName: selectedDealer.name,
       dealerAddress: selectedDealer.address,
       dealerLat: selectedDealer.latitude,
@@ -103,8 +114,7 @@ export default function CheckoutPage() {
 
     try {
       const batch = writeBatch(firestore);
-      const orderRef = doc(collection(firestore, 'users', user.uid, 'orders'));
-      batch.set(orderRef, newOrder);
+      batch.set(orderRef, { ...newOrder, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
 
       for (const item of items) {
         const cartItemRef = doc(firestore, 'users', user.uid, 'cart', item.id);
@@ -114,8 +124,11 @@ export default function CheckoutPage() {
       await batch.commit();
       
       clearCart();
+      
+      // Send confirmation emails
+      await sendEmail({ emailType: 'order-confirmation', order: newOrder, user: userProfile });
 
-      router.push(`/order-success?orderId=${orderRef.id}`);
+      router.push(`/my-orders?orderId=${orderRef.id}&success=true`);
 
     } catch (error) {
       console.error('Error placing order:', error);

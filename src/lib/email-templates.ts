@@ -72,11 +72,12 @@ export const newOrderAdminNotificationTemplate = (order: Order, user: UserProfil
 
 export const statusUpdateTemplate = (order: Order, user: UserProfile): string => `
 <div ${containerStyles}>
-    <div ${headerStyles}><h1>Your Order is ${order.deliveryStatus}!</h1></div>
+    <div ${headerStyles}><h1>Your Order is ${order.orderStatus}!</h1></div>
     <div ${contentStyles}>
         <h2>Hi ${user.displayName || 'Customer'},</h2>
-        <p>Good news! The status of your order #${order.id} has been updated to <strong>${order.deliveryStatus}</strong>.</p>
-        ${order.deliveryStatus === 'Shipped' ? '<p>Your items are on their way and should arrive soon. You can view your order details in your account.</p>' : ''}
+        <p>Good news! The status of your order #${order.id} has been updated to <strong>${order.orderStatus}</strong>.</p>
+        ${order.orderStatus === 'Shipped' ? '<p>Your items are on their way and should arrive soon. You can view your order details in your account.</p>' : ''}
+        ${order.orderStatus === 'Out for Delivery' && order.deliveryBoyName ? `<p>Your delivery executive, ${order.deliveryBoyName}, is on the way. You can contact them at ${order.deliveryBoyPhone || 'N/A'}.</p>` : ''}
         <div style="text-align: center; margin: 20px 0;">
             <a href="#" ${buttonStyles}>View Order</a>
         </div>

@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, LayoutDashboard, ShoppingCart, MessageSquareQuote, LogOut, User as UserIcon, Shield, Home } from "lucide-react";
+import { Boxes, LayoutDashboard, ShoppingCart, MessageSquareQuote, LogOut, User as UserIcon, Shield, Home, Package } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -36,6 +36,7 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const menuItems = [
   { href: "/admin/analytics", labelKey: "analytics", icon: LayoutDashboard },
+  { href: "/admin/orders", labelKey: "orders", icon: Package },
   { href: "/admin/products", labelKey: "products", icon: Boxes },
   { href: "/admin/sales", labelKey: "sales", icon: ShoppingCart },
   { href: "/admin/reviews", labelKey: "reviews", icon: MessageSquareQuote },
@@ -74,6 +75,12 @@ function UserNav() {
                     <Link href="/admin/profile">
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>{t('profile')}</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/my-orders">
+                        <Package className="mr-2 h-4 w-4" />
+                        <span>{t('myOrders')}</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -131,7 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (pathname === '/admin/profile') {
         return t('profile');
     }
-    const currentItem = allItems.find(item => item.href === pathname);
+    const currentItem = allItems.find(item => pathname.startsWith(item.href));
     return currentItem ? t(currentItem.labelKey) : "Admin";
   }
 
@@ -175,7 +182,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={pathname.startsWith(item.href)}
                     tooltip={{ children: t(item.labelKey), side: "right", align:"center" }}
                   >
                     <Link href={item.href}>

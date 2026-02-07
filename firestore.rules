@@ -99,14 +99,26 @@ service cloud.firestore {
       }
 
       /**
-       * @description User's orders. Immutable once created.
+       * @description User's orders. Can be read by the owner or an admin. Can only be updated by an admin.
        * @path /users/{userId}/orders/{orderId}
        */
       match /orders/{orderId} {
-        allow read, create: if isOwner(userId);
-        allow update, delete: if false;
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin(); // Allows user to list their own orders and admin to list any user's orders
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin(); // User can cancel/give feedback, admin can change status.
+        allow delete: if isAdmin();
       }
     }
+    
+    /**
+     * @description This rule allows an admin to perform a collection group query on 'orders'.
+     * @path /{path=**}/orders/{orderId}
+     */
+    match /{path=**}/orders/{orderId} {
+        allow read: if isAdmin();
+    }
+
 
     /**
      * @description Manages product categories. Publicly readable, but only writable by admins.

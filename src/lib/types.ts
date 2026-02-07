@@ -17,10 +17,23 @@ export interface Sale {
   createdAt: Timestamp;
 }
 
+export interface ProductTrendInfo {
+    momentumScore: number;
+    trend: 'Rising' | 'Declining' | 'Stable';
+}
+
 export interface ProductAnalysis extends Product {
   salesVelocity: number;
   daysUntilStockout: number;
   riskLevel: 'High' | 'Medium' | 'Low' | 'N/A';
   isOverstocked: boolean;
   suggestedRestock: number;
+  trendInfo: ProductTrendInfo;
+}
+
+export interface MarketAnalysis {
+    weeklyGrowth: number;
+    volatility: 'Stable' | 'Moderate' | 'Volatile';
+    volatilityScore: number;
+    businessImpactLabel: string;
 }

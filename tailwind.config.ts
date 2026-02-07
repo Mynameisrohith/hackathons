@@ -96,12 +96,17 @@ export default {
             '0%, 100%': { boxShadow: '0 0 5px hsl(var(--glow-color-high)), 0 0 10px hsl(var(--glow-color-high))' },
             '50%': { boxShadow: '0 0 15px hsl(var(--glow-color-high)), 0 0 25px hsl(var(--glow-color-high))' },
         },
+        'subtle-pulse': {
+          '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'scale(1.02)', opacity: '0.9' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'card-enter': 'card-enter 0.7s ease-out forwards',
         glow: 'glow 2.5s ease-in-out infinite',
+        'subtle-pulse': 'subtle-pulse 2.5s ease-in-out infinite',
       },
     },
   },

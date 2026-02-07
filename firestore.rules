@@ -47,15 +47,26 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the requesting user has administrative privileges.
-     * Admin status is granted by the existence of a document for the user
-     * in the /roles_admin collection, or by matching a hardcoded email.
+     * Checks if the user is an admin based on the existence of a document in the 'roles_admin' collection.
+     */
+    function isRoleAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+    
+    /**
+     * Checks if the user is an admin based on a hardcoded email address.
+     * IMPORTANT: This provides a fallback super-admin. 
+     * For production, it's recommended to manage all admins via the /roles_admin collection.
+     */
+    function isHardcodedAdmin() {
+      return request.auth.token.email == 'drohith7080@gmail.com';
+    }
+
+    /**
+     * Checks if the requesting user has administrative privileges by combining role-based and hardcoded checks.
      */
     function isAdmin() {
-      return isSignedIn() && (
-        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
-        request.auth.token.email == 'drohith7080@gmail.com'
-      );
+      return isSignedIn() && (isRoleAdmin() || isHardcodedAdmin());
     }
 
     /**
@@ -116,7 +127,7 @@ service cloud.firestore {
      * @path /{path=**}/orders/{orderId}
      */
     match /{path=**}/orders/{orderId} {
-        allow read: if request.auth != null && (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || request.auth.token.email == 'drohith7080@gmail.com');
+        allow read: if isAdmin();
     }
 
 

@@ -35,6 +35,55 @@
         "email",
         "displayName"
       ]
+    },
+    "Category": {
+        "title": "Product Category",
+        "type": "object",
+        "description": "Represents a category for products.",
+        "properties": {
+          "name": { "type": "string", "description": "Name of the category." },
+          "description": { "type": "string", "description": "Description of the category." },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["name"]
+    },
+    "Product": {
+        "title": "Product",
+        "type": "object",
+        "description": "Represents a product in the store.",
+        "properties": {
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "stock": { "type": "number" },
+          "description": { "type": "string" },
+          "imageUrl": { "type": "string", "format": "uri" },
+          "categoryId": { "type": "string" },
+          "categoryName": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["name", "price", "stock", "categoryId", "categoryName", "imageUrl", "description"]
+    },
+    "Sale": {
+        "title": "Sale",
+        "type": "object",
+        "description": "Represents a sales transaction.",
+        "properties": {
+          "productId": { "type": "string" },
+          "productName": { "type": "string" },
+          "quantity": { "type": "number" },
+          "totalAmount": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["productId", "productName", "quantity", "totalAmount"]
+    },
+    "Role": {
+        "title": "Role",
+        "type": "object",
+        "description": "Represents a user role.",
+        "properties": {
+            "role": { "type": "string", "enum": ["admin"] }
+        },
+        "required": ["role"]
     }
   },
   "auth": {
@@ -63,13 +112,27 @@
         }
       },
       {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": { "$ref": "#/backend/entities/Category" },
+          "description": "Stores product categories. Publicly readable, but only manageable by administrators.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
         "path": "/products/{productId}",
         "definition": {
           "entityName": "Product",
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Stores product information (name, price, stock, createdAt).",
+          "description": "Stores product information. Publicly readable, but only manageable by administrators.",
           "params": [
             {
               "name": "productId",
@@ -85,7 +148,7 @@
           "schema": {
             "$ref": "#/backend/entities/Sale"
           },
-          "description": "Stores sales transaction data (productId, productName, quantity, totalAmount, createdAt).",
+          "description": "Stores sales transaction data. Any authenticated user can create a sale, but only admins can modify or delete transactions.",
           "params": [
             {
               "name": "saleId",
@@ -111,6 +174,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support a retail management application with a focus on products, sales, and analytics. User data is stored under the `/users/{userId}` path to maintain data isolation and ownership. Product and sales data are stored in top-level collections, which simplifies querying and aggregation for analytics, avoiding the need for complex joins or subcollection queries. To support Authorization Independence, especially for role management (though not immediately used but ready for future expansion), a dedicated `/roles_admin/{userId}` collection is used to denote administrator roles. This approach enhances security rule simplicity and debuggability by eliminating the need for `get()` calls within the rules and facilitating atomic operations.  The chosen structure enables straightforward `list` operations for products and sales data, making the application's data accessible and manageable without compromising security. While the current specification doesn't include collaborative data, the structure can easily accommodate membership-based authorization by adding relevant fields to the product or sale documents if needed in the future."
+    "reasoning": "The Firestore data structure supports a retail management application with products, categories, sales, and analytics. User data is isolated under `/users/{userId}`. Products, categories, and sales are in top-level collections for easy querying. A dedicated `/roles_admin/{userId}` collection manages administrator roles, enhancing security and simplifying rules by avoiding `get()` calls. This structure facilitates public reads for storefront data while restricting writes to authorized users, ensuring a secure and scalable architecture."
   }
 }

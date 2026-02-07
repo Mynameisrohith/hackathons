@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, LayoutDashboard, ShoppingCart, MessageSquareQuote, LogOut, User as UserIcon } from "lucide-react";
+import { Boxes, LayoutDashboard, ShoppingCart, MessageSquareQuote, LogOut, User as UserIcon, Shield } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -77,6 +78,7 @@ function UserNav() {
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const router = useRouter();
 
   useEffect(() => {
@@ -86,7 +88,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, [user, isUserLoading, router]);
 
   const getPageTitle = () => {
-    return menuItems.find(item => item.href === pathname)?.label || "Dashboard";
+    const allItems = [...menuItems];
+    if (isAdmin) {
+      allItems.push({ href: "/categories", label: "Categories", icon: Shield });
+    }
+    return allItems.find(item => item.href === pathname)?.label || "Dashboard";
   }
 
   if (isUserLoading || !user) {
@@ -127,6 +133,20 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {!isAdminLoading && isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/categories"}
+                    tooltip={{ children: "Categories", side: "right", align:"center" }}
+                  >
+                    <Link href="/categories">
+                      <Shield />
+                      <span>Categories</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>

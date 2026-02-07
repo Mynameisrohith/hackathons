@@ -1,10 +1,21 @@
 import type { Timestamp } from "firebase/firestore";
 
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: Timestamp;
+}
+
 export interface Product {
   id: string;
   name: string;
   price: number;
   stock: number;
+  description: string;
+  imageUrl: string;
+  categoryId: string;
+  categoryName: string;
   createdAt: Timestamp;
 }
 

@@ -9,6 +9,7 @@
  *
  * Data Structure:
  * - /users/{userId}: Contains private user profile information, strictly isolated to the owning user.
+ * - /categories/{categoryId}: A top-level collection for product categories, publicly readable but admin-only for writes.
  * - /products/{productId}: A top-level collection of products, publicly readable but only manageable by administrators.
  * - /sales/{saleId}: A top-level collection of sales transactions, publicly readable. Any authenticated user can create a sale, but only admins can modify or delete transactions.
  * - /roles_admin/{userId}: A collection where the existence of a document signifies that the user is an administrator. This provides a centralized and performant way to check for admin privileges.
@@ -76,11 +77,6 @@ service cloud.firestore {
     /**
      * @description Manages user profile documents. Access is restricted to the document owner.
      * @path /users/{userId}
-     * @allow (get) An authenticated user reads their own profile. auth.uid == userId.
-     * @allow (create) An authenticated user creates their own profile for the first time. auth.uid == userId.
-     * @deny (list) A user attempts to list all user profiles in the collection.
-     * @deny (update) A user tries to modify another user's profile. auth.uid != userId.
-     * @principle Restricts access to a user's own data tree and enforces self-creation.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -91,13 +87,20 @@ service cloud.firestore {
     }
 
     /**
+     * @description Manages product categories. Publicly readable, but only writable by admins.
+     * @path /categories/{categoryId}
+     */
+    match /categories/{categoryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
      * @description Manages product listings. Publicly readable, but only writable by admins.
      * @path /products/{productId}
-     * @allow (list) Any user, including unauthenticated ones, can list all products.
-     * @allow (create) An administrator creates a new product document.
-     * @deny (create) A regular authenticated user attempts to create a product.
-     * @deny (delete) A regular user attempts to delete a product.
-     * @principle Implements public read access with role-based write restrictions.
      */
     match /products/{productId} {
       allow get: if true;
@@ -111,11 +114,6 @@ service cloud.firestore {
      * @description Manages sales transaction records. Publicly readable for analytics.
      * Any signed-in user can create a sale, but only admins can modify or delete records.
      * @path /sales/{saleId}
-     * @allow (list) Any user, including unauthenticated ones, can list sales for analytics.
-     * @allow (create) An authenticated user creates a new sale record (e.g., makes a purchase).
-     * @deny (update) A regular user tries to modify a sale after it has been created.
-     * @deny (delete) A regular user tries to delete a sale transaction.
-     * @principle Supports public read and user-driven creation, with admin-only modification for data integrity.
      */
     match /sales/{saleId} {
       allow get: if true;
@@ -128,11 +126,6 @@ service cloud.firestore {
     /**
      * @description Manages administrator roles. Only other admins can view or modify the list of admins.
      * @path /roles_admin/{userId}
-     * @allow (create) An existing admin adds a new user to the admin roles.
-     * @allow (delete) An existing admin removes another user's admin privileges.
-     * @deny (get) A non-admin user tries to check if another user is an admin.
-     * @deny (list) A non-admin user tries to get a list of all administrators.
-     * @principle Secures role management by restricting access to users who already hold the role.
      */
     match /roles_admin/{userId} {
       allow get: if isAdmin();

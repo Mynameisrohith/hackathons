@@ -123,9 +123,9 @@ service cloud.firestore {
         // A user can get their own order. An admin can get any order.
         allow get: if isOwner(userId) || isAdmin();
         
-        // A user can list their own orders. An admin can list any single user's orders.
-        // This rule does NOT cover collection group queries.
-        allow list: if isOwner(userId) || isAdmin();
+        // A user can list their own orders. An admin can list any single user's orders via this path.
+        // This rule is made compatible with collection group queries by avoiding `exists()` and `get()`.
+        allow list: if isOwner(userId) || (request.auth != null && request.auth.token.email == 'drohith7080@gmail.com');
 
         // Write operations are not part of collection group queries, so they CAN use the `isAdmin()` helper.
         allow create: if isOwner(userId);

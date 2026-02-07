@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -31,17 +30,24 @@ const statusColors: { [key in Order['orderStatus']]: string } = {
   Cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
 };
 
-function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
+function OrderRow({ order }: { order: Order }) {
     const { t } = useLanguage();
     const firestore = useFirestore();
     const [isUpdating, setIsUpdating] = useState(false);
     const [boyName, setBoyName] = useState(order.deliveryBoyName || '');
     const [boyPhone, setBoyPhone] = useState(order.deliveryBoyPhone || '');
     
-    const user = useMemo(() => users.find(u => u.id === order.userId), [users, order.userId]);
+    const userProfile: UserProfile | null = useMemo(() => {
+        if (!order) return null;
+        return {
+            id: order.userId,
+            email: order.userEmail,
+            displayName: order.customerName,
+        };
+    }, [order]);
 
     const handleStatusChange = async (newStatus: Order['orderStatus']) => {
-        if (!user) {
+        if (!userProfile) {
             toast({ variant: 'destructive', title: 'Error', description: 'Associated user not found.' });
             return;
         }
@@ -57,9 +63,9 @@ function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
             const emailOrder = { ...order, ...updatedOrderData, updatedAt: new Date() as any };
 
             if(newStatus === 'Delivered') {
-                await sendEmail({ emailType: 'feedback-request', order: emailOrder, user });
+                await sendEmail({ emailType: 'feedback-request', order: emailOrder, user: userProfile });
             } else {
-                await sendEmail({ emailType: 'status-update', order: emailOrder, user });
+                await sendEmail({ emailType: 'status-update', order: emailOrder, user: userProfile });
             }
 
             toast({ title: 'Success', description: 'Order status updated.' });
@@ -71,7 +77,7 @@ function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
     };
 
     const handleAssignDeliveryBoy = async () => {
-        if (!user) {
+        if (!userProfile) {
             toast({ variant: 'destructive', title: 'Error', description: 'Associated user not found.' });
             return;
         }
@@ -84,7 +90,7 @@ function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
             const emailOrder = { ...order, ...updatedOrderData, updatedAt: new Date() as any };
 
             if (order.orderStatus === 'Out for Delivery') {
-                 await sendEmail({ emailType: 'status-update', order: emailOrder, user });
+                 await sendEmail({ emailType: 'status-update', order: emailOrder, user: userProfile });
             }
             toast({ title: 'Success', description: 'Delivery boy assigned.' });
         } catch (e) {
@@ -190,12 +196,9 @@ export default function AdminOrdersPage() {
         return q;
     }, [firestore, statusFilter, isAdmin]);
 
-    const usersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'users')) : null, [firestore, isAdmin]);
-    
     const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
-    const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
 
-    const isLoading = isAdminLoading || isLoadingOrders || isLoadingUsers;
+    const isLoading = isAdminLoading || isLoadingOrders;
 
     return (
         <Card className="card-glass">
@@ -239,7 +242,7 @@ export default function AdminOrdersPage() {
                                 </TableRow>
                             ))
                         ) : orders && orders.length > 0 ? (
-                            orders.map(order => <OrderRow key={order.id} order={order} users={users || []} />)
+                            orders.map(order => <OrderRow key={order.id} order={order} />)
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={7} className="h-24 text-center">

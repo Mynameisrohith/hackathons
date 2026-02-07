@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { doc, updateDoc } from 'firebase/firestore';
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useAdmin } from '@/hooks/useAdmin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +16,8 @@ import { toast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/lib/types';
-import { RetailSparkIcon } from '@/components/icons';
 import { User as UserIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }),
@@ -25,6 +26,7 @@ const profileSchema = z.object({
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const userDocRef = useMemoFirebase(() => {
@@ -64,7 +66,9 @@ export default function ProfilePage() {
     }
   };
 
-  if (isUserLoading || isProfileLoading) {
+  const isLoading = isUserLoading || isProfileLoading || isAdminLoading;
+
+  if (isLoading) {
     return (
       <div className="flex justify-center">
         <Card className="w-full max-w-2xl">
@@ -104,7 +108,10 @@ export default function ProfilePage() {
                 </AvatarFallback>
             </Avatar>
           <CardTitle className="text-3xl">{userProfile.displayName}</CardTitle>
-          <CardDescription>{userProfile.email}</CardDescription>
+          <CardDescription className='flex flex-col items-center gap-2'>
+            <span>{userProfile.email}</span>
+            <Badge variant={isAdmin ? "destructive" : "secondary"}>{isAdmin ? "Admin" : "User"}</Badge>
+          </CardDescription>
         </CardHeader>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>

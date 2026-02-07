@@ -51,6 +51,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import type { Product } from "@/lib/types";
 import { PlusCircle, Trash2, Save } from "lucide-react";
@@ -255,22 +262,24 @@ export default function ProductsPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Add New Product</CardTitle>
-          <CardDescription>
-            Expand the form to add a new item to your inventory.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AddProductForm setOpen={setFormOpen} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Product List</CardTitle>
-          <CardDescription>
-            An overview of all products in your inventory.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Product List</CardTitle>
+            <CardDescription>
+              An overview of all products in your inventory.
+            </CardDescription>
+          </div>
+          <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
+            <DialogTrigger asChild>
+              <Button><PlusCircle className="mr-2"/>Add Product</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Product</DialogTitle>
+              </DialogHeader>
+              <AddProductForm setOpen={setFormOpen} />
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <Table>

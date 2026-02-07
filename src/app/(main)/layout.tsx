@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Boxes, LayoutDashboard, ShoppingCart } from "lucide-react";
+import { Boxes, LayoutDashboard, ShoppingCart, MessageSquareQuote } from "lucide-react";
 
 import {
   SidebarProvider,
@@ -22,6 +22,7 @@ const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Products", icon: Boxes },
   { href: "/sales", label: "Sales", icon: ShoppingCart },
+  { href: "/reviews", label: "Reviews", icon: MessageSquareQuote },
 ];
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {

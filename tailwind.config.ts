@@ -100,6 +100,10 @@ export default {
           '0%, 100%': { transform: 'scale(1)', opacity: '1' },
           '50%': { transform: 'scale(1.02)', opacity: '0.9' },
         },
+        'fraud-glow': {
+            '0%, 100%': { boxShadow: '0 0 10px rgba(239, 68, 68, 0.4), 0 0 20px rgba(239, 68, 68, 0.3)' },
+            '50%': { boxShadow: '0 0 25px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -107,6 +111,7 @@ export default {
         'card-enter': 'card-enter 0.7s ease-out forwards',
         glow: 'glow 2.5s ease-in-out infinite',
         'subtle-pulse': 'subtle-pulse 2.5s ease-in-out infinite',
+        'fraud-glow': 'fraud-glow 2s ease-in-out infinite',
       },
     },
   },

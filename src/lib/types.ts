@@ -17,6 +17,43 @@ export interface Sale {
   createdAt: Timestamp;
 }
 
+export interface Review {
+  id: string;
+  productId: string;
+  productName: string;
+  rating: number;
+  comment: string;
+  userId: string;
+  createdAt: Timestamp;
+}
+
+export interface ReviewAnalysis extends Review {
+  isDuplicateComment: boolean;
+  isShortComment: boolean;
+  isRapidReview: boolean;
+}
+
+export interface FraudMetrics {
+    fraudScore: number;
+    riskLevel: 'Low' | 'Medium' | 'High';
+    suspiciousReviews: ReviewAnalysis[];
+    suspiciousUsers: { userId: string; reviewCount: number }[];
+    analysis: {
+        duplicateComments: number;
+        ratingSpike: boolean;
+        shortComments: number;
+        rapidReviews: number;
+        abnormalFrequency: boolean;
+    };
+}
+
+export interface AIFraudReport {
+    fraudSummary: string;
+    keyConcerns: string[];
+    recommendedActions: string[];
+}
+
+
 export interface ProductTrendInfo {
     momentumScore: number;
     trend: 'Rising' | 'Declining' | 'Stable';

@@ -97,4 +97,7 @@ body {
         animation: card-enter 0.7s ease-out forwards;
         animation-delay: var(--card-delay, 0s);
     }
+    .fraud-glow {
+        animation: fraud-glow 2s ease-in-out infinite;
+    }
 }

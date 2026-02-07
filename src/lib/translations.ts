@@ -118,6 +118,10 @@ export const translations = {
     geocodeErrorDesc: "Please check the address or select a suggestion.",
     searchAddressPlaceholder: "Start typing your address...",
     yourLocation: "Your Location",
+    useCurrentLocation: 'Use my current location',
+    or: 'or',
+    locationError: 'Location Error',
+    locationErrorDesc: 'Could not retrieve your current location. Please enter your address manually.',
     
     // Order Success
     orderSuccessTitle: 'Thank You for Your Order!',
@@ -360,7 +364,11 @@ export const translations = {
     geocodeErrorDesc: "దయచేసి చిరునామాను తనిఖీ చేయండి లేదా ఒక సూచనను ఎంచుకోండి.",
     searchAddressPlaceholder: "ನಿಮ್ಮ ವಿಳಾಸವನ್ನು ಟೈಪ್ ಮಾಡಲು ಪ್ರಾರಂಭಿಸಿ...",
     yourLocation: "ನಿಮ್ಮ ಸ್ಥಳ",
-    
+    useCurrentLocation: 'ನನ್ನ ಪ್ರಸ್ತುತ ಸ್ಥಳವನ್ನು ಬಳಸಿ',
+    or: 'ಅಥವಾ',
+    locationError: 'ಸ್ಥಳ ದೋಷ',
+    locationErrorDesc: 'ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಸ್ಥಳವನ್ನು ಹಿಂಪಡೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವಿಳಾಸವನ್ನು ಹಸ್ತಚಾಲಿತವಾಗಿ ನಮೂದಿಸಿ.',
+
     // Order Success
     orderSuccessTitle: 'ನಿಮ್ಮ ಆರ್ಡರ್‌ಗೆ ಧನ್ಯವಾದಗಳು!',
     orderSuccessDesc: 'ನಿಮ್ಮ ಆರ್ಡರ್ ನಮಗೆ ತಲುಪಿದೆ ಮತ್ತು ನಾವು ಅದನ್ನು ಸಿದ್ಧಪಡಿಸುತ್ತಿದ್ದೇವೆ. ನಿಮ್ಮ ಇಮೇಲ್‌ಗೆ ದೃಢೀಕರಣವನ್ನು ಕಳುಹಿಸಲಾಗಿದೆ.',

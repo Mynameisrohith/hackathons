@@ -56,6 +56,21 @@ export async function getGeocodeWithFallback(
   }
 }
 
+export async function getReverseGeocode(
+  request: google.maps.GeocoderRequest
+): Promise<google.maps.GeocoderResult> {
+  try {
+    const results = await getGeocode(request);
+    if (results && results.length > 0) {
+      return results[0];
+    }
+    throw new Error('No results found from reverse Geocoding API');
+  } catch (error) {
+    console.error('Reverse geocoding failed:', error);
+    throw new Error('Reverse geocoding failed.');
+  }
+}
+
 export function extractAddressComponent(
   components: google.maps.GeocoderAddressComponent[],
   type: string

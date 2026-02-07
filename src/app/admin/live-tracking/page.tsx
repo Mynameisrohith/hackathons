@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, collectionGroup, query, where, orderBy } from 'firebase/firestore';
+import { collection, collectionGroup, query } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Order, Store } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,10 +14,10 @@ import LiveTrackingMap from '@/components/admin/LiveTrackingMap';
 export default function LiveTrackingPage() {
   const firestore = useFirestore();
 
-  // Fetch all orders and filter client-side to avoid needing a composite index on a collection group query
+  // Fetch all orders and filter/sort client-side to avoid needing a composite index on a collection group query
   const allOrdersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+    return query(collectionGroup(firestore, 'orders'));
   }, [firestore]);
 
   const storesQuery = useMemoFirebase(() => {
@@ -29,7 +30,9 @@ export default function LiveTrackingPage() {
   
   const activeOrders = useMemo(() => {
       if (!allOrders) return [];
-      return allOrders.filter(order => order.orderStatus === 'Out for Delivery');
+      // Sort orders descending by creation date, then filter for active ones
+      const sortedOrders = [...allOrders].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      return sortedOrders.filter(order => order.orderStatus === 'Out for Delivery');
   }, [allOrders]);
   
   const isLoading = isLoadingOrders || isLoadingStores;

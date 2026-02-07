@@ -30,6 +30,7 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
   SidebarInset,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { RetailSparkIcon } from "@/components/icons";
 import { useUser, useAuth, useFirestore } from "@/firebase";

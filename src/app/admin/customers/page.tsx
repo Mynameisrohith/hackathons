@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, collectionGroup, doc, setDoc } from 'firebase/firestore';
-import type { Order, UserProfile, UserRole, UserRoleType } from '@/lib/types';
+import type { Order, UserProfile } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import type { UserRole, UserRoleType } from '@/lib/types';
 
 type CustomerStat = UserProfile & {
   orderCount: number;

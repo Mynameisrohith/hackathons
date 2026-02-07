@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -31,6 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
+    // If not loading and no user, redirect to login
     if (!isLoading && !user) {
       router.replace('/login?redirect=/admin/dashboard');
     }
@@ -44,14 +46,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // After loading, if user exists but role is not admin, deny access.
-  // This also handles the case where roleData is null.
-  if (user && roleData?.role !== 'admin') {
+  // After loading, if a user exists but their role is not 'admin' or their status is not 'active', deny access.
+  // The central /auth/redirect page should handle most of these cases, but this is a final safeguard.
+  if (user && (roleData?.role !== 'admin' || roleData?.status !== 'active')) {
     return <AdminAccessDenied />;
   }
 
-  // If user exists and role is admin, show the layout
-  if (user && roleData?.role === 'admin') {
+  // If user exists and is an active admin, show the layout
+  if (user && roleData?.role === 'admin' && roleData?.status === 'active') {
       return (
         <div className="flex min-h-screen bg-secondary/50">
           <AdminSidebar />
@@ -62,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       );
   }
 
-  // Fallback case, typically shown while redirecting or if user is null after load check
+  // Fallback case, typically shown while redirecting or if auth state is indeterminate
   return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

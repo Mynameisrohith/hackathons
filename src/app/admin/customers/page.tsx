@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useCollection, useMemoFirebase, useFirestore, useUser } from '@/firebase';
+import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { UserProfile, UserRole } from '@/lib/types';
+import type { UserProfile, UserRole, RoleStatus, UserRoleType } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,64 +18,99 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import type { UserRoleType } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { useRole } from '@/hooks/useAdmin';
+
 
 type UserWithRole = UserProfile & {
-  role: UserRoleType | 'pending';
+  roleInfo?: UserRole & { id: string };
+};
+
+const statusBadgeVariants: { [key in RoleStatus]: string } = {
+    active: 'bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/30',
+    pending: 'bg-yellow-500/20 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border-yellow-500/30',
+    rejected: 'bg-red-500/20 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-500/30',
 };
 
 // Component to manage role assignment for a user
-function RoleManager({ user, currentRole, adminId }: { user: UserWithRole, currentRole: UserRoleType | 'pending', adminId: string }) {
+function RoleManager({ user, adminUser }: { user: UserWithRole, adminUser: any }) {
     const firestore = useFirestore();
     const [isUpdating, setIsUpdating] = useState(false);
     const rolesToAssign: UserRoleType[] = ['admin', 'dealer', 'delivery', 'customer'];
 
-    const handleRoleChange = async (newRole: UserRoleType) => {
+    const handleRoleUpdate = async (newRole?: UserRoleType, newStatus?: RoleStatus) => {
         if (!firestore) return;
         setIsUpdating(true);
 
         const roleRef = doc(firestore, 'roles', user.id);
-        const rolePayload: UserRole = { 
-            role: newRole,
+        
+        const currentRole = user.roleInfo;
+        const payload: Partial<UserRole> = {
+            role: newRole || currentRole?.role || 'customer',
+            status: newStatus || currentRole?.status || 'pending',
             assignedAt: serverTimestamp() as any,
-            assignedBy: adminId
+            assignedBy: adminUser.uid,
         };
 
         try {
-            await setDoc(roleRef, rolePayload, { merge: true });
-            toast({ title: 'Role Updated', description: `${user.displayName}'s role set to ${newRole}.` });
+            await setDoc(roleRef, payload, { merge: true });
+            toast({ title: 'User Updated', description: `${user.displayName} has been updated.` });
         } catch (error) {
             console.error('Failed to update role:', error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update role.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update user.' });
         } finally {
             setIsUpdating(false);
         }
     };
+    
+    const isProtected = user.roleInfo?.isSuperAdmin || user.id === adminUser.uid;
+    const currentStatus = user.roleInfo?.status;
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || user.id === adminId}>
+                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || isProtected}>
                     <span className="sr-only">Open menu</span>
                     {isUpdating ? <Loader2 className="animate-spin h-4 w-4" /> : <MoreHorizontal className="h-4 w-4" />}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Assign Role</DropdownMenuLabel>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {rolesToAssign.map(role => (
-                    <DropdownMenuItem
-                        key={role}
-                        disabled={currentRole === role}
-                        onClick={() => handleRoleChange(role)}
-                    >
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                {currentStatus === 'pending' && (
+                    <>
+                        <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'active')}>
+                           <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Approve Application
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'rejected')}>
+                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> Reject Application
+                        </DropdownMenuItem>
+                    </>
+                )}
+                 {currentStatus === 'active' && (
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                        {rolesToAssign.map(role => (
+                            <DropdownMenuItem
+                                key={role}
+                                disabled={user.roleInfo?.role === role}
+                                onClick={() => handleRoleUpdate(role, 'active')}
+                            >
+                                {role.charAt(0).toUpperCase() + role.slice(1)}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuGroup>
+                )}
+                 {currentStatus === 'rejected' && (
+                     <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'pending')}>
+                        <RefreshCw className="mr-2 h-4 w-4" /> Re-open Application
                     </DropdownMenuItem>
-                ))}
+                 )}
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -83,22 +119,23 @@ function RoleManager({ user, currentRole, adminId }: { user: UserWithRole, curre
 function mapUsersToRoles(users: UserProfile[] | null, roles: (UserRole & {id: string})[] | null): UserWithRole[] {
   if (!users) return [];
   
-  const roleMap = new Map<string, UserRoleType>();
+  const roleMap = new Map<string, UserRole & {id: string}>();
   if (roles) {
       for (const role of roles) {
-          roleMap.set(role.id, role.role);
+          roleMap.set(role.id, role);
       }
   }
 
-  return users.map(user => {
-    const role = roleMap.get(user.id) || 'pending';
-    return { ...user, role };
-  }).sort((a,b) => a.displayName.localeCompare(b.displayName));
+  return users.map(user => ({
+      ...user,
+      roleInfo: roleMap.get(user.id),
+  })).sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
 }
 
 export default function UserManagementPage() {
   const firestore = useFirestore();
-  const { user: adminUser } = useUser();
+  // useRole provides details for the currently logged-in admin
+  const { user: adminUser, roleData: adminRoleData } = useRole();
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const rolesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'roles')) : null, [firestore]);
@@ -109,7 +146,7 @@ export default function UserManagementPage() {
   const isLoading = loadingUsers || loadingRoles;
   const usersWithRoles = useMemo(() => mapUsersToRoles(users, roles), [users, roles]);
 
-  if (!adminUser) return null; // Should be handled by layout, but as a safeguard.
+  if (!adminUser) return null;
 
   return (
     <div className="animate-card-enter">
@@ -118,8 +155,8 @@ export default function UserManagementPage() {
         <Card className="card-glass">
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="p-6">
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full mb-2" />)}
+              <div className="p-6 space-y-2">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
               </div>
             ) : (
               <Table>
@@ -128,35 +165,49 @@ export default function UserManagementPage() {
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {usersWithRoles.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground h-24">No users found.</TableCell>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground h-24">No users found.</TableCell>
                     </TableRow>
                   )}
-                  {usersWithRoles.map(user => (
-                    <TableRow key={user.id}>
-                      <TableCell className="flex items-center gap-3 font-medium">
-                        <Avatar>
-                          <AvatarImage src={user.photoURL} alt={user.displayName} />
-                          <AvatarFallback>{user.displayName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        {user.displayName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                       <TableCell>
-                        <Badge variant={user.role === 'pending' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
-                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                          <RoleManager user={user} currentRole={user.role} adminId={adminUser.uid} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {usersWithRoles.map(user => {
+                    const roleName = user.roleInfo?.role || 'N/A';
+                    const statusName = user.roleInfo?.status || 'N/A';
+
+                    return (
+                        <TableRow key={user.id}>
+                          <TableCell className="flex items-center gap-3 font-medium">
+                            <Avatar>
+                              <AvatarImage src={user.photoURL} alt={user.displayName} />
+                              <AvatarFallback>{user.displayName?.[0]}</AvatarFallback>
+                            </Avatar>
+                            {user.displayName}
+                            {user.roleInfo?.isSuperAdmin && (
+                               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg border-yellow-300">Super Admin</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                           <TableCell>
+                            <Badge variant={roleName === 'admin' ? 'default' : 'secondary'}>
+                                {roleName.charAt(0).toUpperCase() + roleName.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                             <Badge className={cn(statusBadgeVariants[statusName as keyof typeof statusBadgeVariants] || 'bg-gray-500/20 text-gray-700')}>
+                                {statusName.charAt(0).toUpperCase() + statusName.slice(1)}
+                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                              <RoleManager user={user} adminUser={adminUser} />
+                          </TableCell>
+                        </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             )}

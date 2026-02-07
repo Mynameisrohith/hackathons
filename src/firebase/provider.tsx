@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -80,8 +81,25 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-          // User is signed in, ensure a user profile document exists.
           const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+          const roleDocRef = doc(firestore, 'roles', firebaseUser.uid);
+          
+          // SUPER ADMIN LOGIC: Automatically grant super admin role based on email.
+          if (firebaseUser.email === 'drohith7080@gmail.com') {
+            try {
+              await setDoc(roleDocRef, {
+                role: 'admin',
+                status: 'active',
+                isSuperAdmin: true,
+                assignedAt: serverTimestamp(),
+                assignedBy: 'system',
+              }, { merge: true });
+            } catch (error) {
+              console.error("FirebaseProvider: Error setting Super Admin role:", error);
+            }
+          }
+
+          // User profile creation logic (idempotent)
           const docSnap = await getDoc(userDocRef);
 
           if (!docSnap.exists()) {
@@ -93,10 +111,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                 displayName: firebaseUser.displayName || 'New User',
                 photoURL: firebaseUser.photoURL || '',
                 creationTime: serverTimestamp(),
-              });
+              }, { merge: true }); // Use merge to be safe
             } catch (error) {
               console.error("FirebaseProvider: Error creating user document:", error);
-              // Don't block the auth flow, just log the creation error.
             }
           }
         }

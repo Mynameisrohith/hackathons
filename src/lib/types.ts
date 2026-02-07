@@ -8,11 +8,16 @@ export interface Coordinates {
 
 export type UserRoleType = 'admin' | 'dealer' | 'delivery' | 'customer';
 
+export type RoleStatus = 'active' | 'pending' | 'rejected';
+
 export interface UserRole {
   role: UserRoleType;
+  status: RoleStatus;
+  isSuperAdmin?: boolean;
   storeId?: string; // For dealers
   assignedAt?: Timestamp;
-  assignedBy?: string; // Admin's UID
+  assignedBy?: string; // Admin's UID or 'system'
+  applicationId?: string;
 }
 
 export interface UserProfile {

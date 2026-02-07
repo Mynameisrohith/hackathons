@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -14,14 +15,14 @@ export default function PendingApprovalPage() {
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                         <Clock className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle className="mt-4">Pending Approval</CardTitle>
+                    <CardTitle className="mt-4">Application Pending</CardTitle>
                     <CardDescription>
-                        Your account has been created, but an administrator needs to assign you a role before you can proceed.
+                        Your application is under review. An administrator will process your request shortly.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Please contact your administrator. You can close this window.
+                        You will be notified once your application has been approved. You can close this window.
                     </p>
                     <Button variant="outline" className="mt-6 w-full" onClick={() => auth?.signOut()}>
                         Logout

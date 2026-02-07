@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from "react";
@@ -11,7 +12,7 @@ export default function AuthRedirectPage() {
 
   useEffect(() => {
     if (isLoading) {
-      return; // Wait until role is loaded
+      return; // Wait until role and user status are loaded
     }
 
     if (!user) {
@@ -20,11 +21,29 @@ export default function AuthRedirectPage() {
     }
 
     if (!roleData) {
-        // No role assigned, user is pending approval
-        router.replace("/auth/pending");
+        // This is a new user who doesn't have a role document yet.
+        // Redirect them to the signup/role selection page.
+        router.replace("/auth/signup");
         return;
     }
 
+    // Handle different application statuses for non-active users
+    if (roleData.status !== 'active') {
+        switch (roleData.status) {
+            case 'pending':
+                router.replace('/auth/pending');
+                return;
+            case 'rejected':
+                router.replace('/auth/rejected');
+                return;
+            default:
+                // Fallback for any other unknown status
+                router.replace('/auth/pending');
+                return;
+        }
+    }
+    
+    // If the role status is 'active', redirect to the appropriate dashboard
     switch (roleData.role) {
       case "admin":
         router.replace("/admin/dashboard");
@@ -37,7 +56,7 @@ export default function AuthRedirectPage() {
         break;
       case "customer":
       default:
-        // For users with 'customer' role or any other default.
+        // Default to customer view (homepage)
         router.replace("/");
         break;
     }

@@ -1,6 +1,8 @@
+
 "use client";
 
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import Link from "next/link";
 import { collection, onSnapshot, query, Timestamp } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import type { Product, Sale, ProductAnalysis, MarketAnalysis } from "@/lib/types";
@@ -20,10 +22,14 @@ import {
   AlertTriangle,
   Flame,
   Frown,
+  PlusCircle,
+  ShoppingCart,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { RetailSparkIcon } from "@/components/icons";
 
 // Custom hook for animating numbers
 const useAnimatedCounter = (endValue: number, duration = 1500) => {
@@ -409,6 +415,34 @@ const RiskBadge = ({ level }: { level: ProductAnalysis['riskLevel'] }) => {
   return <Badge variant={variants[level]} className={cn('w-16 justify-center', glowClass)}>{level}</Badge>;
 };
 
+function DashboardEmptyState() {
+    return (
+      <Card className="col-span-full flex items-center justify-center p-8 text-center animate-card-enter">
+        <div>
+          <RetailSparkIcon className="mx-auto size-16 text-muted-foreground/50 mb-4" />
+          <h2 className="text-2xl font-semibold">Welcome to RetailSpark!</h2>
+          <p className="text-muted-foreground mt-2 max-w-md">
+            Your dashboard is ready. Add your first product and record a sale to see your business analytics come to life.
+          </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <Button asChild>
+              <Link href="/products">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add a Product
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/sales">
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Record a Sale
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+}
+
 // Helper function to calculate standard deviation
 const calculateStdDev = (arr: number[]) => {
     const n = arr.length;
@@ -426,13 +460,22 @@ export default function DashboardPage() {
   const firestore = useFirestore();
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore) {
+        setIsLoading(false);
+        return;
+    };
 
+    setIsLoading(true);
     const productsQuery = query(collection(firestore, "products"));
     const salesQuery = query(collection(firestore, "sales"));
 
     let productLoaded = false;
     let salesLoaded = false;
+    const updateLoadingState = () => {
+        if (productLoaded && salesLoaded) {
+            setIsLoading(false);
+        }
+    }
 
     const unsubProducts = onSnapshot(productsQuery, (snapshot) => {
       const productsData = snapshot.docs.map(
@@ -440,7 +483,11 @@ export default function DashboardPage() {
       );
       setProducts(productsData);
       productLoaded = true;
-      if(salesLoaded) setIsLoading(false);
+      updateLoadingState();
+    }, (error) => {
+        console.error("Error fetching products:", error);
+        productLoaded = true;
+        updateLoadingState();
     });
 
     const unsubSales = onSnapshot(salesQuery, (snapshot) => {
@@ -449,17 +496,16 @@ export default function DashboardPage() {
       );
       setSales(salesData);
       salesLoaded = true;
-      if(productLoaded) setIsLoading(false);
+      updateLoadingState();
+    }, (error) => {
+        console.error("Error fetching sales:", error);
+        salesLoaded = true;
+        updateLoadingState();
     });
-    
-    const timer = setTimeout(() => {
-        if (isLoading) setIsLoading(false);
-    }, 3000);
 
     return () => {
       unsubProducts();
       unsubSales();
-      clearTimeout(timer);
     };
   }, [firestore]);
 
@@ -558,6 +604,14 @@ export default function DashboardPage() {
     };
   }, [products, sales]);
 
+  if (!isLoading && products.length === 0) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <DashboardEmptyState />
+        </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <BusinessHealthIndicator score={analytics.businessHealth?.score} isLoading={isLoading} />
@@ -571,3 +625,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

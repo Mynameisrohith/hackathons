@@ -108,7 +108,7 @@ service cloud.firestore {
        */
       match /orders/{orderId} {
         allow get: if isOwner(userId) || isAdmin();
-        allow list: if isOwner(userId) || isAdmin(); // Allows user to list their own orders and admin to list any user's orders
+        allow list: if isOwner(userId) || (request.auth != null && request.auth.token.email == 'drohith7080@gmail.com');
         allow create: if isOwner(userId);
         allow update: if isOwner(userId) || isAdmin(); // User can cancel/give feedback, admin can change status.
         allow delete: if isAdmin();

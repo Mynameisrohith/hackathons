@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, updateDoc, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import type { CartItem, Product } from '@/lib/types';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface CartContextType {
   items: CartItem[] | null;
@@ -14,7 +14,7 @@ interface CartContextType {
   isLoading: boolean;
   isUpdating: (itemId: string) => boolean;
   addToCart: (product: Product, quantity: number) => Promise<void>;
-  updateQuantity: (itemId: string, quantity: number) => Promise<void>;
+  updateQuantity: (itemId: string, quantity: number) => void;
   removeFromCart: (itemId: string) => Promise<void>;
   clearCart: () => void;
 }
@@ -39,7 +39,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const isUpdating = useCallback((itemId: string) => updatingItems.includes(itemId), [updatingItems]);
 
   const addToCart = async (product: Product, quantity: number) => {
-    if (!user || !firestore) throw new Error("User not authenticated.");
+    if (!user || !firestore) {
+      console.warn("User not authenticated. Cannot add to cart.");
+      return;
+    }
     setUpdatingItems(prev => [...prev, product.id]);
     try {
         const cartRef = collection(firestore, 'users', user.uid, 'cart');
@@ -66,8 +69,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateQuantity = useDebounce(async (itemId: string, quantity: number) => {
-    if (!user || !firestore) throw new Error("User not authenticated.");
+  const updateQuantity = useDebouncedCallback(async (itemId: string, quantity: number) => {
+    if (!user || !firestore) {
+        console.warn("User not authenticated, cannot update cart.");
+        return;
+    }
     if (quantity < 1) {
         await removeFromCart(itemId);
         return;
@@ -82,7 +88,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, 500);
 
   const removeFromCart = async (itemId: string) => {
-    if (!user || !firestore) throw new Error("User not authenticated.");
+    if (!user || !firestore) {
+      console.warn("User not authenticated. Cannot remove from cart.");
+      return;
+    }
     setUpdatingItems(prev => [...prev, itemId]);
     try {
         const itemRef = doc(firestore, 'users', user.uid, 'cart', itemId);

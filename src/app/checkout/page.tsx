@@ -11,11 +11,11 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowRight, ArrowLeft, Check, AlertTriangle, Truck } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Check, AlertTriangle, Truck, XCircle } from 'lucide-react';
 import type { Order, CartItem, Store, Coordinates } from '@/lib/types';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
@@ -64,14 +64,14 @@ function NearestStoreCard({
 
     if (!storeInfo) {
         return (
-            <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
+            <Card className="border-red-500/50 bg-red-50/50 dark:bg-red-950/20">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <AlertTriangle size={20} /> {t('locationAccessDenied')}
+                    <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                        <XCircle size={20} /> {t('noStoresFoundTitle')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-muted-foreground">{t('locationAccessDeniedDesc')}</p>
+                    <p className="text-sm text-muted-foreground">{t('noStoresFoundDesc')}</p>
                 </CardContent>
             </Card>
         )

@@ -48,10 +48,13 @@ service cloud.firestore {
     /**
      * Checks if the requesting user has administrative privileges.
      * Admin status is granted by the existence of a document for the user
-     * in the /roles_admin collection.
+     * in the /roles_admin collection, or by matching a hardcoded email.
      */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+        request.auth.token.email == 'ddrohith7080@gmail.com'
+      );
     }
 
     /**

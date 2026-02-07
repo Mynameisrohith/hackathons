@@ -5,22 +5,23 @@
  * Core Philosophy:
  * The security model is designed to be secure by default while providing flexibility for application features. It combines three primary access control patterns:
  * 1. User Ownership: User data is strictly private and can only be accessed or modified by the user who owns it.
- * 2. Role-Based Access Control (RBAC): A dedicated '/roles_admin' collection manages administrator privileges. Admins have full control over global data collections.
+ * 2. Role-Based Access Control (RBAC): A dedicated '/roles' collection manages administrator privileges. Admins have full control over global data collections.
  * 3. Public Read with Restricted Writes: Global data, such as products and sales, is publicly readable to support the retail storefront and analytics, but write operations are strictly controlled.
  *
  * Data Structure:
  * - /users/{userId}: Contains private user profile information, strictly isolated to the owning user.
+ * - /roles/{userId}: Stores the role ('admin', 'dealer', 'delivery') for a given user.
  * - /categories/{categoryId}: A top-level collection for product categories, publicly readable but admin-only for writes.
  * - /products/{productId}: A top-level collection of products, publicly readable but only manageable by administrators.
  * - /sales/{saleId}: A top-level collection of sales transactions, publicly readable. Any authenticated user can create a sale, but only admins can modify or delete transactions.
- * - /roles_admin/{userId}: A collection where the existence of a document signifies that the user is an administrator. This provides a centralized and performant way to check for admin privileges.
  * - /stores/{storeId}: Contains physical store locations, publicly readable but admin-only for writes.
  *
  * Key Security Decisions:
- * - User Isolation: Listing users is explicitly disallowed to protect user privacy. A user can only access their own document within the `/users` collection.
- * - Admin Supremacy: Administrators, defined in `/roles_admin`, have privileged access to manage global collections like `/products` and `/sales`. This role is managed by other admins.
+ * - User Isolation: A user can only access their own document within the `/users` collection. Admins can list users for management purposes.
+ * - Admin Supremacy: Administrators, defined in `/roles`, have privileged access to manage global collections.
  * - Default Secure: The default posture is to deny access. Rules explicitly grant permissions on a per-collection basis.
- * - Write Integrity: All write operations (`create`, `update`, `delete`) are protected. There are no open writes. Relational integrity (e.g., ensuring a user's ID in their document matches their path ID) is enforced on creation and maintained as immutable on update.
+ * - Write Integrity: All write operations (`create`, `update`, `delete`) are protected.
+ * - Collection Group Query Constraint: The 'list' rule for the 'orders' collection group must use a check that does not involve `get()` or `exists()`, hence the retained email check for that specific rule.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -47,19 +48,19 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the user is an admin based on the existence of a document in the 'roles_admin' collection.
+     * Checks if the user is an admin based on the 'roles' collection.
      * IMPORTANT: This function CANNOT be used in rules for collection group queries.
      */
     function isRoleAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
     }
 
     /**
-     * Checks if the requesting user has administrative privileges by combining role-based and hardcoded checks.
-     * NOTE: This function cannot be used in collection group queries because isRoleAdmin() uses exists().
+     * Checks if the requesting user has administrative privileges.
+     * NOTE: This function cannot be used in collection group queries because isRoleAdmin() uses get().
      */
     function isAdmin() {
-      return isSignedIn() && (isRoleAdmin() || request.auth.token.email == 'drohith7080@gmail.com');
+      return isRoleAdmin();
     }
 
     /**
@@ -88,8 +89,8 @@ service cloud.firestore {
      * @path /users/{userId}
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // Prevents listing all users
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin(); // Allow admins to list users for the customer panel
       allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
       allow update: if isOwner(userId) && resource != null && userIdIsImmutable();
       allow delete: if isOwner(userId) && resource != null;
@@ -110,6 +111,8 @@ service cloud.firestore {
      * `create` is allowed for owners.
      */
     match /{path=**}/orders/{orderId} {
+        // IMPORTANT: The 'list' rule for a collection group query cannot use get() or exists().
+        // We retain the email check here specifically to allow the admin panel to function.
         allow list: if request.auth.token.email == 'drohith7080@gmail.com';
         allow get: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
         allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
@@ -167,15 +170,13 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages administrator roles. Only other admins can view or modify the list of admins.
-     * Users can check their own admin status.
-     * @path /roles_admin/{userId}
+     * @description Manages user roles. A user can read their own role. Admins can manage all roles.
+     * @path /roles/{userId}
      */
-    match /roles_admin/{userId} {
+    match /roles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if false;
+      allow create, update: if isAdmin();
       allow delete: if isAdmin() && resource != null;
     }
     

@@ -3,6 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAdmin } from '@/hooks/useAdmin';
 import { collection, collectionGroup, query, where } from 'firebase/firestore';
 import type { Order, Product, Sale, Review } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -21,18 +22,19 @@ import { StarRating } from '@/components/StarRating';
 
 const useAnalyticsData = () => {
     const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-    const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
-    const productsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'products')) : null, [firestore]);
-    const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'categories')) : null, [firestore]);
-    const reviewsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reviews')) : null, [firestore]);
+    const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collectionGroup(firestore, 'orders')) : null, [firestore, isAdmin]);
+    const productsQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'products')) : null, [firestore, isAdmin]);
+    const categoriesQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'categories')) : null, [firestore, isAdmin]);
+    const reviewsQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'reviews')) : null, [firestore, isAdmin]);
     
     const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
     const { data: products, isLoading: loadingProducts } = useCollection<Product>(productsQuery);
     const { data: categories, isLoading: loadingCategories } = useCollection<any>(categoriesQuery);
     const { data: reviews, isLoading: loadingReviews } = useCollection<Review>(reviewsQuery);
 
-    const isLoading = loadingOrders || loadingProducts || loadingCategories || loadingReviews;
+    const isLoading = isAdminLoading || loadingOrders || loadingProducts || loadingCategories || loadingReviews;
 
     const analytics = useMemo(() => {
         if (!orders || !products || !categories) return null;

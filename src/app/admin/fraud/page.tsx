@@ -10,6 +10,7 @@ import {
   collectionGroup,
 } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
+import { useAdmin } from "@/hooks/useAdmin";
 import {
   Product,
   Review,
@@ -215,21 +216,28 @@ export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const firestore = useFirestore();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !isAdmin) {
+        setIsLoading(false);
+        return;
+    };
 
     const reviewsQuery = query(collection(firestore, "reviews"));
     
     const unsubReviews = onSnapshot(reviewsQuery, (snapshot) => {
         setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
         setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching reviews:", error);
+        setIsLoading(false);
     });
 
     return () => {
       unsubReviews();
     };
-  }, [firestore]);
+  }, [firestore, isAdmin]);
 
   const fraudMetrics: FraudMetrics | null = useMemo(() => {
       if (reviews.length < 5) return null;

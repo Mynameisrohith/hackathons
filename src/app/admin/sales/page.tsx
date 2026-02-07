@@ -15,6 +15,7 @@ import {
   Firestore,
 } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
+import { useAdmin } from "@/hooks/useAdmin";
 import {
   Card,
   CardContent,
@@ -185,9 +186,13 @@ export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const firestore = useFirestore();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !isAdmin) {
+        setIsLoading(false);
+        return;
+    };
 
     const productsQuery = query(collection(firestore, "products"));
     const salesQuery = query(collection(firestore, "sales"));
@@ -195,17 +200,22 @@ export default function SalesPage() {
     const unsubProducts = onSnapshot(productsQuery, (snapshot) => {
         setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
         setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching products:", error);
+        setIsLoading(false);
     });
     
     const unsubSales = onSnapshot(salesQuery, (snapshot) => {
         setSales(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sale)));
+    }, (error) => {
+        console.error("Error fetching sales:", error);
     });
 
     return () => {
       unsubProducts();
       unsubSales();
     };
-  }, [firestore]);
+  }, [firestore, isAdmin]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">

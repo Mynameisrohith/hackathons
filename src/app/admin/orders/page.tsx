@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useAdmin } from '@/hooks/useAdmin';
 import { collectionGroup, query, orderBy, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Order, UserProfile } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -176,24 +177,25 @@ function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
 export default function AdminOrdersPage() {
     const { t } = useLanguage();
     const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
     const [statusFilter, setStatusFilter] = useState<Order['orderStatus'] | 'All'>('All');
 
-    const ordersQuery = useMemo(() => {
-        if (!firestore) return null;
+    const ordersQuery = useMemoFirebase(() => {
+        if (!firestore || !isAdmin) return null;
         let q = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
         if (statusFilter !== 'All') {
             q = query(q, where('orderStatus', '==', statusFilter));
         }
         return q;
-    }, [firestore, statusFilter]);
+    }, [firestore, statusFilter, isAdmin]);
 
-    const usersQuery = useMemo(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+    const usersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'users')) : null, [firestore, isAdmin]);
     
     const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
     const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
 
-    const isLoading = isLoadingOrders || isLoadingUsers;
+    const isLoading = isAdminLoading || isLoadingOrders || isLoadingUsers;
 
     return (
         <Card className="card-glass">

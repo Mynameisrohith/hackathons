@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAdmin } from '@/hooks/useAdmin';
 import { collectionGroup, query, where, orderBy } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -39,18 +40,21 @@ function FeedbackCard({ order }: { order: Order }) {
 export default function AdminFeedbackPage() {
     const { t } = useLanguage();
     const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
     const feedbackQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !isAdmin) return null;
         return query(
             collectionGroup(firestore, 'orders'),
             where('rating', '>', 0),
             orderBy('rating', 'asc'),
             orderBy('updatedAt', 'desc')
         );
-    }, [firestore]);
+    }, [firestore, isAdmin]);
 
-    const { data: ordersWithFeedback, isLoading } = useCollection<Order>(feedbackQuery);
+    const { data: ordersWithFeedback, isLoading: isLoadingFeedback } = useCollection<Order>(feedbackQuery);
+
+    const isLoading = isAdminLoading || isLoadingFeedback;
 
     return (
         <div className="space-y-6">

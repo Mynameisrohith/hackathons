@@ -14,6 +14,7 @@ import {
   Firestore,
 } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
+import { useAdmin } from "@/hooks/useAdmin";
 import {
   Product,
   Review,
@@ -184,9 +185,13 @@ export default function ReviewsPage() {
   const [isFormOpen, setFormOpen] = useState(false);
   const firestore = useFirestore();
   const { user } = useUser();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !isAdmin) {
+        setIsLoading(false);
+        return;
+    };
 
     const productsQuery = query(collection(firestore, "products"));
     const reviewsQuery = query(collection(firestore, "reviews"));
@@ -198,10 +203,18 @@ export default function ReviewsPage() {
         setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
         productsLoaded = true;
         if (reviewsLoaded) setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching products:", error);
+        productsLoaded = true;
+        if (reviewsLoaded) setIsLoading(false);
     });
     
     const unsubReviews = onSnapshot(reviewsQuery, (snapshot) => {
         setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
+        reviewsLoaded = true;
+        if (productsLoaded) setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching reviews:", error);
         reviewsLoaded = true;
         if (productsLoaded) setIsLoading(false);
     });
@@ -210,7 +223,7 @@ export default function ReviewsPage() {
       unsubProducts();
       unsubReviews();
     };
-  }, [firestore]);
+  }, [firestore, isAdmin]);
 
 
   return (
@@ -288,4 +301,3 @@ export default function ReviewsPage() {
   </div>
   );
 }
-

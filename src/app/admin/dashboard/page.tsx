@@ -3,6 +3,7 @@
 
 import React, { useMemo } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useAdmin } from "@/hooks/useAdmin";
 import { collection, collectionGroup, query } from 'firebase/firestore';
 import type { Order, Sale } from '@/lib/types';
 import { StatCard } from "@/components/admin/StatCard";
@@ -14,14 +15,15 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const useDashboardStats = () => {
     const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-    const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
-    const salesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'sales')) : null, [firestore]);
+    const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collectionGroup(firestore, 'orders')) : null, [firestore, isAdmin]);
+    const salesQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'sales')) : null, [firestore, isAdmin]);
 
     const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
     const { data: sales, isLoading: loadingSales } = useCollection<Sale>(salesQuery);
     
-    const isLoading = loadingOrders || loadingSales;
+    const isLoading = isAdminLoading || loadingOrders || loadingSales;
 
     const stats = useMemo(() => {
         if (!orders || !sales) return null;

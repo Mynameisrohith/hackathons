@@ -345,7 +345,10 @@ export default function ProductsPage() {
   const { isAdmin } = useAdmin();
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !isAdmin) {
+        setIsLoading(false);
+        return;
+    };
     const productsQuery = query(collection(firestore, "products"));
     const categoriesQuery = query(collection(firestore, "categories"));
     
@@ -392,7 +395,7 @@ export default function ProductsPage() {
         unsubProducts();
         unsubCategories();
     };
-  }, [firestore]);
+  }, [firestore, isAdmin]);
 
   return (
     <div className="grid gap-6">

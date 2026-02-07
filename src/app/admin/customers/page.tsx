@@ -3,6 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAdmin } from '@/hooks/useAdmin';
 import { collection, collectionGroup, query } from 'firebase/firestore';
 import type { Order, UserProfile } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -21,9 +22,10 @@ interface CustomerStat extends UserProfile {
 export default function AdminCustomersPage() {
     const { t } = useLanguage();
     const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-    const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-    const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
+    const usersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'users')) : null, [firestore, isAdmin]);
+    const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collectionGroup(firestore, 'orders')) : null, [firestore, isAdmin]);
 
     const { data: users, isLoading: loadingUsers } = useCollection<UserProfile>(usersQuery);
     const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
@@ -53,7 +55,7 @@ export default function AdminCustomersPage() {
         }).sort((a,b) => b.totalSpent - a.totalSpent);
     }, [users, orders]);
 
-    const isLoading = loadingUsers || loadingOrders;
+    const isLoading = isAdminLoading || loadingUsers || loadingOrders;
 
     return (
         <Card className="card-glass">

@@ -3,7 +3,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { useAdmin } from '@/hooks/useAdmin';
+import { collection, query, doc, updateDoc, writeBatch, collectionGroup } from 'firebase/firestore';
 import type { Order, Store } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -22,9 +23,10 @@ interface DealerStat extends Store {
 export default function AdminDealersPage() {
     const { t } = useLanguage();
     const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-    const storesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'stores')) : null, [firestore]);
-    const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
+    const storesQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'stores')) : null, [firestore, isAdmin]);
+    const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collectionGroup(firestore, 'orders')) : null, [firestore, isAdmin]);
 
     const { data: stores, isLoading: loadingStores } = useCollection<Store>(storesQuery);
     const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
@@ -65,7 +67,7 @@ export default function AdminDealersPage() {
         }
     }
 
-    const isLoading = loadingStores || loadingOrders;
+    const isLoading = isAdminLoading || loadingStores || loadingOrders;
 
     return (
         <Card className="card-glass">

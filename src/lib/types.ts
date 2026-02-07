@@ -190,3 +190,9 @@ export type EmailPayload = {
     order: Order;
     user: UserProfile;
 }
+
+export interface DeliveryDelayPrediction {
+  predictedDelay: number;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  reasons: string[];
+}

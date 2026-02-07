@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import type { Order, UserProfile } from '@/lib/types';
+import type { Order, UserProfile, DeliveryDelayPrediction } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Package, CheckCircle, Truck, Star, XCircle, AlertTriangle, Send, Loader2 } from 'lucide-react';
+import { Package, CheckCircle, Truck, Star, XCircle, AlertTriangle, Send, Loader2, Clock, Boxes, CloudRain } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -29,6 +29,8 @@ import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 import { sendEmail } from '@/lib/email-client';
 import Link from 'next/link';
+import { predictDeliveryDelay } from '@/lib/aiDeliveryDelay';
+
 
 const statusTimeline: { [key in Order['orderStatus']]?: { step: number; icon: React.ElementType } } = {
     Pending: { step: 1, icon: Package },
@@ -51,7 +53,7 @@ function OrderTimeline({ status }: { status: Order['orderStatus'] }) {
         )
     }
 
-    const { step: currentStep, icon: CurrentIcon } = currentStatusInfo;
+    const { step: currentStep } = currentStatusInfo;
 
     if (status === 'Cancelled') {
         return (
@@ -149,6 +151,63 @@ function FeedbackForm({ order, userProfile }: { order: Order, userProfile: UserP
     )
 }
 
+function DelayPredictionCard({ order }: { order: Order }) {
+    const { t } = useLanguage();
+    const [delayInfo, setDelayInfo] = useState<DeliveryDelayPrediction | null>(null);
+
+    useEffect(() => {
+        const updatePrediction = () => {
+            const prediction = predictDeliveryDelay(order);
+            setDelayInfo(prediction);
+        };
+        
+        updatePrediction(); // Initial prediction
+        const interval = setInterval(updatePrediction, 30000); // Update every 30 seconds
+
+        return () => clearInterval(interval);
+    }, [order]);
+
+    if (!delayInfo || delayInfo.riskLevel === 'Low') {
+        return (
+            <div className="mt-6 flex items-center gap-2 text-sm text-green-600">
+                <CheckCircle className="h-4 w-4" />
+                <p>{t('onTrack')}</p>
+            </div>
+        );
+    }
+
+    const riskColors = {
+        Medium: 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/50',
+        High: 'text-red-600 bg-red-50 border-red-200 dark:bg-red-950/50',
+        Low: '', // Should not be rendered here
+    };
+
+    const IconMap: { [key: string]: React.ElementType } = {
+        'Evening traffic congestion.': Clock,
+        'High volume of orders.': Boxes,
+        'Adverse weather conditions (Rain).': CloudRain,
+    };
+
+    return (
+        <div className={cn("mt-6 p-4 rounded-lg border animate-card-enter", riskColors[delayInfo.riskLevel])}>
+            <div className="flex items-center gap-3">
+                <AlertTriangle className="h-6 w-6" />
+                <div>
+                    <p className="font-bold">{t('delayExpected').replace('{minutes}', delayInfo.predictedDelay.toString())}</p>
+                    <div className="text-xs flex flex-wrap gap-x-2">
+                       {delayInfo.reasons.map((reason, i) => (
+                            <span key={i} className="inline-flex items-center gap-1">
+                               {React.createElement(IconMap[reason] || AlertTriangle, { className: 'h-3 w-3' })}
+                               {t(reason.toLowerCase().replace(/[.() ]/g, '') as any)}
+                            </span>
+                       ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProfile }) {
     const { t } = useLanguage();
     const firestore = useFirestore();
@@ -194,7 +253,8 @@ function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProf
                 <div className="mb-8 pt-6">
                     <OrderTimeline status={order.orderStatus} />
                 </div>
-                <div className="space-y-4">
+                {order.orderStatus === 'Out for Delivery' && <DelayPredictionCard order={order} />}
+                <div className="space-y-4 mt-6">
                     {order.items.map(item => (
                         <div key={item.productId} className="flex items-center justify-between">
                             <div className="flex items-center gap-4">

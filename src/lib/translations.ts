@@ -278,6 +278,12 @@ export const translations = {
     submitFeedback: 'Submit Feedback',
     feedbackSubmitted: 'Thank you for your feedback!',
     feedbackError: 'Failed to submit feedback.',
+    delayExpected: 'Possible Delay: ~{minutes} min',
+    onTrack: 'Delivery is on track',
+    eveningtrafficcongestion: 'Evening Traffic',
+    highvolumeoforders: 'High Order Volume',
+    adverseweatherconditionsrain: 'Rain',
+    conditionsareoptimal: 'Conditions are optimal.',
 
     // NEW KEYS FOR EXPANSION
     // New Pages
@@ -599,6 +605,12 @@ export const translations = {
     submitFeedback: 'ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಿ',
     feedbackSubmitted: 'ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು!',
     feedbackError: 'ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಲು ವಿಫಲವಾಗಿದೆ.',
+    delayExpected: 'ಸಂಭಾವ್ಯ ವಿಳಂಬ: ~{minutes} ನಿಮಿಷ',
+    onTrack: 'ವಿತರಣೆ ಸರಿಯಾದ ಸಮಯದಲ್ಲಿದೆ',
+    eveningtrafficcongestion: 'ಸಂಜೆ ಸಂಚಾರ',
+    highvolumeoforders: 'ಹೆಚ್ಚಿನ ಆರ್ಡರ್‌ಗಳು',
+    adverseweatherconditionsrain: 'ಮಳೆ',
+    conditionsareoptimal: 'ಪರಿಸ್ಥಿತಿಗಳು ಉತ್ತಮವಾಗಿವೆ.',
 
 
      // NEW KEYS FOR EXPANSION

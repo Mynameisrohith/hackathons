@@ -74,6 +74,7 @@ import type { Product, Category } from "@/lib/types";
 import { PlusCircle, Trash2, Save } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/context/LanguageContext";
 
 const productSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -85,6 +86,7 @@ const productSchema = z.object({
 });
 
 function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: boolean) => void; firestore: Firestore, categories: Category[] }) {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
@@ -132,7 +134,7 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product Name</FormLabel>
+              <FormLabel>{t('productName')}</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., T-Shirt" {...field} />
               </FormControl>
@@ -145,11 +147,11 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
           name="categoryId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel>{t('category')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder={t('selectCategory')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -169,9 +171,9 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t('description')}</FormLabel>
               <FormControl>
-                <Textarea placeholder="A detailed description of the product." {...field} />
+                <Textarea placeholder={t('productDescPlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -182,7 +184,7 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>{t('imageUrl')}</FormLabel>
               <FormControl>
                 <Input type="url" placeholder="https://example.com/image.png" {...field} />
               </FormControl>
@@ -196,7 +198,7 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
             name="price"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Price</FormLabel>
+                <FormLabel>{t('price')}</FormLabel>
                 <FormControl>
                     <Input type="number" step="0.01" placeholder="9.99" {...field} />
                 </FormControl>
@@ -209,7 +211,7 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
             name="stock"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Stock</FormLabel>
+                <FormLabel>{t('stock')}</FormLabel>
                 <FormControl>
                     <Input type="number" placeholder="100" {...field} />
                 </FormControl>
@@ -219,7 +221,7 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
             />
         </div>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Adding..." : "Add Product"}
+          {isSubmitting ? t('adding') : t('addProduct')}
         </Button>
       </form>
     </Form>
@@ -230,6 +232,7 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
   const [stock, setStock] = useState(product.stock);
   const [isUpdating, setIsUpdating] = useState(false);
   const categoryName = categories.find(c => c.id === product.categoryId)?.name || 'N/A';
+  const { t } = useLanguage();
 
   const handleDelete = async () => {
     if (!isAdmin) {
@@ -315,15 +318,14 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t('deleteConfirm')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the
-                    product "{product.name}".
+                    {t('deleteCategoryWarning').replace('{name}', product.name)}
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
             </AlertDialog>
@@ -334,6 +336,7 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
 }
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -396,18 +399,18 @@ export default function ProductsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Product List</CardTitle>
+            <CardTitle>{t('productList')}</CardTitle>
             <CardDescription>
-              An overview of all products in your inventory.
+              {t('productListDesc')}
             </CardDescription>
           </div>
           <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
               <DialogTrigger asChild>
-              <Button><PlusCircle className="mr-2"/>Add Product</Button>
+              <Button><PlusCircle className="mr-2"/>{t('addProduct')}</Button>
               </DialogTrigger>
               <DialogContent>
               <DialogHeader>
-                  <DialogTitle>Add New Product</DialogTitle>
+                  <DialogTitle>{t('addProductTitle')}</DialogTitle>
               </DialogHeader>
               {firestore && <AddProductForm setOpen={setFormOpen} firestore={firestore} categories={categories} />}
               </DialogContent>
@@ -417,13 +420,13 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('imageUrl')}</TableHead>
+                <TableHead>{t('productName')}</TableHead>
+                <TableHead>{t('category')}</TableHead>
+                <TableHead>{t('price')}</TableHead>
+                <TableHead>{t('stock')}</TableHead>
+                <TableHead>{t('createdAt')}</TableHead>
+                <TableHead className="text-right">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -446,7 +449,7 @@ export default function ProductsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    No products found. Add one to get started!
+                    {t('noProductsToAdd')}
                   </TableCell>
                 </TableRow>
               )}

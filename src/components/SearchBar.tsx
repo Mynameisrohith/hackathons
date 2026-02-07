@@ -4,8 +4,10 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Input } from './ui/input';
+import { useLanguage } from '@/context/LanguageContext';
 
 export function SearchBar() {
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -31,7 +33,7 @@ export function SearchBar() {
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         type="search"
-        placeholder="Search for products..."
+        placeholder={t('searchPlaceholder')}
         className="w-full pl-9"
         onChange={handleSearch}
         defaultValue={searchParams.get('q') || ''}

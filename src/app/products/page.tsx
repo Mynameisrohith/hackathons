@@ -11,8 +11,10 @@ import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchBar } from '@/components/SearchBar';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   const firestore = useFirestore();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
@@ -36,9 +38,9 @@ export default function ProductsPage() {
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mb-12">
         <div className='max-w-2xl mx-auto'>
-            <h1 className="text-center text-4xl font-extrabold tracking-tight lg:text-5xl">Our Products</h1>
+            <h1 className="text-center text-4xl font-extrabold tracking-tight lg:text-5xl">{t('ourProducts')}</h1>
             <p className="mt-4 text-center text-lg text-muted-foreground">
-                Find what you're looking for with our instant search.
+                {t('searchSubtitle')}
             </p>
             <div className='mt-6'>
                 <SearchBar />
@@ -58,7 +60,7 @@ export default function ProductsPage() {
         ) : filteredProducts.length > 0 ? (
           filteredProducts.map((product, i) => <ProductCard key={product.id} product={product} delay={i * 50} />)
         ) : (
-          <p className='col-span-full text-center text-muted-foreground'>No products found for "{debouncedSearchQuery}".</p>
+          <p className='col-span-full text-center text-muted-foreground'>{t('noProductsFound').replace('{query}', debouncedSearchQuery)}</p>
         )}
       </div>
     </div>

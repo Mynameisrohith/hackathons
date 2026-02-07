@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { RetailSparkIcon } from "@/components/icons";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Custom hook for animating numbers
 const useAnimatedCounter = (endValue: number, duration = 1500) => {
@@ -67,6 +68,7 @@ const useAnimatedCounter = (endValue: number, duration = 1500) => {
 
 // Business Health Indicator Component
 const BusinessHealthIndicator = ({ score, isLoading }: { score: number, isLoading: boolean }) => {
+  const { t } = useLanguage();
   const animatedScore = useAnimatedCounter(isLoading ? 0 : score, 2000);
   const circumference = 2 * Math.PI * 45; // radius = 45
   const offset = circumference - (animatedScore / 100) * circumference;
@@ -88,7 +90,7 @@ const BusinessHealthIndicator = ({ score, isLoading }: { score: number, isLoadin
 
   return (
     <Card className="card-glass col-span-full md:col-span-2 lg:col-span-1 flex flex-col items-center justify-center p-6 animate-card-enter">
-      <CardTitle className="text-center mb-4">Business Health</CardTitle>
+      <CardTitle className="text-center mb-4">{t('businessHealth')}</CardTitle>
       <div className="relative h-40 w-40">
         <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
           <defs>
@@ -136,6 +138,7 @@ const BusinessHealthIndicator = ({ score, isLoading }: { score: number, isLoadin
 
 // Market Trend Overview Component
 const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysis, isLoading: boolean }) => {
+    const { t } = useLanguage();
     const growth = analysis?.weeklyGrowth ?? 0;
     const animatedGrowth = useAnimatedCounter(isLoading ? 0 : growth, 1500);
 
@@ -143,7 +146,7 @@ const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysi
         return (
             <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 flex flex-col justify-center animate-card-enter" style={{ animationDelay: '0.1s' }}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><TrendingUp /> Market Trends</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><TrendingUp /> {t('marketTrends')}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-2">
                     <Skeleton className="h-10 w-24 mx-auto" />
@@ -166,14 +169,14 @@ const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysi
     return (
         <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 flex flex-col justify-center animate-card-enter" style={{ animationDelay: '0.1s' }}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><TrendingUp /> Market Trends</CardTitle>
+                <CardTitle className="flex items-center gap-2"><TrendingUp /> {t('marketTrends')}</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
                 <div className={cn("flex items-center justify-center gap-1 text-4xl font-bold", isPositive ? "text-green-600" : "text-red-600")}>
                     {isPositive ? <ArrowUp className="h-8 w-8" /> : <ArrowDown className="h-8 w-8" />}
                     <span>{Math.abs(animatedGrowth).toFixed(1)}%</span>
                 </div>
-                <p className="text-sm text-muted-foreground">vs last 7 days</p>
+                <p className="text-sm text-muted-foreground">{t('vsLast7Days')}</p>
                 <div className="mt-4 flex flex-col items-center gap-2">
                     <div className="flex items-center gap-2">
                        <Activity className="h-4 w-4 text-muted-foreground" />
@@ -188,11 +191,12 @@ const MarketTrendOverview = ({ analysis, isLoading }: { analysis?: MarketAnalysi
 
 // Rising Products Component
 const RisingProducts = ({ products, isLoading }: { products: ProductAnalysis[], isLoading: boolean }) => {
+    const { t } = useLanguage();
     if (isLoading) {
         return (
             <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.2s' }}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-emerald-500"><Flame /> Rising Products</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-emerald-500"><Flame /> {t('risingProducts')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
@@ -204,7 +208,7 @@ const RisingProducts = ({ products, isLoading }: { products: ProductAnalysis[], 
     return (
         <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.2s' }}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-emerald-500"><Flame /> Rising Products</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-emerald-500"><Flame /> {t('risingProducts')}</CardTitle>
             </CardHeader>
             <CardContent>
                 {products.length > 0 ? (
@@ -220,7 +224,7 @@ const RisingProducts = ({ products, isLoading }: { products: ProductAnalysis[], 
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-center text-muted-foreground py-4">No significant rising trends.</p>
+                    <p className="text-center text-muted-foreground py-4">{t('noRisingTrends')}</p>
                 )}
             </CardContent>
         </Card>
@@ -229,11 +233,12 @@ const RisingProducts = ({ products, isLoading }: { products: ProductAnalysis[], 
 
 // Declining Products Component
 const DecliningProducts = ({ products, isLoading }: { products: ProductAnalysis[], isLoading: boolean }) => {
+    const { t } = useLanguage();
     if (isLoading) {
         return (
             <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.3s' }}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-rose-500"><Frown /> Declining Products</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-rose-500"><Frown /> {t('decliningProducts')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
@@ -245,7 +250,7 @@ const DecliningProducts = ({ products, isLoading }: { products: ProductAnalysis[
     return (
         <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.3s' }}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-rose-500"><Frown /> Declining Products</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-rose-500"><Frown /> {t('decliningProducts')}</CardTitle>
             </CardHeader>
             <CardContent>
                 {products.length > 0 ? (
@@ -261,7 +266,7 @@ const DecliningProducts = ({ products, isLoading }: { products: ProductAnalysis[
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-center text-muted-foreground py-4">No products are declining.</p>
+                    <p className="text-center text-muted-foreground py-4">{t('noDeclining')}</p>
                 )}
             </CardContent>
         </Card>
@@ -271,11 +276,12 @@ const DecliningProducts = ({ products, isLoading }: { products: ProductAnalysis[
 
 // Inventory Risk Panel Component
 const InventoryRiskPanel = ({ products, isLoading }: { products: ProductAnalysis[], isLoading: boolean }) => {
+    const { t } = useLanguage();
     if (isLoading) {
         return (
             <Card className="card-glass col-span-full lg:col-span-2 animate-card-enter" style={{ animationDelay: '0.4s' }}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ShieldAlert /> Inventory at Risk</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><ShieldAlert /> {t('inventoryAtRisk')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -289,7 +295,7 @@ const InventoryRiskPanel = ({ products, isLoading }: { products: ProductAnalysis
   return (
     <Card className="card-glass col-span-full lg:col-span-2 animate-card-enter" style={{ animationDelay: '0.4s' }}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><ShieldAlert /> Inventory at Risk (High)</CardTitle>
+        <CardTitle className="flex items-center gap-2"><ShieldAlert /> {t('inventoryAtRisk')}</CardTitle>
       </CardHeader>
       <CardContent>
         {highRiskProducts.length > 0 ? (
@@ -299,7 +305,7 @@ const InventoryRiskPanel = ({ products, isLoading }: { products: ProductAnalysis
                 <span className="font-medium">{p.name}</span>
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-muted-foreground">
-                    {p.daysUntilStockout < 1 ? '<1 day left' : `${Math.floor(p.daysUntilStockout)} days left`}
+                    {p.daysUntilStockout < 1 ? t('dayLeft') : t('daysLeft').replace('{days}', Math.floor(p.daysUntilStockout).toString())}
                   </span>
                   <RiskBadge level={p.riskLevel} />
                 </div>
@@ -307,7 +313,7 @@ const InventoryRiskPanel = ({ products, isLoading }: { products: ProductAnalysis
             ))}
           </ul>
         ) : (
-          <p className="text-center text-muted-foreground py-4">No products at high risk. Well done!</p>
+          <p className="text-center text-muted-foreground py-4">{t('noHighRisk')}</p>
         )}
       </CardContent>
     </Card>
@@ -316,11 +322,12 @@ const InventoryRiskPanel = ({ products, isLoading }: { products: ProductAnalysis
 
 // Restock Suggestions Component
 const RestockSuggestions = ({ products, isLoading }: { products: ProductAnalysis[], isLoading: boolean }) => {
+    const { t } = useLanguage();
     if (isLoading) {
         return (
             <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.5s' }}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><PackageCheck /> Restock Suggestions</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><PackageCheck /> {t('restockSuggestions')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -334,7 +341,7 @@ const RestockSuggestions = ({ products, isLoading }: { products: ProductAnalysis
   return (
     <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.5s' }}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><PackageCheck /> Restock Suggestions</CardTitle>
+        <CardTitle className="flex items-center gap-2"><PackageCheck /> {t('restockSuggestions')}</CardTitle>
       </CardHeader>
       <CardContent>
         {restockNeeded.length > 0 ? (
@@ -343,17 +350,17 @@ const RestockSuggestions = ({ products, isLoading }: { products: ProductAnalysis
               <li key={p.id} className="flex items-center justify-between rounded-md bg-background/50 p-2">
                 <div>
                     <p className="font-medium">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">Current: {p.stock}</p>
+                    <p className="text-xs text-muted-foreground">{t('current').replace('{stock}', p.stock.toString())}</p>
                 </div>
                 <div className="text-right">
                     <p className="font-bold text-primary">+{p.suggestedRestock}</p>
-                    <p className="text-xs text-muted-foreground">units</p>
+                    <p className="text-xs text-muted-foreground">{t('units')}</p>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-center text-muted-foreground py-4">No restock suggestions for now.</p>
+          <p className="text-center text-muted-foreground py-4">{t('noRestock')}</p>
         )}
       </CardContent>
     </Card>
@@ -363,11 +370,12 @@ const RestockSuggestions = ({ products, isLoading }: { products: ProductAnalysis
 
 // Overstock Warnings Component
 const OverstockWarnings = ({ products, isLoading }: { products: ProductAnalysis[], isLoading: boolean }) => {
+    const { t } = useLanguage();
     if (isLoading) {
         return (
             <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.6s' }}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Warehouse /> Overstock Warnings</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Warehouse /> {t('overstockWarnings')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -381,7 +389,7 @@ const OverstockWarnings = ({ products, isLoading }: { products: ProductAnalysis[
   return (
     <Card className="card-glass col-span-full md:col-span-1 lg:col-span-1 animate-card-enter" style={{ animationDelay: '0.6s' }}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Warehouse /> Overstock Warnings</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Warehouse /> {t('overstockWarnings')}</CardTitle>
       </CardHeader>
       <CardContent>
         {overstocked.length > 0 ? (
@@ -389,12 +397,12 @@ const OverstockWarnings = ({ products, isLoading }: { products: ProductAnalysis[
             {overstocked.map((p) => (
               <li key={p.id} className="flex items-center justify-between rounded-md bg-background/50 p-2">
                 <span className="font-medium">{p.name}</span>
-                <span className="text-sm text-amber-600 font-semibold">{p.stock} units</span>
+                <span className="text-sm text-amber-600 font-semibold">{p.stock} {t('units')}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-center text-muted-foreground py-4">No overstocked products detected.</p>
+          <p className="text-center text-muted-foreground py-4">{t('noOverstock')}</p>
         )}
       </CardContent>
     </Card>
@@ -416,25 +424,26 @@ const RiskBadge = ({ level }: { level: ProductAnalysis['riskLevel'] }) => {
 };
 
 function DashboardEmptyState() {
+    const { t } = useLanguage();
     return (
       <Card className="col-span-full flex items-center justify-center p-8 text-center animate-card-enter">
         <div>
           <RetailSparkIcon className="mx-auto size-16 text-muted-foreground/50 mb-4" />
-          <h2 className="text-2xl font-semibold">Welcome to your Admin Dashboard!</h2>
+          <h2 className="text-2xl font-semibold">{t('welcomeAdmin')}</h2>
           <p className="text-muted-foreground mt-2 max-w-md">
-            Your analytics dashboard is ready. Add your first product and record a sale to see your business analytics come to life.
+            {t('welcomeAdminSubtitle')}
           </p>
           <div className="mt-6 flex justify-center gap-4">
             <Button asChild>
               <Link href="/admin/products">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add a Product
+                {t('addProduct')}
               </Link>
             </Button>
             <Button asChild variant="secondary">
               <Link href="/admin/sales">
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                Record a Sale
+                {t('recordSale')}
               </Link>
             </Button>
           </div>

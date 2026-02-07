@@ -50,6 +50,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { Product, Sale } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/context/LanguageContext";
 
 const saleSchema = z.object({
   productId: z.string().min(1, "Please select a product."),
@@ -60,6 +61,7 @@ const saleSchema = z.object({
 });
 
 function RecordSaleForm({ products, firestore }: { products: Product[]; firestore: Firestore }) {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof saleSchema>>({
     resolver: zodResolver(saleSchema),
@@ -134,11 +136,11 @@ function RecordSaleForm({ products, firestore }: { products: Product[]; firestor
           name="productId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product</FormLabel>
+              <FormLabel>{t('productName')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
+                    <SelectValue placeholder={t('selectCategory')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -158,7 +160,7 @@ function RecordSaleForm({ products, firestore }: { products: Product[]; firestor
           name="quantity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Quantity</FormLabel>
+              <FormLabel>{t('quantity')}</FormLabel>
               <FormControl>
                 <Input type="number" placeholder="1" {...field} />
               </FormControl>
@@ -167,10 +169,10 @@ function RecordSaleForm({ products, firestore }: { products: Product[]; firestor
           )}
         />
         <div className="text-lg font-semibold">
-            Total: ${totalAmount.toFixed(2)}
+            {t('total').replace('{total}', totalAmount.toFixed(2))}
         </div>
         <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
-          {isSubmitting ? "Recording..." : "Record Sale"}
+          {isSubmitting ? t('recording') : t('recordSale')}
         </Button>
       </form>
     </Form>
@@ -178,6 +180,7 @@ function RecordSaleForm({ products, firestore }: { products: Product[]; firestor
 }
 
 export default function SalesPage() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -208,8 +211,8 @@ export default function SalesPage() {
     <div className="grid gap-6 md:grid-cols-2">
       <Card className="md:col-span-1">
         <CardHeader>
-          <CardTitle>Record a New Sale</CardTitle>
-          <CardDescription>Select a product and quantity to record a sale.</CardDescription>
+          <CardTitle>{t('recordNewSale')}</CardTitle>
+          <CardDescription>{t('recordSaleDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading || !firestore ? <Skeleton className="h-64 w-full"/> : <RecordSaleForm products={products} firestore={firestore} />}
@@ -217,17 +220,17 @@ export default function SalesPage() {
       </Card>
       <Card className="md:col-span-1">
         <CardHeader>
-          <CardTitle>Sales History</CardTitle>
-          <CardDescription>A log of all past sales transactions.</CardDescription>
+          <CardTitle>{t('salesHistory')}</CardTitle>
+          <CardDescription>{t('salesHistoryDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t('productName')}</TableHead>
+                <TableHead>{t('qty')}</TableHead>
+                <TableHead>{t('total')}</TableHead>
+                <TableHead>{t('date')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -252,7 +255,7 @@ export default function SalesPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
-                    No sales recorded yet.
+                    {t('noSales')}
                   </TableCell>
                 </TableRow>
               )}

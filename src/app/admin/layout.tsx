@@ -32,17 +32,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/context/LanguageContext";
 
 const menuItems = [
-  { href: "/admin/analytics", label: "Analytics", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: Boxes },
-  { href: "/admin/sales", label: "Sales", icon: ShoppingCart },
-  { href: "/admin/reviews", label: "Reviews", icon: MessageSquareQuote },
-];
+  { href: "/admin/analytics", labelKey: "analytics", icon: LayoutDashboard },
+  { href: "/admin/products", labelKey: "products", icon: Boxes },
+  { href: "/admin/sales", labelKey: "sales", icon: ShoppingCart },
+  { href: "/admin/reviews", labelKey: "reviews", icon: MessageSquareQuote },
+] as const;
 
 function UserNav() {
     const { user } = useUser();
     const auth = useAuth();
+    const { t } = useLanguage();
 
     if (!user) {
         return <Skeleton className="h-8 w-8 rounded-full" />;
@@ -71,13 +73,13 @@ function UserNav() {
                 <DropdownMenuItem asChild>
                     <Link href="/admin/profile">
                         <UserIcon className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
+                        <span>{t('profile')}</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => auth.signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>{t('logout')}</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -90,6 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const router = useRouter();
   const firestore = useFirestore();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -123,12 +126,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const getPageTitle = () => {
     const allItems = [...menuItems];
     if (isAdmin) {
-      allItems.push({ href: "/admin/categories", label: "Categories", icon: Shield });
+      allItems.push({ href: "/admin/categories", labelKey: "categories", icon: Shield });
     }
     if (pathname === '/admin/profile') {
-        return "Profile";
+        return t('profile');
     }
-    return allItems.find(item => item.href === pathname)?.label || "Admin";
+    const currentItem = allItems.find(item => item.href === pathname);
+    return currentItem ? t(currentItem.labelKey) : "Admin";
   }
 
   if (isUserLoading || !user) {
@@ -158,11 +162,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    tooltip={{ children: "Marketplace Home", side: "right", align:"center" }}
+                    tooltip={{ children: t('home'), side: "right", align:"center" }}
                   >
                     <Link href="/">
                       <Home />
-                      <span>Home</span>
+                      <span>{t('home')}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -172,11 +176,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    tooltip={{ children: item.label, side: "right", align:"center" }}
+                    tooltip={{ children: t(item.labelKey), side: "right", align:"center" }}
                   >
                     <Link href={item.href}>
                       <item.icon />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -186,11 +190,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === "/admin/categories"}
-                    tooltip={{ children: "Categories", side: "right", align:"center" }}
+                    tooltip={{ children: t('categories'), side: "right", align:"center" }}
                   >
                     <Link href="/admin/categories">
                       <Shield />
-                      <span>Categories</span>
+                      <span>{t('categories')}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -67,6 +67,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/context/LanguageContext";
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -75,6 +76,7 @@ const categorySchema = z.object({
 });
 
 function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => void; firestore: Firestore }) {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof categorySchema>>({
     resolver: zodResolver(categorySchema),
@@ -116,9 +118,9 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category Name</FormLabel>
+              <FormLabel>{t('categoryName')}</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Electronics" {...field} />
+                <Input placeholder={t('categoryNamePlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -129,9 +131,9 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t('description')}</FormLabel>
               <FormControl>
-                <Textarea placeholder="A short description of the category." {...field} />
+                <Textarea placeholder={t('categoryDescPlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -142,7 +144,7 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>{t('imageUrl')}</FormLabel>
               <FormControl>
                 <Input type="url" placeholder="https://example.com/image.png" {...field} />
               </FormControl>
@@ -151,7 +153,7 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
           )}
         />
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Adding..." : "Add Category"}
+          {isSubmitting ? t('adding') : t('addCategory')}
         </Button>
       </form>
     </Form>
@@ -159,6 +161,7 @@ function AddCategoryForm({ setOpen, firestore }: { setOpen: (open: boolean) => v
 }
 
 function CategoryRow({ category, firestore }: { category: Category, firestore: Firestore }) {
+  const { t } = useLanguage();
   const handleDelete = async () => {
     try {
       await deleteDoc(doc(firestore, "categories", category.id));
@@ -201,15 +204,14 @@ function CategoryRow({ category, firestore }: { category: Category, firestore: F
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>{t('deleteConfirm')}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                category "{category.name}".
+                {t('deleteCategoryWarning').replace('{name}', category.name)}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+              <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -219,6 +221,7 @@ function CategoryRow({ category, firestore }: { category: Category, firestore: F
 }
 
 export default function CategoriesPage() {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
@@ -279,18 +282,18 @@ export default function CategoriesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Product Categories</CardTitle>
+            <CardTitle>{t('productCategories')}</CardTitle>
             <CardDescription>
-              Manage your product categories.
+              {t('manageCategories')}
             </CardDescription>
           </div>
           <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
             <DialogTrigger asChild>
-              <Button><PlusCircle className="mr-2"/>Add Category</Button>
+              <Button><PlusCircle className="mr-2"/>{t('addCategory')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
+                <DialogTitle>{t('addNewCategory')}</DialogTitle>
               </DialogHeader>
               {firestore && <AddCategoryForm setOpen={setFormOpen} firestore={firestore} />}
             </DialogContent>
@@ -300,11 +303,11 @@ export default function CategoriesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('imageUrl')}</TableHead>
+                <TableHead>{t('categoryName')}</TableHead>
+                <TableHead>{t('description')}</TableHead>
+                <TableHead>{t('createdAt')}</TableHead>
+                <TableHead className="text-right">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -325,7 +328,7 @@ export default function CategoriesPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    No categories found. Add one to get started!
+                    {t('noCategoriesToAdd')}
                   </TableCell>
                 </TableRow>
               )}

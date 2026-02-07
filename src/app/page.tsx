@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useMemoFirebase } from '@/firebase';
@@ -11,10 +11,12 @@ import { Product, Category } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryCard } from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ShoppingBag, Sparkles } from 'lucide-react';
+import { ArrowRight, ShoppingBag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
 
 function HeroSection() {
+  const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 to-background pt-20 pb-12 sm:pt-28 sm:pb-20">
        <div className="absolute top-0 left-0 -z-10 h-full w-full bg-grid-slate-900/[0.04] [mask-image:radial-gradient(100%_50%_at_50%_0%,rgba(255,255,255,0.7)_0,rgba(255,255,255,0)_100%)]"></div>
@@ -22,20 +24,20 @@ function HeroSection() {
         <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
           <div className="max-w-xl text-center md:text-left">
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Discover Your Next <span className="text-primary">Favorite</span> Thing
+              {t('heroTitle').replace(t('heroTitleHighlight'), '')} <span className="text-primary">{t('heroTitleHighlight')}</span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
-              Explore a curated marketplace of unique products. Built with the power of AI to bring you a personalized shopping experience.
+              {t('heroSubtitle')}
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6 md:justify-start">
               <Button asChild size="lg" className="gradient-btn shadow-lg">
                 <Link href="/products">
-                  Shop Now <ShoppingBag className="ml-2 h-5 w-5" />
+                  {t('shopNow')} <ShoppingBag className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href="#categories">
-                  Browse Categories <ArrowRight className="ml-2 h-5 w-5" />
+                  {t('browseCategories')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </div>
@@ -58,10 +60,11 @@ function HeroSection() {
 
 
 function FeaturedProducts({ products, isLoading }: { products: Product[] | null, isLoading: boolean }) {
+  const { t } = useLanguage();
   return (
     <section className="py-16 sm:py-24">
       <div className="container mx-auto px-4">
-        <h2 className="mb-10 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Featured Products</h2>
+        <h2 className="mb-10 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{t('featuredProducts')}</h2>
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
@@ -83,10 +86,11 @@ function FeaturedProducts({ products, isLoading }: { products: Product[] | null,
 }
 
 function CategoryPreview({ categories, isLoading }: { categories: Category[] | null, isLoading: boolean }) {
+  const { t } = useLanguage();
   return (
     <section id="categories" className="bg-primary/5 py-16 sm:py-24">
       <div className="container mx-auto px-4">
-        <h2 className="mb-10 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Shop by Category</h2>
+        <h2 className="mb-10 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{t('shopByCategory')}</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {isLoading ? (
              Array.from({ length: 4 }).map((_, i) => (
@@ -95,12 +99,12 @@ function CategoryPreview({ categories, isLoading }: { categories: Category[] | n
           ) : categories && categories.length > 0 ? (
             categories.map((category) => <CategoryCard key={category.id} category={category} />)
           ) : (
-            <p className='col-span-full text-center text-muted-foreground'>No categories found.</p>
+            <p className='col-span-full text-center text-muted-foreground'>{t('noCategoriesFound')}</p>
           )}
         </div>
         <div className="mt-12 text-center">
             <Button asChild variant="ghost">
-                <Link href="/categories">View All Categories <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                <Link href="/categories">{t('viewAllCategories')} <ArrowRight className="ml-2 h-4 w-4"/></Link>
             </Button>
         </div>
       </div>

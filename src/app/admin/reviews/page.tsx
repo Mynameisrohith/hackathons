@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,15 +11,12 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
-  Timestamp,
   Firestore,
 } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import {
   Product,
   Review,
-  ReviewAnalysis,
-  FraudMetrics,
   AIFraudReport,
 } from "@/lib/types";
 import {
@@ -81,6 +78,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { explainFraudMetrics, FraudMetricsInput } from "@/ai/flows/explain-fraud-flow";
+import type { FraudMetrics, ReviewAnalysis } from "@/lib/types";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 const reviewSchema = z.object({
@@ -90,6 +89,7 @@ const reviewSchema = z.object({
 });
 
 function AddReviewForm({ products, setOpen, firestore, userId }: { products: Product[], setOpen: (open: boolean) => void, firestore: Firestore, userId: string }) {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof reviewSchema>>({
     resolver: zodResolver(reviewSchema),
@@ -131,10 +131,10 @@ function AddReviewForm({ products, setOpen, firestore, userId }: { products: Pro
           name="productId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product</FormLabel>
+              <FormLabel>{t('product')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger><SelectValue placeholder="Select a product" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectCategory')} /></SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {products.map((product) => (
@@ -151,7 +151,7 @@ function AddReviewForm({ products, setOpen, firestore, userId }: { products: Pro
           name="rating"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Rating</FormLabel>
+              <FormLabel>{t('rating')}</FormLabel>
               <FormControl>
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -175,7 +175,7 @@ function AddReviewForm({ products, setOpen, firestore, userId }: { products: Pro
           name="comment"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Comment</FormLabel>
+              <FormLabel>{t('comment')}</FormLabel>
               <FormControl>
                 <Textarea placeholder="Share your thoughts on the product..." {...field} />
               </FormControl>
@@ -184,7 +184,7 @@ function AddReviewForm({ products, setOpen, firestore, userId }: { products: Pro
           )}
         />
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Submitting..." : "Submit Review"}
+          {isSubmitting ? t('submitting') : t('submitReview')}
         </Button>
       </form>
     </Form>
@@ -192,6 +192,7 @@ function AddReviewForm({ products, setOpen, firestore, userId }: { products: Pro
 }
 
 const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, isLoading: boolean }) => {
+    const { t } = useLanguage();
     const [aiReport, setAiReport] = useState<AIFraudReport | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
 
@@ -235,7 +236,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <ShieldAlert className={cn(riskLevel === 'High' ? 'text-red-400' : 'text-amber-400')} />
-                    Marketplace Trust & Fraud Detection
+                    {t('marketplaceTrust')}
                 </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -244,7 +245,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                     "flex flex-col items-center justify-center p-6 rounded-lg",
                     riskLevel === 'High' && 'fraud-glow'
                 )}>
-                    <h3 className="text-lg font-medium mb-4">Fraud Risk Score</h3>
+                    <h3 className="text-lg font-medium mb-4">{t('fraudRiskScore')}</h3>
                     <div className="relative h-40 w-40">
                         <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
                             <circle cx="60" cy="60" r="55" stroke="hsl(var(--muted))" strokeWidth="10" fill="transparent" />
@@ -268,7 +269,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold">{fraudScore}</div>
                     </div>
-                    <Badge variant={riskLevel === 'High' ? 'destructive' : riskLevel === 'Medium' ? 'secondary' : 'default'} className="mt-4">{riskLevel} Risk</Badge>
+                    <Badge variant={riskLevel === 'High' ? 'destructive' : riskLevel === 'Medium' ? 'secondary' : 'default'} className="mt-4">{t('riskLevel').replace('{level}', riskLevel)}</Badge>
                 </div>
 
                 {/* AI Insight Panel */}
@@ -278,7 +279,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                 )}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-primary">
-                            <Bot /> AI Risk Insight
+                            <Bot /> {t('aiRiskInsight')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -303,8 +304,8 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                         {!isAiLoading && !aiReport && (
                             <div className="flex flex-col items-center justify-center h-full text-center">
                                 <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
-                                <p className="font-semibold">All Clear</p>
-                                <p className="text-sm text-muted-foreground">AI analysis shows no significant fraud indicators.</p>
+                                <p className="font-semibold">{t('allClear')}</p>
+                                <p className="text-sm text-muted-foreground">{t('allClearDesc')}</p>
                             </div>
                         )}
                     </CardContent>
@@ -312,7 +313,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
 
                 {/* Details Panels */}
                 <Card className="card-glass">
-                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><ThumbsDown /> Suspicious Reviews</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><ThumbsDown /> {t('suspiciousReviews')}</CardTitle></CardHeader>
                     <CardContent>
                         {suspiciousReviews.length > 0 ? (
                             <ul className="space-y-2 text-sm">
@@ -321,39 +322,39 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                                         <p className="font-medium truncate">{r.productName}</p>
                                         <p className="text-xs text-muted-foreground truncate italic">"{r.comment}"</p>
                                         <div className="flex gap-2 mt-1">
-                                            {r.isDuplicateComment && <Badge variant="destructive" className="text-xs">Duplicate</Badge>}
-                                            {r.isShortComment && <Badge variant="destructive" className="text-xs">Spam</Badge>}
-                                            {r.isRapidReview && <Badge variant="destructive" className="text-xs">Rapid</Badge>}
+                                            {r.isDuplicateComment && <Badge variant="destructive" className="text-xs">{t('duplicateComments')}</Badge>}
+                                            {r.isShortComment && <Badge variant="destructive" className="text-xs">{t('shortComments')}</Badge>}
+                                            {r.isRapidReview && <Badge variant="destructive" className="text-xs">{t('rapidReviews')}</Badge>}
                                         </div>
                                     </li>
                                 ))}
                             </ul>
-                        ) : <p className="text-sm text-muted-foreground text-center py-4">No suspicious reviews found.</p>}
+                        ) : <p className="text-sm text-muted-foreground text-center py-4">{t('noSuspiciousReviews')}</p>}
                     </CardContent>
                 </Card>
                  <Card className="card-glass">
-                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><UserCheck /> Suspicious Users</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><UserCheck /> {t('suspiciousUsers')}</CardTitle></CardHeader>
                     <CardContent>
                         {suspiciousUsers.length > 0 ? (
                             <ul className="space-y-2 text-sm">
                                 {suspiciousUsers.map(u => (
                                     <li key={u.userId} className="flex justify-between items-center p-2 bg-background/50 rounded-md">
                                         <p className="font-mono text-xs truncate">{u.userId}</p>
-                                        <p>{u.reviewCount} reviews</p>
+                                        <p>{u.reviewCount} {t('reviews')}</p>
                                     </li>
                                 ))}
                             </ul>
-                        ) : <p className="text-sm text-muted-foreground text-center py-4">No suspicious user activity.</p>}
+                        ) : <p className="text-sm text-muted-foreground text-center py-4">{t('noSuspiciousUsers')}</p>}
                     </CardContent>
                 </Card>
                  <Card className="card-glass">
-                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles /> Key Metrics</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles /> {t('keyMetrics')}</CardTitle></CardHeader>
                     <CardContent className="text-sm space-y-2">
-                        <div className="flex justify-between"><span className="flex items-center gap-1"><Repeat size={14}/>Duplicate Comments</span> <span className="font-bold">{metrics.analysis.duplicateComments}</span></div>
-                        <div className="flex justify-between"><span className="flex items-center gap-1"><FileText size={14}/>Short Comments</span> <span className="font-bold">{metrics.analysis.shortComments}</span></div>
-                        <div className="flex justify-between"><span className="flex items-center gap-1"><Clock size={14}/>Rapid Reviews</span> <span className="font-bold">{metrics.analysis.rapidReviews}</span></div>
-                        <div className="flex justify-between"><span className="flex items-center gap-1"><Star size={14}/>Rating Spike</span> <Badge variant={metrics.analysis.ratingSpike ? 'destructive' : 'default'}>{metrics.analysis.ratingSpike ? 'Detected' : 'None'}</Badge></div>
-                        <div className="flex justify-between"><span className="flex items-center gap-1"><AlertTriangle size={14}/>Abnormal Frequency</span> <Badge variant={metrics.analysis.abnormalFrequency ? 'destructive' : 'default'}>{metrics.analysis.abnormalFrequency ? 'Yes' : 'No'}</Badge></div>
+                        <div className="flex justify-between"><span className="flex items-center gap-1"><Repeat size={14}/>{t('duplicateComments')}</span> <span className="font-bold">{metrics.analysis.duplicateComments}</span></div>
+                        <div className="flex justify-between"><span className="flex items-center gap-1"><FileText size={14}/>{t('shortComments')}</span> <span className="font-bold">{metrics.analysis.shortComments}</span></div>
+                        <div className="flex justify-between"><span className="flex items-center gap-1"><Clock size={14}/>{t('rapidReviews')}</span> <span className="font-bold">{metrics.analysis.rapidReviews}</span></div>
+                        <div className="flex justify-between"><span className="flex items-center gap-1"><Star size={14}/>{t('ratingSpike')}</span> <Badge variant={metrics.analysis.ratingSpike ? 'destructive' : 'default'}>{metrics.analysis.ratingSpike ? t('detected') : t('none')}</Badge></div>
+                        <div className="flex justify-between"><span className="flex items-center gap-1"><AlertTriangle size={14}/>{t('abnormalFrequency')}</span> <Badge variant={metrics.analysis.abnormalFrequency ? 'destructive' : 'default'}>{metrics.analysis.abnormalFrequency ? t('yes') : t('no')}</Badge></div>
                     </CardContent>
                 </Card>
             </CardContent>
@@ -362,6 +363,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
 };
 
 export default function ReviewsPage() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -485,17 +487,17 @@ export default function ReviewsPage() {
         <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-1">
             <CardHeader>
-            <CardTitle>Submit a Review</CardTitle>
-            <CardDescription>Share your experience with a product.</CardDescription>
+            <CardTitle>{t('submitReview')}</CardTitle>
+            <CardDescription>{t('submitReviewDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
             {isLoading || !user || !firestore ? <Skeleton className="h-64 w-full"/> : (
                 <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full"><PlusCircle className="mr-2"/>Add Your Review</Button>
+                        <Button className="w-full"><PlusCircle className="mr-2"/>{t('addYourReview')}</Button>
                     </DialogTrigger>
                     <DialogContent>
-                        <DialogHeader><DialogTitle>New Review</DialogTitle></DialogHeader>
+                        <DialogHeader><DialogTitle>{t('newReview')}</DialogTitle></DialogHeader>
                         <AddReviewForm products={products} setOpen={setFormOpen} firestore={firestore} userId={user.uid} />
                     </DialogContent>
                 </Dialog>
@@ -504,17 +506,17 @@ export default function ReviewsPage() {
         </Card>
         <Card className="md:col-span-2">
             <CardHeader>
-            <CardTitle>Recent Reviews</CardTitle>
-            <CardDescription>What customers are saying.</CardDescription>
+            <CardTitle>{t('recentReviews')}</CardTitle>
+            <CardDescription>{t('whatCustomersSay')}</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Comment</TableHead>
-                    <TableHead>User</TableHead>
+                    <TableHead>{t('productName')}</TableHead>
+                    <TableHead>{t('rating')}</TableHead>
+                    <TableHead>{t('comment')}</TableHead>
+                    <TableHead>{t('user')}</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -545,7 +547,7 @@ export default function ReviewsPage() {
                 ) : (
                     <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
-                        No reviews yet. Be the first!
+                        {t('noReviewsYet')}
                     </TableCell>
                     </TableRow>
                 )}

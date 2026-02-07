@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
 import { StarRating } from '@/components/StarRating';
 import { ProductCard } from '@/components/ProductCard';
+import { useLanguage } from '@/context/LanguageContext';
 
 function ProductDetailsSkeleton() {
   return (
@@ -36,6 +37,7 @@ function ProductDetailsSkeleton() {
 }
 
 function ReviewsSection({ productId }: { productId: string }) {
+    const { t } = useLanguage();
     const firestore = useFirestore();
 
     const reviewsQuery = useMemoFirebase(() => {
@@ -48,7 +50,7 @@ function ReviewsSection({ productId }: { productId: string }) {
     return (
         <Card className="mt-12">
             <CardHeader>
-                <CardTitle>Customer Reviews</CardTitle>
+                <CardTitle>{t('customerReviews')}</CardTitle>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -62,12 +64,12 @@ function ReviewsSection({ productId }: { productId: string }) {
                             <div key={review.id} className="border-b pb-4 last:border-b-0">
                                 <StarRating rating={review.rating} />
                                 <p className="mt-2 text-muted-foreground">{review.comment}</p>
-                                <p className="mt-2 text-xs text-muted-foreground">by User {review.userId.substring(0, 6)}... on {review.createdAt.toDate().toLocaleDateString()}</p>
+                                <p className="mt-2 text-xs text-muted-foreground">{t('byUser').replace('{user}', review.userId.substring(0, 6)).replace('{date}', review.createdAt.toDate().toLocaleDateString())}</p>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center text-muted-foreground">No reviews yet for this product.</p>
+                    <p className="text-center text-muted-foreground">{t('noReviews')}</p>
                 )}
             </CardContent>
         </Card>
@@ -75,6 +77,7 @@ function ReviewsSection({ productId }: { productId: string }) {
 }
 
 function RelatedProducts({ categoryId, currentProductId }: { categoryId: string, currentProductId: string }) {
+    const { t } = useLanguage();
     const firestore = useFirestore();
 
     const relatedQuery = useMemoFirebase(() => {
@@ -93,7 +96,7 @@ function RelatedProducts({ categoryId, currentProductId }: { categoryId: string,
     if (isLoading) {
         return (
              <div className="mt-16">
-                <h2 className="text-2xl font-bold tracking-tight mb-6">Related Products</h2>
+                <h2 className="text-2xl font-bold tracking-tight mb-6">{t('relatedProducts')}</h2>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="space-y-4">
@@ -111,7 +114,7 @@ function RelatedProducts({ categoryId, currentProductId }: { categoryId: string,
 
     return (
         <div className="mt-16">
-            <h2 className="text-2xl font-bold tracking-tight mb-6">Related Products</h2>
+            <h2 className="text-2xl font-bold tracking-tight mb-6">{t('relatedProducts')}</h2>
             <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
                 {filteredProducts.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
@@ -120,6 +123,7 @@ function RelatedProducts({ categoryId, currentProductId }: { categoryId: string,
 }
 
 export default function ProductPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const productId = params.id as string;
   const firestore = useFirestore();
@@ -136,7 +140,7 @@ export default function ProductPage() {
   }
 
   if (!product) {
-    return <div className="container mx-auto px-4 py-12 text-center">Product not found.</div>;
+    return <div className="container mx-auto px-4 py-12 text-center">{t('productNotFound')}</div>;
   }
 
   return (
@@ -166,18 +170,18 @@ export default function ProductPage() {
           <div className="mt-6">
             {product.stock > 0 ? (
                 <Badge className='bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'>
-                    <CheckCircle className="mr-2 h-4 w-4"/> In Stock ({product.stock} available)
+                    <CheckCircle className="mr-2 h-4 w-4"/> {t('inStock').replace('{count}', product.stock.toString())}
                 </Badge>
             ) : (
                 <Badge variant="destructive">
-                    <XCircle className="mr-2 h-4 w-4"/> Out of Stock
+                    <XCircle className="mr-2 h-4 w-4"/> {t('outOfStock')}
                 </Badge>
             )}
           </div>
           
           <div className="mt-10">
             <Button size="lg" className="w-full max-w-xs gradient-btn shadow-lg" disabled={product.stock === 0}>
-                Add to cart <ShoppingCart className="ml-2 h-5 w-5" />
+                {t('addToCart')} <ShoppingCart className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>

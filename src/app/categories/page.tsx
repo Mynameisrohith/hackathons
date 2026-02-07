@@ -8,8 +8,10 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import type { Category } from '@/lib/types';
 import { CategoryCard } from '@/components/CategoryCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CategoriesPage() {
+  const { t } = useLanguage();
   const firestore = useFirestore();
 
   const categoriesQuery = useMemoFirebase(() => {
@@ -22,9 +24,9 @@ export default function CategoriesPage() {
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">All Categories</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">{t('allCategories')}</h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-          Browse our diverse collection of categories to find exactly what you're looking for.
+          {t('categoriesSubtitle')}
         </p>
       </div>
       
@@ -38,7 +40,7 @@ export default function CategoriesPage() {
             <CategoryCard key={category.id} category={category} />
           ))
         ) : (
-          <p className='col-span-full text-center text-muted-foreground'>No categories found.</p>
+          <p className='col-span-full text-center text-muted-foreground'>{t('noCategoriesFound')}</p>
         )}
       </div>
     </div>

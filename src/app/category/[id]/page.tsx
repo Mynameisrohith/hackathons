@@ -9,8 +9,10 @@ import { collection, query, where, doc } from 'firebase/firestore';
 import type { Product, Category } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CategoryPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const categoryId = params.id as string;
   const firestore = useFirestore();
@@ -60,7 +62,7 @@ export default function CategoryPage() {
         ) : products && products.length > 0 ? (
           products.map((product, i) => <ProductCard key={product.id} product={product} delay={i * 50} />)
         ) : (
-          <p className='col-span-full text-center text-muted-foreground'>No products found in this category.</p>
+          <p className='col-span-full text-center text-muted-foreground'>{t('noProductsInCategory')}</p>
         )}
       </div>
     </div>

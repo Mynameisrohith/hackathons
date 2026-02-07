@@ -18,12 +18,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/lib/types';
 import { User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/context/LanguageContext';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }),
 });
 
 export default function ProfilePage() {
+  const { t } = useLanguage();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
@@ -110,7 +112,7 @@ export default function ProfilePage() {
           <CardTitle className="text-3xl">{userProfile.displayName}</CardTitle>
           <CardDescription className='flex flex-col items-center gap-2'>
             <span>{userProfile.email}</span>
-            <Badge variant={isAdmin ? "destructive" : "secondary"}>{isAdmin ? "Admin" : "User"}</Badge>
+            <Badge variant={isAdmin ? "destructive" : "secondary"}>{isAdmin ? t('admin') : t('user')}</Badge>
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -121,7 +123,7 @@ export default function ProfilePage() {
                     name="displayName"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Display Name</FormLabel>
+                        <FormLabel>{t('displayName')}</FormLabel>
                         <FormControl>
                         <Input placeholder="Your display name" {...field} />
                         </FormControl>
@@ -130,7 +132,7 @@ export default function ProfilePage() {
                     )}
                 />
                 <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('email')}</FormLabel>
                     <FormControl>
                     <Input type="email" value={userProfile.email} disabled />
                     </FormControl>
@@ -138,7 +140,7 @@ export default function ProfilePage() {
                 </CardContent>
                 <CardFooter>
                 <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    {isSubmitting ? t('saving') : t('saveChanges')}
                 </Button>
                 </CardFooter>
             </form>

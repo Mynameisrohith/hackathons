@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { RetailSparkIcon } from './icons';
 import { SearchBar } from './SearchBar';
 import { Button } from './ui/button';
-import { ShoppingCart, User, ChevronDown, Menu, Package } from 'lucide-react';
+import { ShoppingCart, User, ChevronDown, Menu, Package, LogOut, UserCog, Shield } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { Badge } from './ui/badge';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
+import { useRole } from '@/hooks/useAdmin';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,8 +61,16 @@ function LanguageSwitcher() {
 function UserButton() {
   const { t } = useLanguage();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  const { role, isLoading: isRoleLoading } = useRole();
 
-  if (isUserLoading) {
+  const handleLogout = () => {
+    if (auth) {
+      auth.signOut();
+    }
+  };
+
+  if (isUserLoading || isRoleLoading) {
     return <Skeleton className="h-8 w-8 rounded-full" />;
   }
 
@@ -98,18 +107,31 @@ function UserButton() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                        <UserCog className="mr-2 h-4 w-4" />
+                        <span>{t('profileTitle')}</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                     <Link href="/my-orders">
                         <Package className="mr-2 h-4 w-4" />
                         <span>{t('myOrders')}</span>
                     </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link href="/admin/analytics">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>{t('adminPanel')}</span>
-                    </Link>
-                </DropdownMenuItem>
+                {role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard">
+                            <Shield className="mr-2 h-4 w-4" />
+                            <span>{t('adminPanel')}</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{t('logout')}</span>
+            </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>
   );

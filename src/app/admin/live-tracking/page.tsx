@@ -1,0 +1,51 @@
+'use client';
+
+import React, { useMemo } from 'react';
+import { useCollection, useMemoFirebase } from '@/firebase';
+import { collection, collectionGroup, query, where, orderBy } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import type { Order, Store } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/PageHeader';
+import LiveTrackingMap from '@/components/admin/LiveTrackingMap';
+
+
+export default function LiveTrackingPage() {
+  const firestore = useFirestore();
+
+  // Fetch all orders and filter client-side to avoid needing a composite index on a collection group query
+  const allOrdersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+  }, [firestore]);
+
+  const storesQuery = useMemoFirebase(() => {
+      if(!firestore) return null;
+      return collection(firestore, 'stores');
+  }, [firestore]);
+
+  const { data: allOrders, isLoading: isLoadingOrders } = useCollection<Order>(allOrdersQuery);
+  const { data: stores, isLoading: isLoadingStores } = useCollection<Store>(storesQuery);
+  
+  const activeOrders = useMemo(() => {
+      if (!allOrders) return [];
+      return allOrders.filter(order => order.orderStatus === 'Out for Delivery');
+  }, [allOrders]);
+  
+  const isLoading = isLoadingOrders || isLoadingStores;
+
+  return (
+    <>
+      <PageHeader title="Live Delivery Tracking" subtitle="Monitor all active deliveries in real-time." />
+      <main className="p-8">
+        <div className="h-[75vh] w-full rounded-lg shadow-lg">
+          {isLoading ? (
+            <Skeleton className="w-full h-full" />
+          ) : (
+            <LiveTrackingMap activeOrders={activeOrders || []} stores={stores || []} />
+          )}
+        </div>
+      </main>
+    </>
+  );
+}

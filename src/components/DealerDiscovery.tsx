@@ -13,6 +13,7 @@ import { AlertTriangle, Map, Navigation, XCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { DealerCard, DealerCardSkeleton } from './DealerCard';
 import { Button } from './ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 
 interface DealerDiscoveryProps {
   userLocation: GeocodedAddress;

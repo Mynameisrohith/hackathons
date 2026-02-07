@@ -16,7 +16,7 @@ export function useAdmin() {
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
   
   // Hardcoded email for super-admin fallback
-  const isHardcodedAdmin = user?.email === 'ddrohith7080@gmail.com';
+  const isHardcodedAdmin = user?.email === 'drohith7080@gmail.com';
 
   const isAdmin = !!adminRole || isHardcodedAdmin;
   const isLoading = isUserLoading || (user ? isAdminRoleLoading : false);

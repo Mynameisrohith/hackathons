@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { RetailSparkIcon } from './icons';
 import { SearchBar } from './SearchBar';
 import { Button } from './ui/button';
-import { ShoppingCart, User } from 'lucide-react';
+import { ShoppingCart, User, ChevronDown, Menu } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { Badge } from './ui/badge';
@@ -17,9 +17,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle
+} from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useState } from 'react';
 
 function LanguageSwitcher() {
     const { language, setLanguage } = useLanguage();
@@ -96,10 +106,82 @@ function UserButton() {
   );
 }
 
+const NavMenu = () => {
+    const { t } = useLanguage();
+    return (
+        <nav className="hidden items-center gap-2 md:flex">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">{t('shop')} <ChevronDown className="ml-1 h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem asChild><Link href="/products">{t('allProducts')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/categories">{t('categories')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/new-arrivals">{t('newArrivals')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/deals">{t('deals')}</Link></DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">{t('company')} <ChevronDown className="ml-1 h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem asChild><Link href="/about">{t('aboutUs')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/careers">{t('careers')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/press">{t('press')}</Link></DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">{t('support')} <ChevronDown className="ml-1 h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem asChild><Link href="/contact">{t('contactUs')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/faq">{t('faq')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/shipping-returns">{t('shippingReturns')}</Link></DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </nav>
+    );
+};
+
+const MobileNavMenu = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
+    const { t } = useLanguage();
+    const closeSheet = () => setOpen(false);
+
+    return (
+      <nav className="flex flex-col gap-4 p-4 text-lg font-medium">
+          <div className='space-y-2'>
+            <p className='text-muted-foreground text-sm font-semibold uppercase'>{t('shop')}</p>
+            <Link href="/products" onClick={closeSheet} className="block hover:text-primary">{t('allProducts')}</Link>
+            <Link href="/categories" onClick={closeSheet} className="block hover:text-primary">{t('categories')}</Link>
+            <Link href="/new-arrivals" onClick={closeSheet} className="block hover:text-primary">{t('newArrivals')}</Link>
+            <Link href="/deals" onClick={closeSheet} className="block hover:text-primary">{t('deals')}</Link>
+          </div>
+          <DropdownMenuSeparator />
+           <div className='space-y-2'>
+            <p className='text-muted-foreground text-sm font-semibold uppercase'>{t('company')}</p>
+            <Link href="/about" onClick={closeSheet} className="block hover:text-primary">{t('aboutUs')}</Link>
+            <Link href="/careers" onClick={closeSheet} className="block hover:text-primary">{t('careers')}</Link>
+            <Link href="/press" onClick={closeSheet} className="block hover:text-primary">{t('press')}</Link>
+          </div>
+          <DropdownMenuSeparator />
+          <div className='space-y-2'>
+            <p className='text-muted-foreground text-sm font-semibold uppercase'>{t('support')}</p>
+            <Link href="/contact" onClick={closeSheet} className="block hover:text-primary">{t('contactUs')}</Link>
+            <Link href="/faq" onClick={closeSheet} className="block hover:text-primary">{t('faq')}</Link>
+            <Link href="/shipping-returns" onClick={closeSheet} className="block hover:text-primary">{t('shippingReturns')}</Link>
+          </div>
+      </nav>
+    );
+};
 
 export function Header() {
   const { t } = useLanguage();
   const { cartCount } = useCart();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 p-4">
       <div className="container mx-auto px-4 py-3 glass-navbar">
@@ -109,13 +191,10 @@ export function Header() {
               <RetailSparkIcon className="size-8 text-primary" />
               <span className="hidden text-xl font-semibold text-primary sm:block">RetailSpark</span>
             </Link>
-            <nav className="hidden items-center gap-4 md:flex">
-              <Link href="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">{t('products')}</Link>
-              <Link href="/categories" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">{t('categories')}</Link>
-            </nav>
+            <NavMenu />
           </div>
 
-          <div className="flex-1 max-w-sm">
+          <div className="flex-1 max-w-sm hidden lg:block">
             <SearchBar />
           </div>
 
@@ -131,7 +210,23 @@ export function Header() {
                 </Link>
             </Button>
             <UserButton />
+            {isMobile && (
+                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon"><Menu /></Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                        <SheetHeader className="border-b pb-4">
+                            <SheetTitle>Menu</SheetTitle>
+                        </SheetHeader>
+                        <MobileNavMenu setOpen={setMobileMenuOpen}/>
+                    </SheetContent>
+                </Sheet>
+            )}
           </div>
+        </div>
+        <div className="lg:hidden mt-4">
+            <SearchBar />
         </div>
       </div>
     </header>

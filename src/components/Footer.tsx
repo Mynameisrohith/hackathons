@@ -28,24 +28,24 @@ export function Footer() {
               <ul className="mt-4 space-y-2 text-sm">
                 <li><Link href="/products" className="text-muted-foreground hover:text-primary">{t('allProducts')}</Link></li>
                 <li><Link href="/categories" className="text-muted-foreground hover:text-primary">{t('categories')}</Link></li>
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('newArrivals')}</Link></li>
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('deals')}</Link></li>
+                <li><Link href="/new-arrivals" className="text-muted-foreground hover:text-primary">{t('newArrivals')}</Link></li>
+                <li><Link href="/deals" className="text-muted-foreground hover:text-primary">{t('deals')}</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold">{t('company')}</h3>
               <ul className="mt-4 space-y-2 text-sm">
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('aboutUs')}</Link></li>
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('careers')}</Link></li>
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('press')}</Link></li>
+                <li><Link href="/about" className="text-muted-foreground hover:text-primary">{t('aboutUs')}</Link></li>
+                <li><Link href="/careers" className="text-muted-foreground hover:text-primary">{t('careers')}</Link></li>
+                <li><Link href="/press" className="text-muted-foreground hover:text-primary">{t('press')}</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold">{t('support')}</h3>
               <ul className="mt-4 space-y-2 text-sm">
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('contactUs')}</Link></li>
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('faq')}</Link></li>
-                <li><Link href="#" className="text-muted-foreground hover:text-primary">{t('shippingReturns')}</Link></li>
+                <li><Link href="/contact" className="text-muted-foreground hover:text-primary">{t('contactUs')}</Link></li>
+                <li><Link href="/faq" className="text-muted-foreground hover:text-primary">{t('faq')}</Link></li>
+                <li><Link href="/shipping-returns" className="text-muted-foreground hover:text-primary">{t('shippingReturns')}</Link></li>
               </ul>
             </div>
             <div>

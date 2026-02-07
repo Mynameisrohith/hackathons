@@ -117,7 +117,7 @@ export const translations = {
     findingDealers: 'Finding Nearby Dealers...',
     selectDealer: 'Select a Dispatch Dealer',
     selectDealerDesc: 'The nearest available dealers to your location are shown below.',
-    noDealersFoundError: 'Could not find any dealers for your location. Please try a different address.',
+    noDealersFoundError: 'We couldn\'t find a delivery store for your location. Please try a different address.',
     noDealersFoundTitle: 'No Dealers Found',
     noDealersFoundDesc: 'There are no dealers available to service this address. Try changing your location.',
     registeredDealer: 'Registered',
@@ -201,7 +201,7 @@ export const translations = {
     productDescPlaceholder: 'A detailed description of the product.',
     stock: 'Stock',
     noProductsToAdd: 'No products found. Add one to get started!',
-
+    
     // Admin Profile
     profileTitle: 'Profile',
     displayName: 'Display Name',
@@ -251,6 +251,49 @@ export const translations = {
     qty: 'Qty',
     date: 'Date',
     noSales: 'No sales recorded yet.',
+
+    // NEW KEYS FOR EXPANSION
+    // New Pages
+    shopPageTitle: 'Find Your Perfect Product',
+    shopPageSubtitle: 'Filter, sort, and discover products tailored to your needs.',
+    newArrivalsTitle: 'Fresh Off the Press',
+    newArrivalsSubtitle: 'Check out the latest additions to our marketplace.',
+    justLaunched: 'Just Launched',
+    dealsTitle: 'Unbeatable Deals',
+    dealsSubtitle: 'Limited-time offers you don\'t want to miss.',
+    aboutUsTitle: 'Our Story',
+    aboutUsSubtitle: 'Learn more about the mission and vision behind RetailSpark.',
+    careersTitle: 'Join Our Team',
+    careersSubtitle: 'Explore exciting opportunities and grow with us.',
+    pressTitle: 'In The News',
+    pressSubtitle: 'See what the world is saying about RetailSpark.',
+    contactTitle: 'Get In Touch',
+    contactSubtitle: 'We\'d love to hear from you. Here\'s how you can reach us.',
+    faqTitle: 'Frequently Asked Questions',
+    faqSubtitle: 'Find answers to common questions about our platform and services.',
+    shippingReturnsTitle: 'Shipping & Returns',
+    shippingReturnsSubtitle: 'Everything you need to know about our shipping policies and how to make a return.',
+    
+    // Filters & Sorting
+    filters: 'Filters',
+    priceRange: 'Price Range',
+    sortBy: 'Sort By',
+    popularity: 'Popularity',
+    priceHighToLow: 'Price: High to Low',
+    priceLowToHigh: 'Price: Low to High',
+
+    // About Page
+    ourMission: 'Our Mission',
+    ourVision: 'Our Vision',
+    meetTheTeam: 'Meet the Team',
+
+    // Careers Page
+    openPositions: 'Open Positions',
+    applyNow: 'Apply Now',
+    
+    // Contact Page
+    submit: 'Submit',
+    message: 'Message',
   },
   kn: {
     // Header & Footer
@@ -369,7 +412,7 @@ export const translations = {
     findingDealers: 'ಹತ್ತಿರದ ಡೀಲರ್‌ಗಳನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ...',
     selectDealer: 'ರವಾನೆ ಡೀಲರ್ ಆಯ್ಕೆಮಾಡಿ',
     selectDealerDesc: 'ನಿಮ್ಮ ಸ್ಥಳಕ್ಕೆ ಹತ್ತಿರದ ಲಭ್ಯವಿರುವ ಡೀಲರ್‌ಗಳನ್ನು ಕೆಳಗೆ ತೋರಿಸಲಾಗಿದೆ.',
-    noDealersFoundError: 'ನಿಮ್ಮ ಸ್ಥಳಕ್ಕಾಗಿ ಯಾವುದೇ ಡೀಲರ್‌ಗಳನ್ನು ಹುಡುಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಬೇರೆ ವಿಳಾಸವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+    noDealersFoundError: 'ನಿಮ್ಮ ಸ್ಥಳಕ್ಕಾಗಿ ಯಾವುದೇ ಡೀಲರ್‌ಗಳನ್ನು ಹುಡುಕಲು ನಮಗೆ ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಬೇರೆ ವಿಳಾಸವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
     noDealersFoundTitle: 'ಡೀಲರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ',
     noDealersFoundDesc: 'ಈ ವಿಳಾಸಕ್ಕೆ ಸೇವೆ ಸಲ್ಲಿಸಲು ಯಾವುದೇ ಡೀಲರ್‌ಗಳು ಲಭ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಬದಲಾಯಿಸಲು ಪ್ರಯತ್ನಿಸಿ.',
     registeredDealer: 'ನೋಂದಾಯಿತ',
@@ -500,6 +543,49 @@ export const translations = {
     salesHistoryDesc: 'ಹಿಂದಿನ ಎಲ್ಲಾ ಮಾರಾಟ ವಹಿವಾಟುಗಳ ದಾಖಲೆ.',
     date: 'ದಿನಾಂಕ',
     noSales: 'ಇನ್ನೂ ಯಾವುದೇ ಮಾರಾಟ ದಾಖಲಾಗಿಲ್ಲ.',
+
+     // NEW KEYS FOR EXPANSION
+    // New Pages
+    shopPageTitle: 'ನಿಮ್ಮ ಪರಿಪೂರ್ಣ ಉತ್ಪನ್ನವನ್ನು ಹುಡುಕಿ',
+    shopPageSubtitle: 'ನಿಮ್ಮ ಅಗತ್ಯಗಳಿಗೆ ತಕ್ಕಂತೆ ಉತ್ಪನ್ನಗಳನ್ನು ಫಿಲ್ಟರ್ ಮಾಡಿ, ವಿಂಗಡಿಸಿ ಮತ್ತು ಅನ್ವೇಷಿಸಿ.',
+    newArrivalsTitle: 'ಹೊಸದಾಗಿ ಬಂದಿದೆ',
+    newArrivalsSubtitle: 'ನಮ್ಮ ಮಾರುಕಟ್ಟೆಗೆ ಇತ್ತೀಚಿನ ಸೇರ್ಪಡೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
+    justLaunched: 'ಈಗಷ್ಟೇ ಬಿಡುಗಡೆಯಾಗಿದೆ',
+    dealsTitle: 'ಅಜೇಯ ಡೀಲ್‌ಗಳು',
+    dealsSubtitle: 'ನೀವು ತಪ್ಪಿಸಿಕೊಳ್ಳಬಾರದ ಸೀಮಿತ ಸಮಯದ ಕೊಡುಗೆಗಳು.',
+    aboutUsTitle: 'ನಮ್ಮ ಕಥೆ',
+    aboutUsSubtitle: 'ರಿಟೇಲ್‌ಸ್ಪಾರ್ಕ್ ಹಿಂದಿನ ಧ್ಯೇಯ ಮತ್ತು ದೃಷ್ಟಿಯ ಬಗ್ಗೆ ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ.',
+    careersTitle: 'ನಮ್ಮ ತಂಡವನ್ನು ಸೇರಿಕೊಳ್ಳಿ',
+    careersSubtitle: 'ಅತ್ಯಾಕರ್ಷಕ ಅವಕಾಶಗಳನ್ನು ಅನ್ವೇಷಿಸಿ ಮತ್ತು ನಮ್ಮೊಂದಿಗೆ ಬೆಳೆಯಿರಿ.',
+    pressTitle: 'ಸುದ್ದಿಯಲ್ಲಿ',
+    pressSubtitle: 'ರಿಟೇಲ್‌ಸ್ಪಾರ್ಕ್ ಬಗ್ಗೆ ಜಗತ್ತು ಏನು ಹೇಳುತ್ತಿದೆ ಎಂದು ನೋಡಿ.',
+    contactTitle: 'ಸಂಪರ್ಕದಲ್ಲಿ ಇರಿ',
+    contactSubtitle: 'ನಿಮ್ಮಿಂದ ಕೇಳಲು ನಾವು ಇಷ್ಟಪಡುತ್ತೇವೆ. ನೀವು ನಮ್ಮನ್ನು ಹೇಗೆ ಸಂಪರ್ಕಿಸಬಹುದು ಎಂಬುದು ಇಲ್ಲಿದೆ.',
+    faqTitle: 'ಪದೇ ಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು',
+    faqSubtitle: 'ನಮ್ಮ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಮತ್ತು ಸೇವೆಗಳ ಬಗ್ಗೆ ಸಾಮಾನ್ಯ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಗಳನ್ನು ಹುಡುಕಿ.',
+    shippingReturnsTitle: 'ಶಿಪ್ಪಿಂಗ್ ಮತ್ತು ಹಿಂತಿರುಗಿಸುವಿಕೆ',
+    shippingReturnsSubtitle: 'ನಮ್ಮ ಶಿಪ್ಪಿಂಗ್ ನೀತಿಗಳು ಮತ್ತು ಹಿಂತಿರುಗಿಸುವಿಕೆಯನ್ನು ಹೇಗೆ ಮಾಡುವುದು ಎಂಬುದರ ಕುರಿತು ನೀವು ತಿಳಿದುಕೊಳ್ಳಬೇಕಾದ ಎಲ್ಲವೂ.',
+    
+    // Filters & Sorting
+    filters: 'ಫಿಲ್ಟರ್‌ಗಳು',
+    priceRange: 'ಬೆಲೆ ಶ್ರೇಣಿ',
+    sortBy: 'ಪ್ರಕಾರ ವಿಂಗಡಿಸಿ',
+    popularity: 'ಜನಪ್ರಿಯತೆ',
+    priceHighToLow: 'ಬೆಲೆ: ಹೆಚ್ಚಿನದರಿಂದ ಕಡಿಮೆಗೆ',
+    priceLowToHigh: 'ಬೆಲೆ: ಕಡಿಮೆಯಿಂದ ಹೆಚ್ಚಿನದಕ್ಕೆ',
+
+    // About Page
+    ourMission: 'ನಮ್ಮ ಧ್ಯೇಯ',
+    ourVision: 'ನಮ್ಮ ದೃಷ್ಟಿ',
+    meetTheTeam: 'ತಂಡವನ್ನು ಭೇಟಿ ಮಾಡಿ',
+
+    // Careers Page
+    openPositions: 'ತೆರೆದ ಹುದ್ದೆಗಳು',
+    applyNow: 'ಈಗ ಅನ್ವಯಿಸಿ',
+    
+    // Contact Page
+    submit: 'ಸಲ್ಲಿಸು',
+    message: 'ಸಂದೇಶ',
   },
 };
 

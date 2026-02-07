@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -31,7 +30,7 @@ import Image from 'next/image';
 import { sendEmail } from '@/lib/email-client';
 import Link from 'next/link';
 
-const statusTimeline: { [key in Order['orderStatus']]: { step: number; icon: React.ElementType } } = {
+const statusTimeline: { [key in Order['orderStatus']]?: { step: number; icon: React.ElementType } } = {
     Pending: { step: 1, icon: Package },
     Packed: { step: 2, icon: CheckCircle },
     'Out for Delivery': { step: 3, icon: Truck },
@@ -41,7 +40,18 @@ const statusTimeline: { [key in Order['orderStatus']]: { step: number; icon: Rea
 
 function OrderTimeline({ status }: { status: Order['orderStatus'] }) {
     const { t } = useLanguage();
-    const { step: currentStep, icon: CurrentIcon } = statusTimeline[status];
+    const currentStatusInfo = statusTimeline[status];
+
+    if (!currentStatusInfo) {
+        return (
+             <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
+                <AlertTriangle className="h-6 w-6" />
+                <span className="font-semibold">Invalid Order Status</span>
+            </div>
+        )
+    }
+
+    const { step: currentStep, icon: CurrentIcon } = currentStatusInfo;
 
     if (status === 'Cancelled') {
         return (
@@ -144,6 +154,8 @@ function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProf
     const firestore = useFirestore();
     const [isCancelling, setIsCancelling] = useState(false);
     
+    const currentStatusInfo = statusTimeline[order.orderStatus];
+    
     const handleCancel = async () => {
         setIsCancelling(true);
         const orderRef = doc(firestore, 'users', order.userId, 'orders', order.id);
@@ -170,9 +182,13 @@ function OrderCard({ order, userProfile }: { order: Order, userProfile: UserProf
                     <CardTitle>{t('orderId')}: <span className="font-mono text-base">{order.id}</span></CardTitle>
                     <p className="text-sm text-muted-foreground">{t('placedOn').replace('{date}', new Date(order.createdAt.seconds * 1000).toLocaleDateString())}</p>
                 </div>
-                <Badge className={cn("text-base", statusTimeline[order.orderStatus].step ? 'bg-primary' : 'bg-destructive')}>
-                    {t(order.orderStatus.toLowerCase().replace(/ /g, '') as any)}
-                </Badge>
+                {currentStatusInfo ? (
+                  <Badge className={cn("text-base", currentStatusInfo.step ? 'bg-primary' : 'bg-destructive')}>
+                      {t(order.orderStatus.toLowerCase().replace(/ /g, '') as any)}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-base">Unknown</Badge>
+                )}
             </CardHeader>
             <CardContent>
                 <div className="mb-8 pt-6">

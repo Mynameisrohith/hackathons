@@ -85,7 +85,7 @@ service cloud.firestore {
      * This enforces immutability for critical relational fields on update.
      */
     function userIdIsImmutable() {
-      return request.resource.data.id == resource.data.id;
+      return request.resource.data.id == userIdIsImmutable();
     }
 
     // ----------------------------------------------------------------------
@@ -93,12 +93,11 @@ service cloud.firestore {
     // ----------------------------------------------------------------------
 
     /**
-     * @description Manages user profile documents and cart. Access is restricted to the document owner.
+     * @description Manages user profile documents and subcollections.
      * @path /users/{userId}
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      // Use email check for list operations to avoid using get() in rules.
       allow list: if isAdminByEmail();
       allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
       allow update: if isOwner(userId) && resource != null && userIdIsImmutable();
@@ -111,21 +110,35 @@ service cloud.firestore {
       match /cart/{cartItemId} {
         allow read, write: if isOwner(userId);
       }
+      
+      /**
+       * @description User's own orders. This is more specific than the collection group rule below.
+       * @path /users/{userId}/orders/{orderId}
+       */
+      match /orders/{orderId} {
+        // A user can list and read their own orders.
+        allow list, get: if isOwner(userId);
+        // A user can create an order for themselves.
+        allow create: if isOwner(userId);
+        // A user can update their order (e.g., for feedback, or to cancel).
+        allow update: if isOwner(userId);
+        // A user cannot delete their order history.
+        allow delete: if false;
+      }
     }
     
     /**
-     * @description Secures the 'orders' collection group. This is the primary rule for all 'orders' collections.
-     * `list` is restricted to admins for collection group queries.
-     * `get`, `update`, `delete` are allowed for owners or admins.
-     * `create` is allowed for owners.
+     * @description Secures the 'orders' collection group for admin access.
+     * This rule allows admins to perform collection group queries across all users.
+     * Individual document access is handled by the more specific rule inside /users/{userId} for owners.
      */
     match /{path=**}/orders/{orderId} {
-        // IMPORTANT: The 'list' rule for a collection group query cannot use get() or exists().
-        // We retain the email check here specifically to allow the admin panel to function.
+        // This list rule is ONLY for collection group queries by an admin.
         allow list: if isAdminByEmail();
-        allow get: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-        allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
-        allow update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+        // These rules allow admins to manage any order document directly.
+        // User access is handled by the more specific rule at /users/{userId}/orders/{orderId}.
+        allow get, update, delete: if isAdmin();
+        allow create: if false; // Users must create orders under their own user document.
     }
 
     /**
@@ -184,7 +197,6 @@ service cloud.firestore {
      */
     match /roles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      // Use email check for list operations to avoid using get() in rules.
       allow list: if isAdminByEmail();
       allow create, update: if isAdmin();
       allow delete: if isAdmin() && resource != null;

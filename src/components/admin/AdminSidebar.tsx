@@ -15,7 +15,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLanguage, TranslationKeys } from '@/lib/translations';
+import { useLanguage } from '@/context/LanguageContext';
+import type { TranslationKeys } from '@/lib/translations';
 
 const navItems = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'dashboard' },

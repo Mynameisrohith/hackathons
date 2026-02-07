@@ -149,12 +149,60 @@ export const translations = {
     saveChanges: 'Save Changes',
     saving: 'Saving...',
     orders: 'Orders',
+    dashboard: "Dashboard",
+    liveTracking: "Live Tracking",
+    dealers: "Dealers",
+    fraudMonitoring: "Fraud Monitoring",
+    customers: "Customers",
+    feedbackCenter: "Feedback Center",
 
+    // Admin Dashboard
+    totalRevenue: "Total Revenue",
+    totalOrders: "Total Orders",
+    activeDeliveries: "Active Deliveries",
+    pendingOrders: "Pending Orders",
+    cancelledOrders: "Cancelled Orders",
+    revenueOverview: "Revenue Overview",
+    orderStatus: "Order Status",
+
+    // Admin Analytics
+    monthlyRevenue: "Monthly Revenue",
+    categoryDistribution: "Category Distribution",
+    salesByCity: "Sales by City",
+    topProducts: "Top Selling Products",
+    recentFeedback: "Recent Feedback",
+    noFeedback: "No feedback submitted yet.",
+
+    // Admin Customers
+    customersDesc: "View and manage your customer data.",
+    customer: "Customer",
+    totalSpent: "Total Spent",
+    avgOrderValue: "Avg. Order Value",
+    noCustomers: "No customer data available.",
+
+    // Admin Dealers
+    dealerManagement: "Dealer Management",
+    dealerManagementDesc: "View and manage all registered dealers.",
+    dealer: "Dealer",
+    location: "Location",
+    status: "Status",
+    active: "Active",
+    inactive: "Inactive",
+    noDealers: "No dealers registered yet.",
+
+    // Admin Feedback
+    feedbackCenterDesc: "Review and manage customer feedback for all delivered orders.",
+    noFeedbackDesc: "Customer feedback will appear here once they submit reviews for delivered orders.",
+
+    // Admin Fraud
+    fraudMonitoringDesc: "AI-powered analysis of reviews and orders to detect suspicious activity.",
+    keyConcerns: "Key Concerns",
+    recommendedActions: "Recommended Actions",
+    
     // Admin Analytics
     welcomeAdmin: 'Welcome to your Admin Dashboard!',
     welcomeAdminSubtitle: 'Your analytics dashboard is ready. Add your first product and record a sale to see your business analytics come to life.',
     addProduct: 'Add a Product',
-    // recordSale: 'Record a Sale', // This is now a user flow
     businessHealth: 'Business Health',
     marketTrends: 'Market Trends',
     vsLast7Days: 'vs last 7 days',
@@ -477,6 +525,55 @@ export const translations = {
     saveChanges: 'ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ',
     saving: 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...',
     orders: 'ಆರ್ಡರ್‌ಗಳು',
+    dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    liveTracking: "ಲೈವ್ ಟ್ರ್ಯಾಕಿಂಗ್",
+    dealers: "ಡೀಲರ್‌ಗಳು",
+    fraudMonitoring: "ವಂಚನೆ ಮೇಲ್ವಿಚಾರಣೆ",
+    customers: "ಗ್ರಾಹಕರು",
+    feedbackCenter: "ಪ್ರತಿಕ್ರಿಯೆ ಕೇಂದ್ರ",
+
+    // Admin Dashboard
+    totalRevenue: "ಒಟ್ಟು ಆದಾಯ",
+    activeDeliveries: "ಸಕ್ರಿಯ ವಿತರಣೆಗಳು",
+    pendingOrders: "ಬಾಕಿ ಇರುವ ಆದೇಶಗಳು",
+    cancelledOrders: "ರದ್ದುಗೊಂಡ ಆದೇಶಗಳು",
+    revenueOverview: "ಆದಾಯದ ಅವಲೋಕನ",
+    orderStatus: "ಆದೇಶ ಸ್ಥಿತಿ",
+
+    // Admin Analytics
+    monthlyRevenue: "ಮಾಸಿಕ ಆದಾಯ",
+    categoryDistribution: "ವರ್ಗ ವಿತರಣೆ",
+    salesByCity: "ನಗರವಾರು ಮಾರಾಟ",
+    topProducts: "ಟಾಪ್ ಮಾರಾಟದ ಉತ್ಪನ್ನಗಳು",
+    recentFeedback: "ಇತ್ತೀಚಿನ ಪ್ರತಿಕ್ರಿಯೆ",
+    noFeedback: "ಇನ್ನೂ ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಲಾಗಿಲ್ಲ.",
+
+    // Admin Customers
+    customersDesc: "ನಿಮ್ಮ ಗ್ರಾಹಕರ ಡೇಟಾವನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ನಿರ್ವಹಿಸಿ.",
+    customer: "ಗ್ರಾಹಕ",
+    totalOrders: "ಒಟ್ಟು ಆದೇಶಗಳು",
+    totalSpent: "ಒಟ್ಟು ಖರ್ಚು",
+    avgOrderValue: "ಸರಾಸರಿ ಆರ್ಡರ್ ಮೌಲ್ಯ",
+    noCustomers: "ಯಾವುದೇ ಗ್ರಾಹಕರ ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ.",
+
+    // Admin Dealers
+    dealerManagement: "ಡೀಲರ್ ನಿರ್ವಹಣೆ",
+    dealerManagementDesc: "ಎಲ್ಲಾ ನೋಂದಾಯಿತ ಡೀಲರ್‌ಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ನಿರ್ವಹಿಸಿ.",
+    dealer: "ಡೀಲರ್",
+    location: "ಸ್ಥಳ",
+    status: "ಸ್ಥಿತಿ",
+    active: "ಸಕ್ರಿಯ",
+    inactive: "ನಿಷ್ಕ್ರಿಯ",
+    noDealers: "ಇನ್ನೂ ಯಾವುದೇ ಡೀಲರ್‌ಗಳು ನೋಂದಾಯಿಸಲ್ಪಟ್ಟಿಲ್ಲ.",
+
+    // Admin Feedback
+    feedbackCenterDesc: "ಎಲ್ಲಾ ವಿತರಿಸಿದ ಆದೇಶಗಳಿಗಾಗಿ ಗ್ರಾಹಕರ ಪ್ರತಿಕ್ರಿಯೆಯನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ನಿರ್ವಹಿಸಿ.",
+    noFeedbackDesc: "ವಿತರಿಸಿದ ಆದೇಶಗಳಿಗಾಗಿ ಗ್ರಾಹಕರು ವಿಮರ್ಶೆಗಳನ್ನು ಸಲ್ಲಿಸಿದ ನಂತರ ಗ್ರಾಹಕರ ಪ್ರತಿಕ್ರಿಯೆ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+    
+    // Admin Fraud
+    fraudMonitoringDesc: "ಸಂದೇಹಾಸ್ಪದ ಚಟುವಟಿಕೆಯನ್ನು ಪತ್ತೆಹಚ್ಚಲು ವಿಮರ್ಶೆಗಳು ಮತ್ತು ಆದೇಶಗಳ AI-ಚಾಲಿತ ವಿಶ್ಲೇಷಣೆ.",
+    keyConcerns: "ಪ್ರಮುಖ ಕಳವಳಗಳು",
+    recommendedActions: "ಶಿಫಾರಸು ಮಾಡಲಾದ ಕ್ರಮಗಳು",
 
     // Admin Analytics
     welcomeAdmin: 'ನಿಮ್ಮ ನಿರ್ವಾಹಕ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಸುಸ್ವಾಗತ!',

@@ -3,7 +3,21 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, LayoutDashboard, ShoppingCart, MessageSquareQuote, LogOut, User as UserIcon, Shield, Home, Package } from "lucide-react";
+import { 
+    LayoutGrid, 
+    Package, 
+    Map, 
+    Store,
+    ShieldAlert,
+    BarChart3,
+    Users,
+    Star,
+    Boxes,
+    MessageSquareQuote, 
+    LogOut, 
+    User as UserIcon, 
+    Home 
+} from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -16,7 +30,6 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { RetailSparkIcon } from "@/components/icons";
-import { cn } from "@/lib/utils";
 import { useUser, useAuth, useFirestore } from "@/firebase";
 import { useEffect } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -35,10 +48,15 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/context/LanguageContext";
 
 const menuItems = [
-  { href: "/admin/analytics", labelKey: "analytics", icon: LayoutDashboard },
+  { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutGrid },
   { href: "/admin/orders", labelKey: "orders", icon: Package },
+  { href: "/admin/live-tracking", labelKey: "liveTracking", icon: Map },
+  { href: "/admin/dealers", labelKey: "dealers", icon: Store },
   { href: "/admin/products", labelKey: "products", icon: Boxes },
-  { href: "/admin/sales", labelKey: "sales", icon: ShoppingCart },
+  { href: "/admin/fraud", labelKey: "fraudMonitoring", icon: ShieldAlert },
+  { href: "/admin/analytics", labelKey: "analytics", icon: BarChart3 },
+  { href: "/admin/customers", labelKey: "customers", icon: Users },
+  { href: "/admin/feedback", labelKey: "feedbackCenter", icon: Star },
   { href: "/admin/reviews", labelKey: "reviews", icon: MessageSquareQuote },
 ] as const;
 
@@ -106,6 +124,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
+  
+  useEffect(() => {
+    if (!isAdminLoading && !isAdmin) {
+      toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to access this page." });
+      router.replace('/');
+    }
+  }, [isAdmin, isAdminLoading, router]);
 
   useEffect(() => {
     if (user && firestore) {
@@ -131,18 +156,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [user, firestore]);
 
   const getPageTitle = () => {
-    const allItems = [...menuItems];
-    if (isAdmin) {
-      allItems.push({ href: "/admin/categories", labelKey: "categories", icon: Shield });
-    }
-    if (pathname === '/admin/profile') {
-        return t('profile');
-    }
-    const currentItem = allItems.find(item => pathname.startsWith(item.href));
-    return currentItem ? t(currentItem.labelKey) : "Admin";
+    if (pathname === '/admin/profile') return t('profile');
+    const currentItem = menuItems.find(item => pathname.startsWith(item.href));
+    return currentItem ? t(currentItem.labelKey as any) : "Admin";
   }
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || isAdminLoading || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RetailSparkIcon className="size-12 animate-spin text-primary" />
@@ -159,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="hidden border-r bg-sidebar md:flex"
         >
           <SidebarHeader className="border-b">
-            <Link href="/admin/analytics" className="flex items-center gap-2">
+            <Link href="/admin/dashboard" className="flex items-center gap-2">
               <RetailSparkIcon className="size-8 text-primary" />
               <h1 className="text-xl font-semibold text-primary">RetailSpark</h1>
             </Link>
@@ -183,29 +202,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <SidebarMenuButton
                     asChild
                     isActive={pathname.startsWith(item.href)}
-                    tooltip={{ children: t(item.labelKey), side: "right", align:"center" }}
+                    tooltip={{ children: t(item.labelKey as any), side: "right", align:"center" }}
                   >
                     <Link href={item.href}>
                       <item.icon />
-                      <span>{t(item.labelKey)}</span>
+                      <span>{t(item.labelKey as any)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {!isAdminLoading && isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === "/admin/categories"}
-                    tooltip={{ children: t('categories'), side: "right", align:"center" }}
-                  >
-                    <Link href="/admin/categories">
-                      <Shield />
-                      <span>{t('categories')}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
@@ -225,3 +230,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </SidebarProvider>
   );
 }
+
+/*
+"dashboard": "Dashboard",
+"liveTracking": "Live Tracking",
+"dealers": "Dealers",
+"fraudMonitoring": "Fraud Monitoring",
+"customers": "Customers",
+"feedbackCenter": "Feedback Center"
+*/

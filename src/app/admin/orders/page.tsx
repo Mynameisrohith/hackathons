@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collectionGroup, query, orderBy, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Order, UserProfile } from '@/lib/types';
@@ -17,7 +18,8 @@ import { toast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Package, Check, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertTriangle, Package, Check, Loader2, Info } from 'lucide-react';
 import { sendEmail } from '@/lib/email-client';
 
 const statusColors: { [key in Order['orderStatus']]: string } = {
@@ -46,6 +48,9 @@ function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
         const orderRef = doc(firestore, 'users', order.userId, 'orders', order.id);
         try {
             const updatedOrderData: Partial<Order> = { orderStatus: newStatus, updatedAt: serverTimestamp() as any };
+             if (newStatus === 'Out for Delivery') {
+                updatedOrderData.deliveryStatus = 'Assigned';
+            }
             await updateDoc(orderRef, updatedOrderData);
             
             const emailOrder = { ...order, ...updatedOrderData, updatedAt: new Date() as any };
@@ -90,7 +95,32 @@ function OrderRow({ order, users }: { order: Order, users: UserProfile[] }) {
 
     return (
         <TableRow className={cn(isUpdating && 'opacity-50')}>
-            <TableCell className="font-mono text-xs">{order.id.substring(0, 8)}...</TableCell>
+            <TableCell>
+                 <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon"><Info className="h-4 w-4"/></Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Order Details ({order.id.substring(0,8)}...)</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            {order.items.map(item => (
+                                <div key={item.productId} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <Image src={item.imageUrl} alt={item.productName} width={40} height={40} className="rounded-md"/>
+                                        <div>
+                                            <p className="font-medium">{item.productName}</p>
+                                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                                        </div>
+                                    </div>
+                                    <p>${(item.price * item.quantity).toFixed(2)}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </TableCell>
             <TableCell>{new Date(order.createdAt.seconds * 1000).toLocaleDateString()}</TableCell>
             <TableCell>{order.customerName}</TableCell>
             <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
@@ -166,7 +196,7 @@ export default function AdminOrdersPage() {
     const isLoading = isLoadingOrders || isLoadingUsers;
 
     return (
-        <Card>
+        <Card className="card-glass">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="flex items-center gap-2"><Package /> {t('orders')}</CardTitle>
@@ -188,7 +218,7 @@ export default function AdminOrdersPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Order ID</TableHead>
+                            <TableHead>Details</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Customer</TableHead>
                             <TableHead className="text-right">Amount</TableHead>

@@ -125,10 +125,11 @@ service cloud.firestore {
 
     /**
      * @description Manages administrator roles. Only other admins can view or modify the list of admins.
+     * Users can check their own admin status.
      * @path /roles_admin/{userId}
      */
     match /roles_admin/{userId} {
-      allow get: if isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isAdmin();
       allow update: if false;

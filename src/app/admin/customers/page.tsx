@@ -4,16 +4,20 @@
 import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAdmin } from '@/hooks/useAdmin';
-import { collection, collectionGroup, query } from 'firebase/firestore';
-import type { Order, UserProfile } from '@/lib/types';
+import { collectionGroup, query } from 'firebase/firestore';
+import type { Order } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User as UserIcon } from 'lucide-react';
 
-interface CustomerStat extends UserProfile {
+interface CustomerStat {
+    id: string;
+    displayName: string;
+    email: string;
+    photoURL?: string;
     totalOrders: number;
     totalSpent: number;
     avgOrderValue: number;
@@ -24,38 +28,47 @@ export default function AdminCustomersPage() {
     const firestore = useFirestore();
     const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-    const usersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, 'users')) : null, [firestore, isAdmin]);
     const ordersQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collectionGroup(firestore, 'orders')) : null, [firestore, isAdmin]);
-
-    const { data: users, isLoading: loadingUsers } = useCollection<UserProfile>(usersQuery);
     const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
 
     const customerStats: CustomerStat[] | null = useMemo(() => {
-        if (!users || !orders) return null;
+        if (!orders) return null;
 
-        const orderMap = new Map<string, Order[]>();
-        orders.forEach(order => {
-            if (!orderMap.has(order.userId)) {
-                orderMap.set(order.userId, []);
+        const statsMap = new Map<string, {
+            userId: string;
+            displayName: string;
+            email: string;
+            totalOrders: number;
+            totalSpent: number;
+        }>();
+
+        for (const order of orders) {
+            let userStat = statsMap.get(order.userId);
+            if (!userStat) {
+                userStat = {
+                    userId: order.userId,
+                    displayName: order.customerName,
+                    email: order.userEmail,
+                    totalOrders: 0,
+                    totalSpent: 0,
+                };
             }
-            orderMap.get(order.userId)!.push(order);
-        });
+            userStat.totalOrders += 1;
+            userStat.totalSpent += order.totalAmount;
+            statsMap.set(order.userId, userStat);
+        }
 
-        return users.map(user => {
-            const userOrders = orderMap.get(user.id) || [];
-            const totalOrders = userOrders.length;
-            const totalSpent = userOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-            const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
-            return {
-                ...user,
-                totalOrders,
-                totalSpent,
-                avgOrderValue,
-            };
-        }).sort((a,b) => b.totalSpent - a.totalSpent);
-    }, [users, orders]);
+        return Array.from(statsMap.values()).map(stat => ({
+            id: stat.userId,
+            displayName: stat.displayName,
+            email: stat.email,
+            totalOrders: stat.totalOrders,
+            totalSpent: stat.totalSpent,
+            avgOrderValue: stat.totalOrders > 0 ? stat.totalSpent / stat.totalOrders : 0,
+        })).sort((a, b) => b.totalSpent - a.totalSpent);
+    }, [orders]);
 
-    const isLoading = isAdminLoading || loadingUsers || loadingOrders;
+    const isLoading = isAdminLoading || loadingOrders;
 
     return (
         <Card className="card-glass">
@@ -89,7 +102,6 @@ export default function AdminCustomersPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={customer.photoURL} alt={customer.displayName} />
                                                 <AvatarFallback>
                                                     {customer.displayName ? customer.displayName.charAt(0).toUpperCase() : <UserIcon />}
                                                 </AvatarFallback>
@@ -116,13 +128,3 @@ export default function AdminCustomersPage() {
         </Card>
     );
 }
-
-/*
-"customers": "Customers",
-"customersDesc": "View and manage your customer data.",
-"customer": "Customer",
-"totalOrders": "Total Orders",
-"totalSpent": "Total Spent",
-"avgOrderValue": "Avg. Order Value",
-"noCustomers": "No customer data available."
-*/

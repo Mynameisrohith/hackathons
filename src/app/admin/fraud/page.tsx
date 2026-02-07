@@ -212,7 +212,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
     );
 };
 
-export default function ReviewsPage() {
+export default function FraudPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const firestore = useFirestore();

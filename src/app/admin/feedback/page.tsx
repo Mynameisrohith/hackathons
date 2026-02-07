@@ -4,33 +4,32 @@
 import React from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAdmin } from '@/hooks/useAdmin';
-import { collectionGroup, query, where, orderBy } from 'firebase/firestore';
-import type { Order } from '@/lib/types';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import type { Review } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StarRating } from '@/components/StarRating';
 import { AlertTriangle } from 'lucide-react';
 
-function FeedbackCard({ order }: { order: Order }) {
+function FeedbackCard({ review }: { review: Review }) {
     return (
         <Card className="card-glass animate-card-enter">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-lg">{order.customerName}</CardTitle>
-                        <CardDescription>Order: {order.id}</CardDescription>
+                        <CardTitle className="text-lg">{review.productName}</CardTitle>
+                        <CardDescription>User: {review.userId.substring(0,8)}...</CardDescription>
                     </div>
-                    <StarRating rating={order.rating || 0} />
+                    <StarRating rating={review.rating || 0} />
                 </div>
             </CardHeader>
             <CardContent>
-                <blockquote className="border-l-2 pl-6 italic">
-                    {order.feedback}
+                <blockquote className="border-l-2 border-primary pl-6 italic">
+                    {review.comment}
                 </blockquote>
                  <div className="text-xs text-muted-foreground mt-4">
-                    <p>Dealer: {order.dealerName}</p>
-                    <p>Date: {order.updatedAt.toDate().toLocaleDateString()}</p>
+                    <p>Date: {review.createdAt.toDate().toLocaleDateString()}</p>
                 </div>
             </CardContent>
         </Card>
@@ -45,14 +44,14 @@ export default function AdminFeedbackPage() {
     const feedbackQuery = useMemoFirebase(() => {
         if (!firestore || !isAdmin) return null;
         return query(
-            collectionGroup(firestore, 'orders'),
-            where('rating', '>', 0),
+            collection(firestore, 'reviews'),
+            where('rating', '<', 3), // Example: filter for low ratings
             orderBy('rating', 'asc'),
-            orderBy('updatedAt', 'desc')
+            orderBy('createdAt', 'desc')
         );
     }, [firestore, isAdmin]);
 
-    const { data: ordersWithFeedback, isLoading: isLoadingFeedback } = useCollection<Order>(feedbackQuery);
+    const { data: lowRatedReviews, isLoading: isLoadingFeedback } = useCollection<Review>(feedbackQuery);
 
     const isLoading = isAdminLoading || isLoadingFeedback;
 
@@ -68,10 +67,10 @@ export default function AdminFeedbackPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                 </div>
-            ) : ordersWithFeedback && ordersWithFeedback.length > 0 ? (
+            ) : lowRatedReviews && lowRatedReviews.length > 0 ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {ordersWithFeedback.map(order => (
-                        <FeedbackCard key={order.id} order={order} />
+                    {lowRatedReviews.map(review => (
+                        <FeedbackCard key={review.id} review={review} />
                     ))}
                 </div>
             ) : (
@@ -86,9 +85,3 @@ export default function AdminFeedbackPage() {
         </div>
     );
 }
-/*
-"feedbackCenter": "Feedback Center",
-"feedbackCenterDesc": "Review and manage customer feedback for all delivered orders.",
-"noFeedback": "No Feedback Yet",
-"noFeedbackDesc": "Customer feedback will appear here once they submit reviews for delivered orders."
-*/

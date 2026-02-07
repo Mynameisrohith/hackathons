@@ -11,13 +11,12 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
   Firestore,
 } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import {
   Card,
   CardContent,
@@ -235,10 +234,6 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
   const { t } = useLanguage();
 
   const handleDelete = async () => {
-    if (!isAdmin) {
-        toast({ variant: "destructive", title: "Unauthorized", description: "Only admins can delete products." });
-        return;
-    }
     try {
       await deleteDoc(doc(firestore, "products", product.id));
       toast({
@@ -256,10 +251,6 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
   };
   
   const handleUpdateStock = async () => {
-    if (!isAdmin) {
-        toast({ variant: "destructive", title: "Unauthorized", description: "Only admins can update stock." });
-        return;
-    }
     if (stock === product.stock) return;
     setIsUpdating(true);
     try {
@@ -288,48 +279,42 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
       <TableCell>{categoryName}</TableCell>
       <TableCell>${product.price.toFixed(2)}</TableCell>
       <TableCell>
-        {isAdmin ? (
-            <div className="flex items-center gap-2">
-                <Input 
-                    type="number"
-                    value={stock}
-                    onChange={(e) => setStock(Number(e.target.value))}
-                    className="h-8 w-20"
-                    disabled={isUpdating}
-                />
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleUpdateStock} disabled={isUpdating || stock === product.stock}>
-                    <Save className="h-4 w-4" />
-                </Button>
-            </div>
-        ) : (
-            <span>{stock}</span>
-        )}
+        <div className="flex items-center gap-2">
+            <Input 
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(Number(e.target.value))}
+                className="h-8 w-20"
+                disabled={isUpdating}
+            />
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleUpdateStock} disabled={isUpdating || stock === product.stock}>
+                <Save className="h-4 w-4" />
+            </Button>
+        </div>
       </TableCell>
       <TableCell>
         {product.createdAt?.toDate().toLocaleDateString()}
       </TableCell>
       <TableCell className="text-right">
-        {isAdmin && (
-            <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                <Trash2 className="h-4 w-4" />
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>{t('deleteConfirm')}</AlertDialogTitle>
-                <AlertDialogDescription>
-                    {t('deleteCategoryWarning').replace('{name}', product.name)}
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-            </AlertDialog>
-        )}
+        <AlertDialog>
+        <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+            <Trash2 className="h-4 w-4" />
+            </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirm')}</AlertDialogTitle>
+            <AlertDialogDescription>
+                {t('deleteCategoryWarning').replace('{name}', product.name)}
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
       </TableCell>
     </TableRow>
   );
@@ -337,69 +322,37 @@ function ProductRow({ product, firestore, isAdmin, categories }: { product: Prod
 
 export default function ProductsPage() {
   const { t } = useLanguage();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const firestore = useFirestore();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-  useEffect(() => {
-    if (!firestore || !isAdmin) {
-        setIsLoading(false);
-        return;
-    };
-    const productsQuery = query(collection(firestore, "products"));
-    const categoriesQuery = query(collection(firestore, "categories"));
-    
-    let productsLoaded = false;
-    let categoriesLoaded = false;
+  const productsQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, "products")) : null, [firestore, isAdmin]);
+  const categoriesQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, "categories")) : null, [firestore, isAdmin]);
+  
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesQuery);
 
-    const unsubProducts = onSnapshot(
-      productsQuery,
-      (querySnapshot) => {
-        const productsData = querySnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Product)
-        );
-        setProducts(productsData);
-        productsLoaded = true;
-        if(categoriesLoaded) setIsLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching products:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not fetch products." });
-        productsLoaded = true;
-        if(categoriesLoaded) setIsLoading(false);
-      }
-    );
+  const isLoading = isAdminLoading || isLoadingProducts || isLoadingCategories;
 
-    const unsubCategories = onSnapshot(
-        categoriesQuery,
-        (querySnapshot) => {
-          const categoriesData = querySnapshot.docs.map(
-            (doc) => ({ id: doc.id, ...doc.data() } as Category)
-          );
-          setCategories(categoriesData);
-          categoriesLoaded = true;
-          if(productsLoaded) setIsLoading(false);
-        },
-        (error) => {
-          console.error("Error fetching categories:", error);
-          toast({ variant: "destructive", title: "Error", description: "Could not fetch categories." });
-          categoriesLoaded = true;
-          if(productsLoaded) setIsLoading(false);
-        }
-      );
-
-    return () => {
-        unsubProducts();
-        unsubCategories();
-    };
-  }, [firestore, isAdmin]);
+  if (isLoading || !isAdmin) {
+      return (
+         <div className="grid gap-6">
+            <Card className="card-glass">
+                <CardHeader>
+                    <Skeleton className="h-8 w-40" />
+                    <Skeleton className="h-4 w-72 mt-2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-96 w-full" />
+                </CardContent>
+            </Card>
+         </div>
+      )
+  }
 
   return (
     <div className="grid gap-6">
-      <Card>
+      <Card className="card-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{t('productList')}</CardTitle>
@@ -415,7 +368,7 @@ export default function ProductsPage() {
               <DialogHeader>
                   <DialogTitle>{t('addProductTitle')}</DialogTitle>
               </DialogHeader>
-              {firestore && <AddProductForm setOpen={setFormOpen} firestore={firestore} categories={categories} />}
+              {firestore && categories && <AddProductForm setOpen={setFormOpen} firestore={firestore} categories={categories} />}
               </DialogContent>
           </Dialog>
         </CardHeader>
@@ -433,19 +386,7 @@ export default function ProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-10 w-10 rounded-md" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
-                  </TableRow>
-                ))
-              ) : products.length > 0 ? (
+              {products && products.length > 0 && categories ? (
                 products.map((product) => (
                   <ProductRow key={product.id} product={product} firestore={firestore!} isAdmin={isAdmin} categories={categories} />
                 ))

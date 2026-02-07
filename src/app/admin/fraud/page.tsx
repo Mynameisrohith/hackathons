@@ -4,15 +4,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   collection,
-  onSnapshot,
   query,
   Firestore,
-  collectionGroup,
 } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useAdmin } from "@/hooks/useAdmin";
 import {
-  Product,
   Review,
   AIFraudReport,
 } from "@/lib/types";
@@ -69,8 +66,6 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
     }
 
     const { fraudScore, riskLevel, suspiciousReviews, suspiciousUsers } = metrics;
-    const riskColor = riskLevel === 'High' ? 'red' : riskLevel === 'Medium' ? 'amber' : 'green';
-    
     const circumference = 2 * Math.PI * 55; // radius = 55
     const offset = circumference - (fraudScore / 100) * circumference;
 
@@ -103,7 +98,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                                 cx="60"
                                 cy="60"
                                 r="55"
-                                stroke={`url(#gradient-${riskColor})`}
+                                stroke={riskLevel === 'High' ? 'url(#gradient-red)' : riskLevel === 'Medium' ? 'url(#gradient-amber)' : 'url(#gradient-green)'}
                                 strokeWidth="10"
                                 fill="transparent"
                                 strokeDasharray={circumference}
@@ -111,7 +106,7 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
                                 strokeLinecap="round"
                                 className="transition-all duration-1000 ease-out"
                             />
-                            <defs>
+                             <defs>
                                 <linearGradient id="gradient-red"><stop stopColor="#f87171" /><stop offset="1" stopColor="#b91c1c" /></linearGradient>
                                 <linearGradient id="gradient-amber"><stop stopColor="#fbbf24" /><stop offset="1" stopColor="#b45309" /></linearGradient>
                                 <linearGradient id="gradient-green"><stop stopColor="#4ade80" /><stop offset="1" stopColor="#15803d" /></linearGradient>
@@ -213,107 +208,96 @@ const FraudDashboard = ({ metrics, isLoading }: { metrics: FraudMetrics | null, 
 };
 
 export default function FraudPage() {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const firestore = useFirestore();
-  const { isAdmin } = useAdmin();
+    const firestore = useFirestore();
+    const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-  useEffect(() => {
-    if (!firestore || !isAdmin) {
-        setIsLoading(false);
-        return;
-    };
-
-    const reviewsQuery = query(collection(firestore, "reviews"));
+    const reviewsQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, "reviews")) : null, [firestore, isAdmin]);
+    const { data: reviews, isLoading: isLoadingReviews } = useCollection<Review>(reviewsQuery);
     
-    const unsubReviews = onSnapshot(reviewsQuery, (snapshot) => {
-        setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
-        setIsLoading(false);
-    }, (error) => {
-        console.error("Error fetching reviews:", error);
-        setIsLoading(false);
-    });
+    const isLoading = isAdminLoading || isLoadingReviews;
 
-    return () => {
-      unsubReviews();
-    };
-  }, [firestore, isAdmin]);
+    const fraudMetrics: FraudMetrics | null = useMemo(() => {
+        if (!reviews || reviews.length < 5) return null;
 
-  const fraudMetrics: FraudMetrics | null = useMemo(() => {
-      if (reviews.length < 5) return null;
+        const now = new Date();
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        const todayStart = new Date(now.setHours(0,0,0,0));
 
-      const now = new Date();
-      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-      const todayStart = new Date(now.setHours(0,0,0,0));
+        const commentsCount: { [key: string]: number } = {};
+        const userReviews: { [key: string]: Review[] } = {};
+        
+        reviews.forEach(r => {
+            commentsCount[r.comment] = (commentsCount[r.comment] || 0) + 1;
+            if (!userReviews[r.userId]) userReviews[r.userId] = [];
+            userReviews[r.userId].push(r);
+        });
 
-      const commentsCount: { [key: string]: number } = {};
-      const userReviews: { [key: string]: Review[] } = {};
-      
-      reviews.forEach(r => {
-          commentsCount[r.comment] = (commentsCount[r.comment] || 0) + 1;
-          if (!userReviews[r.userId]) userReviews[r.userId] = [];
-          userReviews[r.userId].push(r);
-      });
+        const analyzedReviews = reviews.map(review => {
+            const userRevs = userReviews[review.userId];
+            const rapidReviews = userRevs.filter(r => r.createdAt.toDate() > oneHourAgo);
+            return {
+                ...review,
+                isDuplicateComment: commentsCount[review.comment] > 1,
+                isShortComment: review.comment.length < 10,
+                isRapidReview: rapidReviews.length > 1 && rapidReviews.some(r => r.id === review.id),
+            };
+        });
 
-      const analyzedReviews = reviews.map(review => {
-          const userRevs = userReviews[review.userId];
-          const rapidReviews = userRevs.filter(r => r.createdAt.toDate() > oneHourAgo);
-          return {
-            ...review,
-            isDuplicateComment: commentsCount[review.comment] > 1,
-            isShortComment: review.comment.length < 10,
-            isRapidReview: rapidReviews.length > 1 && rapidReviews.some(r => r.id === review.id),
-          };
-      });
+        let fraudScore = 0;
+        
+        const duplicateComments = analyzedReviews.filter(r => r.isDuplicateComment).length;
+        if (duplicateComments > 1) fraudScore += 20;
 
-      let fraudScore = 0;
-      
-      const duplicateComments = analyzedReviews.filter(r => r.isDuplicateComment).length;
-      if (duplicateComments > 1) fraudScore += 20;
+        const shortComments = analyzedReviews.filter(r => r.isShortComment).length;
+        if (shortComments / reviews.length > 0.3) fraudScore += 20;
+        
+        const rapidReviews = analyzedReviews.filter(r => r.isRapidReview).length;
+        if (rapidReviews > 0) fraudScore += 20;
 
-      const shortComments = analyzedReviews.filter(r => r.isShortComment).length;
-      if (shortComments / reviews.length > 0.3) fraudScore += 20;
-      
-      const rapidReviews = analyzedReviews.filter(r => r.isRapidReview).length;
-      if (rapidReviews > 0) fraudScore += 20;
+        const todayReviews = reviews.filter(r => r.createdAt.toDate() > todayStart);
+        const fiveStarToday = todayReviews.filter(r => r.rating === 5).length;
+        const ratingSpike = todayReviews.length > 5 && (fiveStarToday / todayReviews.length) >= 0.8;
+        if (ratingSpike) fraudScore += 20;
+        
+        let avgReviewsPerDay = 0;
+        if(reviews.length > 1) {
+             const oldestReview = reviews.reduce((oldest, current) => current.createdAt.toDate() < oldest.createdAt.toDate() ? current : oldest);
+             const newestReview = reviews.reduce((newest, current) => current.createdAt.toDate() > newest.createdAt.toDate() ? current : newest);
+             const dayDiff = (newestReview.createdAt.toDate().getTime() - oldestReview.createdAt.toDate().getTime()) / (1000 * 3600 * 24);
+             avgReviewsPerDay = reviews.length / (dayDiff + 1);
+        }
 
-      const todayReviews = reviews.filter(r => r.createdAt.toDate() > todayStart);
-      const fiveStarToday = todayReviews.filter(r => r.rating === 5).length;
-      const ratingSpike = todayReviews.length > 5 && (fiveStarToday / todayReviews.length) >= 0.8;
-      if (ratingSpike) fraudScore += 20;
+        const abnormalFrequency = todayReviews.length > avgReviewsPerDay * 3 && todayReviews.length > 5;
+        if (abnormalFrequency) fraudScore += 20;
 
-      const avgReviewsPerDay = reviews.length / ((reviews[reviews.length-1].createdAt.toDate().getTime() - reviews[0].createdAt.toDate().getTime()) / (1000 * 3600 * 24) + 1);
-      const abnormalFrequency = todayReviews.length > avgReviewsPerDay * 3 && todayReviews.length > 5;
-      if (abnormalFrequency) fraudScore += 20;
+        fraudScore = Math.min(100, fraudScore);
+        let riskLevel: FraudMetrics['riskLevel'] = 'Low';
+        if (fraudScore > 60) riskLevel = 'High';
+        else if (fraudScore > 30) riskLevel = 'Medium';
+        
+        const suspiciousReviews = analyzedReviews.filter(r => r.isDuplicateComment || r.isShortComment || r.isRapidReview).sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+        
+        const suspiciousUsers = Object.entries(userReviews)
+            .map(([userId, revs]) => ({ userId, reviewCount: revs.length, reviews: revs }))
+            .filter(u => u.reviews.some(r => analyzedReviews.find(ar => ar.id === r.id)?.isRapidReview) || u.reviewCount > 5)
+            .sort((a, b) => b.reviewCount - a.reviewCount)
+            .slice(0,5);
 
-      fraudScore = Math.min(100, fraudScore);
-      let riskLevel: FraudMetrics['riskLevel'] = 'Low';
-      if (fraudScore > 60) riskLevel = 'High';
-      else if (fraudScore > 30) riskLevel = 'Medium';
-      
-      const suspiciousReviews = analyzedReviews.filter(r => r.isDuplicateComment || r.isShortComment || r.isRapidReview).sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
-      
-      const suspiciousUsers = Object.entries(userReviews)
-        .map(([userId, revs]) => ({ userId, reviewCount: revs.length, reviews: revs }))
-        .filter(u => u.reviews.some(r => analyzedReviews.find(ar => ar.id === r.id)?.isRapidReview) || u.reviewCount > 5)
-        .sort((a, b) => b.reviewCount - a.reviewCount)
-        .slice(0,5);
+        return {
+            fraudScore,
+            riskLevel,
+            suspiciousReviews,
+            suspiciousUsers,
+            analysis: {
+                duplicateComments,
+                ratingSpike,
+                shortComments,
+                rapidReviews,
+                abnormalFrequency
+            }
+        };
 
-      return {
-          fraudScore,
-          riskLevel,
-          suspiciousReviews,
-          suspiciousUsers,
-          analysis: {
-              duplicateComments,
-              ratingSpike,
-              shortComments,
-              rapidReviews,
-              abnormalFrequency
-          }
-      };
-
-  }, [reviews]);
+    }, [reviews]);
 
 
   return (
@@ -322,10 +306,3 @@ export default function FraudPage() {
     </div>
   );
 }
-
-/*
-"fraudMonitoring": "Fraud Monitoring",
-"fraudMonitoringDesc": "AI-powered analysis of reviews and orders to detect suspicious activity.",
-"keyConcerns": "Key Concerns",
-"recommendedActions": "Recommended Actions",
-*/

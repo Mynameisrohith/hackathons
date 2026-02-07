@@ -1,19 +1,18 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   collection,
   addDoc,
-  onSnapshot,
   query,
   serverTimestamp,
   Firestore,
 } from "firebase/firestore";
-import { useFirestore, useUser } from "@/firebase";
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { useAdmin } from "@/hooks/useAdmin";
 import {
   Product,
@@ -61,10 +60,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import {
-  Star,
-  PlusCircle,
-} from "lucide-react";
+import { Star, PlusCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 
@@ -179,52 +175,43 @@ function AddReviewForm({ products, setOpen, firestore, userId }: { products: Pro
 
 export default function ReviewsPage() {
   const { t } = useLanguage();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const firestore = useFirestore();
   const { user } = useUser();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
 
-  useEffect(() => {
-    if (!firestore || !isAdmin) {
-        setIsLoading(false);
-        return;
-    };
+  const productsQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, "products")) : null, [firestore, isAdmin]);
+  const reviewsQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, "reviews")) : null, [firestore, isAdmin]);
 
-    const productsQuery = query(collection(firestore, "products"));
-    const reviewsQuery = query(collection(firestore, "reviews"));
-    
-    let productsLoaded = false;
-    let reviewsLoaded = false;
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
+  const { data: reviews, isLoading: isLoadingReviews } = useCollection<Review>(reviewsQuery);
 
-    const unsubProducts = onSnapshot(productsQuery, (snapshot) => {
-        setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
-        productsLoaded = true;
-        if (reviewsLoaded) setIsLoading(false);
-    }, (error) => {
-        console.error("Error fetching products:", error);
-        productsLoaded = true;
-        if (reviewsLoaded) setIsLoading(false);
-    });
-    
-    const unsubReviews = onSnapshot(reviewsQuery, (snapshot) => {
-        setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
-        reviewsLoaded = true;
-        if (productsLoaded) setIsLoading(false);
-    }, (error) => {
-        console.error("Error fetching reviews:", error);
-        reviewsLoaded = true;
-        if (productsLoaded) setIsLoading(false);
-    });
-
-    return () => {
-      unsubProducts();
-      unsubReviews();
-    };
-  }, [firestore, isAdmin]);
-
+  const isLoading = isAdminLoading || isLoadingProducts || isLoadingReviews;
+  
+  if (isLoading || !isAdmin) {
+    return (
+        <div className="grid gap-6 md:grid-cols-3">
+             <Card className="md:col-span-1 card-glass">
+                <CardHeader>
+                    <Skeleton className="h-7 w-40" />
+                    <Skeleton className="h-4 w-64 mt-2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-10 w-full"/>
+                </CardContent>
+             </Card>
+             <Card className="md:col-span-2 card-glass">
+                <CardHeader>
+                    <Skeleton className="h-7 w-40" />
+                    <Skeleton className="h-4 w-56 mt-2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-80 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
@@ -234,14 +221,14 @@ export default function ReviewsPage() {
         <CardDescription>{t('submitReviewDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-        {isLoading || !user || !firestore ? <Skeleton className="h-64 w-full"/> : (
+        { !user || !firestore ? <Skeleton className="h-10 w-full"/> : (
             <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
                 <DialogTrigger asChild>
                     <Button className="w-full"><PlusCircle className="mr-2"/>{t('addYourReview')}</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader><DialogTitle>{t('newReview')}</DialogTitle></DialogHeader>
-                    <AddReviewForm products={products} setOpen={setFormOpen} firestore={firestore} userId={user.uid} />
+                    {products && <AddReviewForm products={products} setOpen={setFormOpen} firestore={firestore} userId={user.uid} />}
                 </DialogContent>
             </Dialog>
         )}
@@ -263,16 +250,7 @@ export default function ReviewsPage() {
             </TableRow>
             </TableHeader>
             <TableBody>
-            {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                </TableRow>
-                ))
-            ) : reviews.length > 0 ? (
+            {reviews && reviews.length > 0 ? (
                 reviews.slice(0, 10).map((review) => (
                 <TableRow key={review.id} className="animate-card-enter">
                     <TableCell>{review.productName}</TableCell>

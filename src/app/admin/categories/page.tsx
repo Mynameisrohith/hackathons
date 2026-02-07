@@ -11,12 +11,11 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  onSnapshot,
   query,
   serverTimestamp,
   Firestore,
 } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import {
   Card,
   CardContent,
@@ -65,7 +64,6 @@ import type { Category } from "@/lib/types";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -222,55 +220,28 @@ function CategoryRow({ category, firestore }: { category: Category, firestore: F
 
 export default function CategoriesPage() {
   const { t } = useLanguage();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const firestore = useFirestore();
   const { isAdmin, isLoading: isAdminLoading } = useAdmin();
-  const router = useRouter();
+  
+  const categoriesQuery = useMemoFirebase(() => (firestore && isAdmin) ? query(collection(firestore, "categories")) : null, [firestore, isAdmin]);
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesQuery);
 
-  useEffect(() => {
-    if (!isAdminLoading && !isAdmin) {
-      toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to access this page." });
-      router.replace('/admin/analytics');
-    }
-  }, [isAdmin, isAdminLoading, router]);
+  const isLoading = isAdminLoading || isLoadingCategories;
 
-  useEffect(() => {
-    if (!firestore || !isAdmin) return;
-    const q = query(collection(firestore, "categories"));
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const categoriesData = querySnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Category)
-        );
-        setCategories(categoriesData);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching categories:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not fetch categories.",
-        });
-        setIsLoading(false);
-      }
-    );
-    return () => unsubscribe();
-  }, [firestore, isAdmin]);
-
-  if (isAdminLoading || !isAdmin) {
+  if (isLoading || !isAdmin) {
     return (
       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
+        <Card className="card-glass">
+          <CardHeader className="flex flex-row items-center justify-between">
+             <div>
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64 mt-2" />
+             </div>
+            <Skeleton className="h-10 w-32" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-64 w-full" />
           </CardContent>
         </Card>
       </div>
@@ -279,7 +250,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="grid gap-6">
-      <Card>
+      <Card className="card-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{t('productCategories')}</CardTitle>
@@ -321,7 +292,7 @@ export default function CategoriesPage() {
                     <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
                   </TableRow>
                 ))
-              ) : categories.length > 0 ? (
+              ) : categories && categories.length > 0 ? (
                 categories.map((category) => (
                   <CategoryRow key={category.id} category={category} firestore={firestore!} />
                 ))

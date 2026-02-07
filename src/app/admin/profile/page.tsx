@@ -70,10 +70,10 @@ export default function ProfilePage() {
 
   const isLoading = isUserLoading || isProfileLoading || isAdminLoading;
 
-  if (isLoading) {
+  if (isLoading || !isAdmin) {
     return (
       <div className="flex justify-center">
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full max-w-2xl card-glass">
           <CardHeader className="flex flex-col items-center text-center">
             <Skeleton className="h-24 w-24 rounded-full" />
             <Skeleton className="h-6 w-48 mt-4" />

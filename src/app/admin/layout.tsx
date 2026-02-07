@@ -16,7 +16,9 @@ import {
     MessageSquareQuote, 
     LogOut, 
     User as UserIcon, 
-    Home 
+    Home,
+    Settings,
+    Building2
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -47,6 +49,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "@/hooks/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const menuItems = [
   { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutGrid },
@@ -54,6 +57,7 @@ const menuItems = [
   { href: "/admin/live-tracking", labelKey: "liveTracking", icon: Map },
   { href: "/admin/dealers", labelKey: "dealers", icon: Store },
   { href: "/admin/products", labelKey: "products", icon: Boxes },
+  { href: "/admin/categories", labelKey: "categories", icon: Building2 },
   { href: "/admin/fraud", labelKey: "fraudMonitoring", icon: ShieldAlert },
   { href: "/admin/analytics", labelKey: "analytics", icon: BarChart3 },
   { href: "/admin/customers", labelKey: "customers", icon: Users },
@@ -112,6 +116,20 @@ function UserNav() {
     );
 }
 
+function AccessDenied() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-background">
+      <Alert variant="destructive" className="max-w-md">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Access Denied</AlertTitle>
+        <AlertDescription>
+          You do not have the required permissions to view this page. Please contact an administrator if you believe this is an error.
+        </AlertDescription>
+      </Alert>
+    </div>
+  )
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
@@ -125,34 +143,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
-  
-  useEffect(() => {
-    if (!isAdminLoading && !isAdmin) {
-      toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to access this page." });
-      router.replace('/');
-    }
-  }, [isAdmin, isAdminLoading, router]);
 
   useEffect(() => {
     if (user && firestore) {
       const userDocRef = doc(firestore, "users", user.uid);
-      const checkAndCreateProfile = async () => {
-        const docSnap = await getDoc(userDocRef);
+      getDoc(userDocRef).then(docSnap => {
         if (!docSnap.exists()) {
-          try {
-            await setDoc(userDocRef, {
-              id: user.uid,
-              displayName: user.displayName || "New User",
-              email: user.email,
-              photoURL: user.photoURL || "",
-              creationTime: serverTimestamp(),
-            });
-          } catch (error) {
-            console.error("Error creating user profile:", error);
-          }
+          setDoc(userDocRef, {
+            id: user.uid,
+            displayName: user.displayName || "New User",
+            email: user.email,
+            photoURL: user.photoURL || "",
+            creationTime: serverTimestamp(),
+          }).catch(error => console.error("Error creating user profile:", error));
         }
-      };
-      checkAndCreateProfile();
+      });
     }
   }, [user, firestore]);
 
@@ -162,12 +167,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return currentItem ? t(currentItem.labelKey as any) : "Admin";
   }
 
-  if (isUserLoading || isAdminLoading || !isAdmin) {
+  const isLoading = isUserLoading || isAdminLoading;
+
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <RetailSparkIcon className="size-12 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return <AccessDenied />;
   }
 
   return (
@@ -231,12 +242,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </SidebarProvider>
   );
 }
-
-/*
-"dashboard": "Dashboard",
-"liveTracking": "Live Tracking",
-"dealers": "Dealers",
-"fraudMonitoring": "Fraud Monitoring",
-"customers": "Customers",
-"feedbackCenter": "Feedback Center"
-*/

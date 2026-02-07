@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useAdmin } from '@/hooks/useAdmin';
-import { collection, query, doc, updateDoc, writeBatch, collectionGroup } from 'firebase/firestore';
+import { collection, query, doc, updateDoc, collectionGroup } from 'firebase/firestore';
 import type { Order, Store } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +13,6 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Building } from 'lucide-react';
 
 interface DealerStat extends Store {
     totalOrders: number;
@@ -69,6 +68,20 @@ export default function AdminDealersPage() {
 
     const isLoading = isAdminLoading || loadingStores || loadingOrders;
 
+    if (isLoading || !isAdmin) {
+        return (
+            <Card className="card-glass">
+                <CardHeader>
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-4 w-64 mt-2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-64 w-full" />
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
         <Card className="card-glass">
             <CardHeader>
@@ -88,18 +101,7 @@ export default function AdminDealersPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                         {isLoading ? (
-                            [...Array(3)].map((_, i) => (
-                                <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                                    <TableCell><Skeleton className="h-6 w-10" /></TableCell>
-                                </TableRow>
-                            ))
-                        ) : dealerStats && dealerStats.length > 0 ? (
+                         {dealerStats && dealerStats.length > 0 ? (
                             dealerStats.map(dealer => (
                                 <TableRow key={dealer.id}>
                                     <TableCell className="font-medium">{dealer.name}</TableCell>
@@ -130,14 +132,3 @@ export default function AdminDealersPage() {
         </Card>
     );
 }
-
-/*
-"dealerManagement": "Dealer Management",
-"dealerManagementDesc": "View and manage all registered dealers.",
-"dealer": "Dealer",
-"location": "Location",
-"status": "Status",
-"active": "Active",
-"inactive": "Inactive",
-"noDealers": "No dealers registered yet."
-*/

@@ -8,7 +8,7 @@ import { collection, collectionGroup, query, where } from 'firebase/firestore';
 import type { Order, Product, Sale, Review } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { RevenueChart, CategoryDistributionChart, SalesByCityChart } from '@/components/admin/charts';
+import { RevenueChart, CategoryDistributionChart } from '@/components/admin/charts';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -54,12 +54,6 @@ const useAnalyticsData = () => {
             name: cat.name,
             value: categoryCounts[cat.id] || 0,
         }));
-
-        const salesByCity = orders.reduce((acc, order) => {
-            const city = order.city || 'Unknown';
-            acc[city] = (acc[city] || 0) + order.totalAmount;
-            return acc;
-        }, {} as { [key: string]: number });
         
         const topProducts = [...products]
             .sort((a, b) => b.stock - a.stock) // As a proxy for sales for now
@@ -71,18 +65,33 @@ const useAnalyticsData = () => {
             .slice(0, 5);
             
 
-        return { monthlyRevenue, categoryDistribution, salesByCity, topProducts, recentReviews };
+        return { monthlyRevenue, categoryDistribution, topProducts, recentReviews };
 
     }, [orders, products, categories, reviews, isLoading]);
 
-    return { analytics, isLoading };
+    return { analytics, isLoading, isAdmin };
 }
 
 
 export default function AnalyticsPage() {
     const { t } = useLanguage();
-    const { analytics, isLoading } = useAnalyticsData();
+    const { analytics, isLoading, isAdmin } = useAnalyticsData();
     
+    if (isLoading || !isAdmin) {
+        return (
+            <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Skeleton className="h-80 w-full lg:col-span-2" />
+                    <Skeleton className="h-80 w-full" />
+                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Skeleton className="h-96 w-full" />
+                    <Skeleton className="h-96 w-full lg:col-span-2" />
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -91,7 +100,7 @@ export default function AnalyticsPage() {
                         <CardTitle>{t('monthlyRevenue')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {isLoading || !analytics ? <Skeleton className="h-72 w-full" /> : <RevenueChart data={analytics.monthlyRevenue} />}
+                        {!analytics ? <Skeleton className="h-72 w-full" /> : <RevenueChart data={analytics.monthlyRevenue} />}
                     </CardContent>
                 </Card>
                 <Card className="card-glass">
@@ -99,7 +108,7 @@ export default function AnalyticsPage() {
                         <CardTitle>{t('categoryDistribution')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                         {isLoading || !analytics ? <Skeleton className="h-72 w-full" /> : <CategoryDistributionChart data={analytics.categoryDistribution} />}
+                         {!analytics ? <Skeleton className="h-72 w-full" /> : <CategoryDistributionChart data={analytics.categoryDistribution} />}
                     </CardContent>
                 </Card>
             </div>
@@ -109,7 +118,7 @@ export default function AnalyticsPage() {
                         <CardTitle>{t('topProducts')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       {isLoading || !analytics ? <Skeleton className="h-96 w-full" /> : (
+                       {!analytics ? <Skeleton className="h-96 w-full" /> : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -136,9 +145,9 @@ export default function AnalyticsPage() {
                         <CardTitle>{t('recentFeedback')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {isLoading || !analytics ? <Skeleton className="h-96 w-full" /> : analytics.recentReviews.length > 0 ? (
+                        {!analytics ? <Skeleton className="h-96 w-full" /> : analytics.recentReviews.length > 0 ? (
                             analytics.recentReviews.map(r => (
-                                <div key={r.id} className="border-b pb-2">
+                                <div key={r.id} className="border-b border-white/10 pb-2">
                                     <div className="flex justify-between items-center">
                                         <p className="font-semibold">{r.productName}</p>
                                         <StarRating rating={r.rating} />
@@ -153,13 +162,3 @@ export default function AnalyticsPage() {
         </div>
     );
 }
-
-// Add new translation keys
-/*
-"monthlyRevenue": "Monthly Revenue",
-"categoryDistribution": "Category Distribution",
-"salesByCity": "Sales by City",
-"topProducts": "Top Selling Products",
-"recentFeedback": "Recent Feedback",
-"noFeedback": "No feedback submitted yet."
-*/

@@ -7,7 +7,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { collection, collectionGroup, query } from 'firebase/firestore';
 import type { Order, Sale } from '@/lib/types';
 import { StatCard } from "@/components/admin/StatCard";
-import { AreaChart, Badge, DollarSign, Package, AlertTriangle, XCircle, Truck } from "lucide-react";
+import { DollarSign, Package, AlertTriangle, XCircle, Truck } from "lucide-react";
 import { RevenueChart, OrderStatusChart } from "@/components/admin/charts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -26,7 +26,7 @@ const useDashboardStats = () => {
     const isLoading = isAdminLoading || loadingOrders || loadingSales;
 
     const stats = useMemo(() => {
-        if (isLoading || !orders || !sales) return null;
+        if (!orders || !sales) return null;
 
         const totalRevenue = sales.reduce((acc, sale) => acc + sale.totalAmount, 0);
         const totalOrders = orders.length;
@@ -57,14 +57,28 @@ const useDashboardStats = () => {
                 { name: 'Cancelled', value: statusCounts['Cancelled'] || 0 },
             ]
         };
-    }, [orders, sales, isLoading]);
+    }, [orders, sales]);
 
-    return { stats, isLoading };
+    return { stats, isLoading: isLoading, isAdmin };
 };
 
 export default function DashboardPage() {
     const { t } = useLanguage();
-    const { stats, isLoading } = useDashboardStats();
+    const { stats, isLoading, isAdmin } = useDashboardStats();
+
+    if (isLoading || !isAdmin) {
+        return (
+            <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-[126px] w-full" />)}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Skeleton className="lg:col-span-2 h-80 w-full" />
+                    <Skeleton className="h-80 w-full" />
+                </div>
+            </div>
+        )
+    }
 
     const statCards = [
         { title: t('totalRevenue'), value: `$${(stats?.totalRevenue || 0).toFixed(2)}`, icon: DollarSign, change: "+20.1%", changeType: 'increase' },
@@ -77,22 +91,18 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6">
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-                {isLoading ? (
-                    [...Array(5)].map((_, i) => <Skeleton key={i} className="h-[126px] w-full" />)
-                ) : (
-                    statCards.map((card, i) => (
-                         <StatCard
-                            key={card.title}
-                            title={card.title}
-                            value={card.value.toString()}
-                            icon={card.icon}
-                            change={card.change}
-                            changeType={card.changeType as any}
-                            className="animate-card-enter"
-                            style={{ animationDelay: `${i*100}ms`}}
-                        />
-                    ))
-                )}
+                {statCards.map((card, i) => (
+                    <StatCard
+                        key={card.title}
+                        title={card.title}
+                        value={card.value.toString()}
+                        icon={card.icon}
+                        change={card.change}
+                        changeType={card.changeType as any}
+                        className="animate-card-enter"
+                        style={{ animationDelay: `${i*100}ms`}}
+                    />
+                ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -101,7 +111,7 @@ export default function DashboardPage() {
                         <CardTitle>{t('revenueOverview')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       {isLoading || !stats ? <Skeleton className="h-80 w-full" /> : <RevenueChart data={stats.monthlyRevenue} />}
+                       {!stats ? <Skeleton className="h-80 w-full" /> : <RevenueChart data={stats.monthlyRevenue} />}
                     </CardContent>
                 </Card>
                  <Card className="card-glass">
@@ -109,21 +119,10 @@ export default function DashboardPage() {
                         <CardTitle>{t('orderStatus')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {isLoading || !stats ? <Skeleton className="h-80 w-full" /> : <OrderStatusChart data={stats.orderStatusDistribution} />}
+                        {!stats ? <Skeleton className="h-80 w-full" /> : <OrderStatusChart data={stats.orderStatusDistribution} />}
                     </CardContent>
                 </Card>
             </div>
         </div>
     );
 }
-
-// Add new translation keys
-/*
-"totalRevenue": "Total Revenue",
-"totalOrders": "Total Orders",
-"activeDeliveries": "Active Deliveries",
-"pendingOrders": "Pending Orders",
-"cancelledOrders": "Cancelled Orders",
-"revenueOverview": "Revenue Overview",
-"orderStatus": "Order Status",
-*/

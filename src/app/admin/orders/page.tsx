@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -38,21 +38,15 @@ function OrderRow({ order }: { order: Order }) {
     const [boyName, setBoyName] = useState(order.deliveryBoyName || '');
     const [boyPhone, setBoyPhone] = useState(order.deliveryBoyPhone || '');
     
-    const userProfile: UserProfile | null = useMemo(() => {
-        if (!order) return null;
-        return {
-            id: order.userId,
-            email: order.userEmail,
-            displayName: order.customerName,
-            photoURL: '' // Not available on order, but can be added if needed
-        };
-    }, [order]);
+    // Construct a user profile object from the order for email notifications.
+    const userProfile: UserProfile = useMemo(() => ({
+        id: order.userId,
+        email: order.userEmail,
+        displayName: order.customerName,
+        photoURL: '' // Not available on order, but that's fine for email.
+    }), [order]);
 
     const handleStatusChange = async (newStatus: Order['orderStatus']) => {
-        if (!userProfile) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Associated user not found.' });
-            return;
-        }
         setIsUpdating(true);
         const orderRef = doc(firestore, 'users', order.userId, 'orders', order.id);
         try {
@@ -73,16 +67,13 @@ function OrderRow({ order }: { order: Order }) {
             toast({ title: 'Success', description: 'Order status updated.' });
         } catch (e) {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status.' });
+            console.error("Failed to update order status:", e);
         } finally {
             setIsUpdating(false);
         }
     };
 
     const handleAssignDeliveryBoy = async () => {
-        if (!userProfile) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Associated user not found.' });
-            return;
-        }
         setIsUpdating(true);
         const orderRef = doc(firestore, 'users', order.userId, 'orders', order.id);
          try {
@@ -137,7 +128,7 @@ function OrderRow({ order }: { order: Order }) {
                 <Badge className={statusColors[order.orderStatus]}>{order.orderStatus}</Badge>
             </TableCell>
             <TableCell>
-                <Select onValueChange={handleStatusChange} disabled={isUpdating}>
+                <Select onValueChange={handleStatusChange} disabled={isUpdating} defaultValue={order.orderStatus}>
                     <SelectTrigger className="w-40 h-8">
                         <SelectValue placeholder="Update Status" />
                     </SelectTrigger>
@@ -201,6 +192,20 @@ export default function AdminOrdersPage() {
     const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
     const isLoading = isAdminLoading || isLoadingOrders;
+    
+    if (isLoading || !isAdmin) {
+        return (
+            <Card className="card-glass">
+                <CardHeader>
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-4 w-64 mt-2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-96 w-full" />
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <Card className="card-glass">
@@ -235,15 +240,7 @@ export default function AdminOrdersPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {isLoading ? (
-                            [...Array(5)].map((_, i) => (
-                                <TableRow key={i}>
-                                    {[...Array(7)].map((_, j) => (
-                                        <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : orders && orders.length > 0 ? (
+                        {orders && orders.length > 0 ? (
                             orders.map(order => <OrderRow key={order.id} order={order} />)
                         ) : (
                             <TableRow>

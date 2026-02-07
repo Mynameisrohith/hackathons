@@ -32,7 +32,7 @@ const navItems = [
 const NavItem = ({ item }: { item: typeof navItems[0] }) => {
   const { t } = useLanguage();
   const pathname = usePathname();
-  const isActive = pathname === item.href;
+  const isActive = pathname.startsWith(item.href);
 
   return (
     <Link href={item.href} passHref>

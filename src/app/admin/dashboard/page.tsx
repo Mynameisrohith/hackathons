@@ -27,7 +27,7 @@ function calculateDashboardStats(orders: Order[] | null) {
     }
 
     const stats = orders.reduce((acc, order) => {
-        const orderMonth = order.createdAt.toDate().getMonth();
+        const orderMonth = order.createdAt ? new Date(order.createdAt.seconds * 1000).getMonth() : new Date().getMonth();
         
         if (order.orderStatus !== 'Cancelled') {
             acc.totalRevenue += order.totalAmount;
@@ -66,6 +66,7 @@ export default function AdminDashboardPage() {
 
   const ordersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+    // Safe collection group query
     return query(collectionGroup(firestore, 'orders'));
   }, [firestore]);
 

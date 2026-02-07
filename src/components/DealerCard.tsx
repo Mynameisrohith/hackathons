@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Dealer } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useRole } from '@/hooks/useAdmin';
 import { useFirestore } from '@/firebase';
 import { addPlaceAsStore } from '@/lib/store-manager';
 import { Skeleton } from './ui/skeleton';
@@ -22,7 +22,7 @@ interface DealerCardProps {
 
 export function DealerCard({ dealer, isSelected, onSelect }: DealerCardProps) {
   const { t } = useLanguage();
-  const { isAdmin } = useAdmin();
+  const { role } = useRole();
   const firestore = useFirestore();
   const [isAdding, setIsAdding] = useState(false);
 
@@ -70,7 +70,7 @@ export function DealerCard({ dealer, isSelected, onSelect }: DealerCardProps) {
         )}
       </CardContent>
       <CardFooter>
-        {isAdmin && !isRegistered && (
+        {role === 'admin' && !isRegistered && (
           <Button variant="outline" size="sm" className="w-full" onClick={handleAddDealer} disabled={isAdding}>
             <PlusCircle className="mr-2 h-4 w-4" />
             {isAdding ? t('adding') : t('addAsDealer')}

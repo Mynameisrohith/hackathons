@@ -13,5 +13,7 @@ export function useAdmin() {
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
 
-  return { isAdmin: !!adminRole, isLoading: isUserLoading || isAdminRoleLoading };
+  const isHardcodedAdmin = user?.email === 'ddrohith7080@gmail.com';
+
+  return { isAdmin: !!adminRole || isHardcodedAdmin, isLoading: isUserLoading || isAdminRoleLoading };
 }

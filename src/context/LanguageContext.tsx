@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { translations, TranslationKeys } from '@/lib/translations';
 
-export type Language = 'en' | 'hi';
+export type Language = 'en' | 'kn';
 
 interface LanguageContextType {
   language: Language;
@@ -19,7 +19,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedLanguage = localStorage.getItem('language') as Language | null;
-    if (storedLanguage && ['en', 'hi'].includes(storedLanguage)) {
+    if (storedLanguage && ['en', 'kn'].includes(storedLanguage)) {
       setLanguageState(storedLanguage);
     }
   }, []);

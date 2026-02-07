@@ -36,12 +36,12 @@ function LanguageSwitcher() {
         </button>
         <div className="h-4 w-px bg-border" />
         <button
-          onClick={() => setLanguage('hi')}
+          onClick={() => setLanguage('kn')}
           className={`px-2 py-0.5 rounded-sm transition-colors ${
-            language === 'hi' ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'
+            language === 'kn' ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          हिंदी
+          ಕನ್ನಡ
         </button>
       </div>
     );

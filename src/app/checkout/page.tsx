@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { Loader2, ArrowRight, ArrowLeft, Check, CreditCard, Landmark, CircleDollarSign } from 'lucide-react';
 import type { Order, CartItem } from '@/lib/types';
 import Image from 'next/image';
+import { Label } from '@/components/ui/label';
 
 const addressSchema = z.object({
   customerName: z.string().min(2, 'Name is required'),

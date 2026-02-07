@@ -1,214 +1,89 @@
 
-/**
- * This ruleset enforces a hybrid security model for a retail application.
- *
- * Core Philosophy:
- * The security model is designed to be secure by default while providing flexibility for application features. It combines three primary access control patterns:
- * 1. User Ownership: User data is strictly private and can only be accessed or modified by the user who owns it.
- * 2. Role-Based Access Control (RBAC): A dedicated '/roles' collection manages administrator privileges. Admins have full control over global data collections.
- * 3. Public Read with Restricted Writes: Global data, such as products and sales, is publicly readable to support the retail storefront and analytics, but write operations are strictly controlled.
- *
- * Data Structure:
- * - /users/{userId}: Contains private user profile information, strictly isolated to the owning user.
- * - /roles/{userId}: Stores the role ('admin', 'dealer', 'delivery') for a given user.
- * - /categories/{categoryId}: A top-level collection for product categories, publicly readable but admin-only for writes.
- * - /products/{productId}: A top-level collection of products, publicly readable but only manageable by administrators.
- * - /sales/{saleId}: A top-level collection of sales transactions, publicly readable. Any authenticated user can create a sale, but only admins can modify or delete transactions.
- * - /stores/{storeId}: Contains physical store locations, publicly readable but admin-only for writes.
- *
- * Key Security Decisions:
- * - User Isolation: A user can only access their own document within the `/users` collection. Admins can list users for management purposes.
- * - Admin Supremacy: Administrators, defined in `/roles` or by email, have privileged access to manage global collections.
- * - Default Secure: The default posture is to deny access. Rules explicitly grant permissions on a per-collection basis.
- * - Write Integrity: All write operations (`create`, `update`, `delete`) are protected.
- * - Collection Group Query Constraint: The 'list' rule for the 'orders' collection group is now a combined rule to support both admin and user queries, avoiding the `get()` call which is disallowed in list rules.
- */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ----------------------------------------------------------------------
-    // Helper Functions
-    // ----------------------------------------------------------------------
-
-    /**
-     * Checks if the user is authenticated.
-     */
+    // Helper function to check if a user is signed in
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the currently authenticated user's UID matches the provided userId.
-     * This is the foundation for the ownership-based security model.
-     * @param userId The user ID to check against the request's auth UID.
-     */
+    // Helper function to check if the user is the owner of a document
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
-    /**
-     * Checks if the user is an admin based on the 'roles' collection.
-     * IMPORTANT: This function CANNOT be used in rules for collection group queries or list rules.
-     */
-    function isRoleAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    /**
-     * Checks if the user is the hardcoded admin by email.
-     * This is a primary mechanism for list queries where get() is not allowed.
-     */
-    function isAdminByEmail() {
-      return request.auth.token.email == 'drohith7080@gmail.com';
-    }
-
-    /**
-     * Checks if the requesting user has administrative privileges.
-     * This combines both role-based and email-based admin checks.
-     */
+    // Helper function to check if the user has an 'admin' custom claim
+    // This is the standard and secure way to handle admin permissions in security rules
+    // and works for all operations, including 'list'. It requires setting a custom claim
+    // on the user's auth token, typically via a backend function when the role is assigned.
     function isAdmin() {
-      return isRoleAdmin() || isAdminByEmail();
+      return request.auth.token.admin == true;
     }
 
-    /**
-     * Validates that the user ID within a new user document matches the
-     * document's ID in the path. This enforces relational integrity on create.
-     * @param userId The user ID from the path.
-     */
-    function hasValidUserIdOnCreate(userId) {
-      return request.resource.data.id == userId;
-    }
-
-    /**
-     * Validates that the user ID within a user document is not being changed.
-     * This enforces immutability for critical relational fields on update.
-     */
-    function userIdIsImmutable() {
-      return request.resource.data.id == resource.data.id;
-    }
-
-    // ----------------------------------------------------------------------
-    // Collection Rules
-    // ----------------------------------------------------------------------
-
-    /**
-     * @description Manages user profile documents and subcollections.
-     * @path /users/{userId}
-     */
+    // User-specific data
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdminByEmail();
-      allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
-      allow update: if isOwner(userId) && userIdIsImmutable();
-      allow delete: if isOwner(userId);
+      allow list: if isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Users should not be able to delete their own profiles
 
-      /**
-       * @description User's shopping cart. Only accessible by the owner.
-       * @path /users/{userId}/cart/{cartItemId}
-       */
+      // User's shopping cart
       match /cart/{cartItemId} {
         allow read, write: if isOwner(userId);
       }
-      
-      /**
-       * @description User's own orders. This rule handles direct document operations and list queries for owners.
-       * @path /users/{userId}/orders/{orderId}
-       */
+
+      // User's orders
       match /orders/{orderId} {
-        // A user can perform all operations on their own orders.
-        allow read, write: if isOwner(userId);
-        // A user cannot delete their order history.
+        // A user can read/write their own orders. Admins can manage any order.
+        allow read, write: if isOwner(userId) || isAdmin();
+        // Neither users nor admins can delete order history through this path.
         allow delete: if false;
       }
     }
-    
-    /**
-     * @description Secures the 'orders' collection group for ADMIN queries.
-     * This rule allows admins to perform list operations across all users' orders.
-     */
+
+    // Collection group for orders to allow admins to query across all users
     match /{path=**}/orders/{orderId} {
-        // This 'list' rule handles the admin's collection group query.
-        allow list: if isAdminByEmail();
-
-        // These rules allow admins to manage any order document directly.
-        // User access is handled by the more specific rule at /users/{userId}/orders/{orderId}.
-        allow get, update, delete: if isAdmin();
-        
-        // This rule prevents creating orders in unexpected places (e.g., /products/prodId/orders/orderId).
-        // Creation is only allowed via the specific rule under /users/{userId}.
-        allow create: if false;
+        // Only admins can list all orders.
+        allow list: if isAdmin();
     }
 
-    /**
-     * @description Manages product categories. Publicly readable, but only writable by admins.
-     * @path /categories/{categoryId}
-     */
+    // Publicly readable collections, writable only by admins
     match /categories/{categoryId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description Manages product listings. Publicly readable. Any signed-in user can create a product.
-     * @path /products/{productId}
-     */
     match /products/{productId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description Manages sales transaction records. Publicly readable for analytics.
-     * Any signed-in user can create a sale, but only admins can modify or delete records.
-     * @path /sales/{saleId}
-     */
+    match /stores/{storeId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Sales and Reviews are created by any signed-in user, but only managed by admins
     match /sales/{saleId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow update, delete: if isAdmin();
     }
 
-    /**
-     * @description Manages product reviews. Publicly readable for all users.
-     * Any signed-in user can create a review, but only admins can modify or delete.
-     * @path /reviews/{reviewId}
-     */
     match /reviews/{reviewId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow update, delete: if isAdmin();
     }
 
-    /**
-     * @description Manages user roles. A user can read their own role. Admins can manage all roles.
-     * @path /roles/{userId}
-     */
+    // Roles collection is managed by admins. Users can read their own role.
     match /roles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdminByEmail();
-      allow create, update: if isAdmin();
-      allow delete: if isAdmin() && resource != null;
-    }
-    
-    /**
-     * @description Manages physical store locations. Publicly readable, admin-only writes.
-     * @path /stores/{storeId}
-     */
-    match /stores/{storeId} {
-        allow get: if true;
-        allow list: if true;
-        allow create, update, delete: if isAdmin();
+      allow list: if isAdmin();
+      allow write: if isAdmin();
     }
   }
 }

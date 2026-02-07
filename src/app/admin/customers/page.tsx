@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, collectionGroup, doc, setDoc } from 'firebase/firestore';
-import type { Order, UserProfile } from '@/lib/types';
+import { useCollection, useMemoFirebase, useFirestore, useUser } from '@/firebase';
+import { collection, query, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import type { UserProfile, UserRole } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,23 +15,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import type { UserRole, UserRoleType } from '@/lib/types';
+import type { UserRoleType } from '@/lib/types';
 
-type CustomerStat = UserProfile & {
-  orderCount: number;
-  totalSpent: number;
-  avgOrderValue: number;
-  cancellationRate: number;
-  role: UserRoleType | null;
+type UserWithRole = UserProfile & {
+  role: UserRoleType | 'pending';
 };
 
 // Component to manage role assignment for a user
-function RoleManager({ user, currentRole }: { user: CustomerStat, currentRole: UserRoleType | null }) {
+function RoleManager({ user, currentRole, adminId }: { user: UserWithRole, currentRole: UserRoleType | 'pending', adminId: string }) {
     const firestore = useFirestore();
     const [isUpdating, setIsUpdating] = useState(false);
     const rolesToAssign: UserRoleType[] = ['admin', 'dealer', 'delivery', 'customer'];
@@ -42,9 +38,14 @@ function RoleManager({ user, currentRole }: { user: CustomerStat, currentRole: U
         setIsUpdating(true);
 
         const roleRef = doc(firestore, 'roles', user.id);
+        const rolePayload: UserRole = { 
+            role: newRole,
+            assignedAt: serverTimestamp() as any,
+            assignedBy: adminId
+        };
 
         try {
-            await setDoc(roleRef, { role: newRole });
+            await setDoc(roleRef, rolePayload, { merge: true });
             toast({ title: 'Role Updated', description: `${user.displayName}'s role set to ${newRole}.` });
         } catch (error) {
             console.error('Failed to update role:', error);
@@ -57,16 +58,18 @@ function RoleManager({ user, currentRole }: { user: CustomerStat, currentRole: U
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating}>
+                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || user.id === adminId}>
+                    <span className="sr-only">Open menu</span>
                     {isUpdating ? <Loader2 className="animate-spin h-4 w-4" /> : <MoreHorizontal className="h-4 w-4" />}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                <DropdownMenuLabel>Assign Role</DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 {rolesToAssign.map(role => (
                     <DropdownMenuItem
                         key={role}
-                        disabled={currentRole === role || (currentRole === null && role === 'customer')}
+                        disabled={currentRole === role}
                         onClick={() => handleRoleChange(role)}
                     >
                         {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -77,15 +80,8 @@ function RoleManager({ user, currentRole }: { user: CustomerStat, currentRole: U
     );
 }
 
-// Calculates customer statistics, now including their role
-function calculateCustomerStats(users: UserProfile[] | null, orders: Order[] | null, roles: (UserRole & {id: string})[] | null): CustomerStat[] {
-  if (!users || !orders) return [];
-
-  const orderMap = new Map<string, Order[]>();
-  for (const order of orders) {
-    if (!orderMap.has(order.userId)) orderMap.set(order.userId, []);
-    orderMap.get(order.userId)!.push(order);
-  }
+function mapUsersToRoles(users: UserProfile[] | null, roles: (UserRole & {id: string})[] | null): UserWithRole[] {
+  if (!users) return [];
   
   const roleMap = new Map<string, UserRoleType>();
   if (roles) {
@@ -95,34 +91,29 @@ function calculateCustomerStats(users: UserProfile[] | null, orders: Order[] | n
   }
 
   return users.map(user => {
-    const userOrders = orderMap.get(user.id) || [];
-    const totalSpent = userOrders.reduce((sum, o) => o.orderStatus !== 'Cancelled' ? sum + o.totalAmount : sum, 0);
-    const orderCount = userOrders.length;
-    const avgOrderValue = orderCount > 0 ? totalSpent / userOrders.filter(o => o.orderStatus !== 'Cancelled').length : 0;
-    const cancellationRate = orderCount > 0 ? userOrders.filter(o => o.orderStatus === 'Cancelled').length / orderCount : 0;
-    const role = roleMap.get(user.id) || null;
-
-    return { ...user, orderCount, totalSpent, avgOrderValue, cancellationRate, role };
-  }).sort((a,b) => b.totalSpent - a.totalSpent);
+    const role = roleMap.get(user.id) || 'pending';
+    return { ...user, role };
+  }).sort((a,b) => a.displayName.localeCompare(b.displayName));
 }
 
-export default function CustomersPage() {
+export default function UserManagementPage() {
   const firestore = useFirestore();
+  const { user: adminUser } = useUser();
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
   const rolesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'roles')) : null, [firestore]);
 
   const { data: users, isLoading: loadingUsers } = useCollection<UserProfile>(usersQuery);
-  const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
-  const { data: roles, isLoading: loadingRoles } = useCollection<UserRole & { id: string }>(rolesQuery);
+  const { data: roles, isLoading: loadingRoles } = useCollection<(UserRole & { id: string })>(rolesQuery);
 
-  const isLoading = loadingUsers || loadingOrders || loadingRoles;
-  const customerStats = useMemo(() => calculateCustomerStats(users, orders, roles), [users, orders, roles]);
+  const isLoading = loadingUsers || loadingRoles;
+  const usersWithRoles = useMemo(() => mapUsersToRoles(users, roles), [users, roles]);
+
+  if (!adminUser) return null; // Should be handled by layout, but as a safeguard.
 
   return (
     <div className="animate-card-enter">
-      <PageHeader title="Customer Management" subtitle="View and manage customer data and roles." />
+      <PageHeader title="User Management" subtitle="Assign roles and manage user access." />
       <main className="p-4 sm:p-6 lg:p-8">
         <Card className="card-glass">
           <CardContent className="p-0">
@@ -134,46 +125,35 @@ export default function CustomersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Total Orders</TableHead>
-                    <TableHead>Total Spent</TableHead>
-                    <TableHead>Cancellation Rate</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customerStats.length === 0 && (
+                  {usersWithRoles.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground h-24">No customer data available.</TableCell>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground h-24">No users found.</TableCell>
                     </TableRow>
                   )}
-                  {customerStats.map(customer => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="flex items-center gap-3">
+                  {usersWithRoles.map(user => (
+                    <TableRow key={user.id}>
+                      <TableCell className="flex items-center gap-3 font-medium">
                         <Avatar>
-                          <AvatarImage src={customer.photoURL} alt={customer.displayName} />
-                          <AvatarFallback>{customer.displayName?.[0]}</AvatarFallback>
+                          <AvatarImage src={user.photoURL} alt={user.displayName} />
+                          <AvatarFallback>{user.displayName?.[0]}</AvatarFallback>
                         </Avatar>
-                        <div>
-                            <p className="font-medium">{customer.displayName}</p>
-                            <p className="text-xs text-muted-foreground">{customer.email}</p>
-                        </div>
+                        {user.displayName}
                       </TableCell>
-                      <TableCell>{customer.orderCount}</TableCell>
-                      <TableCell>${customer.totalSpent.toFixed(2)}</TableCell>
-                      <TableCell>
-                          <Badge variant={customer.cancellationRate > 0.3 ? 'destructive' : 'secondary'}>
-                            {(customer.cancellationRate * 100).toFixed(0)}%
-                          </Badge>
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
                        <TableCell>
-                        <Badge variant={!customer.role || customer.role === 'customer' ? 'secondary' : customer.role === 'admin' ? 'default' : 'outline'}>
-                            {customer.role ? customer.role.charAt(0).toUpperCase() + customer.role.slice(1) : 'Customer'}
+                        <Badge variant={user.role === 'pending' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
+                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                          <RoleManager user={customer} currentRole={customer.role} />
+                          <RoleManager user={user} currentRole={user.role} adminId={adminUser.uid} />
                       </TableCell>
                     </TableRow>
                   ))}

@@ -11,6 +11,8 @@ export type UserRoleType = 'admin' | 'dealer' | 'delivery' | 'customer';
 export interface UserRole {
   role: UserRoleType;
   storeId?: string; // For dealers
+  assignedAt?: Timestamp;
+  assignedBy?: string; // Admin's UID
 }
 
 export interface UserProfile {

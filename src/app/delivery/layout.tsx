@@ -3,22 +3,19 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/hooks/useAdmin';
-import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Loader2, ShieldX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
-function AdminAccessDenied() {
+function AccessDenied() {
     const router = useRouter();
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background p-4">
             <Alert variant="destructive" className="max-w-md text-center">
-                <div className="flex justify-center mb-4">
-                     <ShieldX className="h-8 w-8" />
-                </div>
+                <ShieldX className="h-8 w-8 mx-auto mb-4" />
                 <AlertTitle className="text-2xl">Access Denied</AlertTitle>
                 <AlertDescription className="mt-2">
-                You do not have permission to view this page. Please contact an administrator.
+                You do not have the required role to access this page.
                 </AlertDescription>
                 <Button variant="secondary" className="mt-6" onClick={() => router.push('/')}>Go to Homepage</Button>
             </Alert>
@@ -26,13 +23,13 @@ function AdminAccessDenied() {
     )
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function DeliveryLayout({ children }: { children: React.ReactNode }) {
   const { roleData, isLoading, user } = useRole();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace('/login?redirect=/admin/dashboard');
+      router.replace('/login?redirect=/delivery/dashboard');
     }
   }, [isLoading, user, router]);
 
@@ -44,25 +41,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // After loading, if user exists but role is not admin, deny access.
-  // This also handles the case where roleData is null.
-  if (user && roleData?.role !== 'admin') {
-    return <AdminAccessDenied />;
+  if (user && roleData?.role !== 'delivery') {
+    return <AccessDenied />;
+  }
+  
+  if (user && roleData?.role === 'delivery') {
+      // We can create a delivery-specific sidebar/header here in the future
+      return <main>{children}</main>;
   }
 
-  // If user exists and role is admin, show the layout
-  if (user && roleData?.role === 'admin') {
-      return (
-        <div className="flex min-h-screen bg-secondary/50">
-          <AdminSidebar />
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
-        </div>
-      );
-  }
-
-  // Fallback case, typically shown while redirecting or if user is null after load check
   return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -21,7 +21,7 @@
  * - Admin Supremacy: Administrators, defined in `/roles`, have privileged access to manage global collections.
  * - Default Secure: The default posture is to deny access. Rules explicitly grant permissions on a per-collection basis.
  * - Write Integrity: All write operations (`create`, `update`, `delete`) are protected.
- * - Collection Group Query Constraint: The 'list' rule for the 'orders' collection group must use a check that does not involve `get()` or `exists()`, hence the retained email check for that specific rule.
+ * - Collection Group Query Constraint: The 'list' rule for the 'orders' collection group is now a combined rule to support both admin and user queries, avoiding the `get()` call which is disallowed in list rules.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -65,7 +65,7 @@ service cloud.firestore {
 
     /**
      * Checks if the user is the hardcoded admin by email.
-     * This is a workaround for list queries where get() is not allowed.
+     * This is the primary mechanism for list queries where get() is not allowed.
      */
     function isAdminByEmail() {
       return request.auth.token.email == 'drohith7080@gmail.com';
@@ -85,7 +85,7 @@ service cloud.firestore {
      * This enforces immutability for critical relational fields on update.
      */
     function userIdIsImmutable() {
-      return request.resource.data.id == userIdIsImmutable();
+      return request.resource.data.id == resource.data.id;
     }
 
     // ----------------------------------------------------------------------
@@ -100,8 +100,8 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdminByEmail();
       allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
-      allow update: if isOwner(userId) && resource != null && userIdIsImmutable();
-      allow delete: if isOwner(userId) && resource != null;
+      allow update: if isOwner(userId) && userIdIsImmutable();
+      allow delete: if isOwner(userId);
 
       /**
        * @description User's shopping cart. Only accessible by the owner.
@@ -112,12 +112,13 @@ service cloud.firestore {
       }
       
       /**
-       * @description User's own orders. This is more specific than the collection group rule below.
+       * @description User's own orders. This rule handles direct document operations for owners.
+       * List operations are handled by the more general collection group rule below.
        * @path /users/{userId}/orders/{orderId}
        */
       match /orders/{orderId} {
-        // A user can list and read their own orders.
-        allow list, get: if isOwner(userId);
+        // A user can read their own order document directly.
+        allow get: if isOwner(userId);
         // A user can create an order for themselves.
         allow create: if isOwner(userId);
         // A user can update their order (e.g., for feedback, or to cancel).
@@ -128,17 +129,22 @@ service cloud.firestore {
     }
     
     /**
-     * @description Secures the 'orders' collection group for admin access.
-     * This rule allows admins to perform collection group queries across all users.
-     * Individual document access is handled by the more specific rule inside /users/{userId} for owners.
+     * @description Secures the 'orders' collection group for both admin and user queries.
+     * This single rule handles all `list` operations on any 'orders' collection.
      */
     match /{path=**}/orders/{orderId} {
-        // This list rule is ONLY for collection group queries by an admin.
-        allow list: if isAdminByEmail();
+        // This 'list' rule handles BOTH the admin's collection group query AND a user's query on their own single 'orders' collection.
+        // It works by checking if the user is the admin OR if they are the owner of the path segment.
+        // `path` is a variable bound by the wildcard `{path=**}`. For a path like `/users/someUserId`, `path[0]` is 'users' and `path[1]` is 'someUserId'.
+        allow list: if isAdminByEmail() || (path[0] == 'users' && isOwner(path[1]));
+
         // These rules allow admins to manage any order document directly.
         // User access is handled by the more specific rule at /users/{userId}/orders/{orderId}.
         allow get, update, delete: if isAdmin();
-        allow create: if false; // Users must create orders under their own user document.
+        
+        // This rule prevents creating orders in unexpected places (e.g., /products/prodId/orders/orderId).
+        // Creation is only allowed via the specific rule under /users/{userId}.
+        allow create: if false;
     }
 
     /**

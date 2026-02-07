@@ -89,6 +89,8 @@ export interface Order {
   longitude: number;
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
+  deliveryStatus: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  cancellationReason?: string;
   createdAt: Timestamp;
   dealerName: string;
   dealerAddress: string;

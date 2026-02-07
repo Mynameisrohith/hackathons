@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -66,6 +67,13 @@ function UserNav() {
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => auth.signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
@@ -91,6 +99,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const allItems = [...menuItems];
     if (isAdmin) {
       allItems.push({ href: "/categories", label: "Categories", icon: Shield });
+    }
+    if (pathname === '/profile') {
+        return "Profile";
     }
     return allItems.find(item => item.href === pathname)?.label || "Dashboard";
   }

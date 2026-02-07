@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -227,11 +228,15 @@ function AddProductForm({ setOpen, firestore, categories }: { setOpen: (open: bo
   );
 }
 
-function ProductRow({ product, firestore }: { product: Product, firestore: Firestore }) {
+function ProductRow({ product, firestore, isAdmin }: { product: Product, firestore: Firestore, isAdmin: boolean }) {
   const [stock, setStock] = useState(product.stock);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleDelete = async () => {
+    if (!isAdmin) {
+        toast({ variant: "destructive", title: "Unauthorized", description: "Only admins can delete products." });
+        return;
+    }
     try {
       await deleteDoc(doc(firestore, "products", product.id));
       toast({
@@ -249,6 +254,10 @@ function ProductRow({ product, firestore }: { product: Product, firestore: Fires
   };
   
   const handleUpdateStock = async () => {
+    if (!isAdmin) {
+        toast({ variant: "destructive", title: "Unauthorized", description: "Only admins can update stock." });
+        return;
+    }
     if (stock === product.stock) return;
     setIsUpdating(true);
     try {
@@ -277,43 +286,49 @@ function ProductRow({ product, firestore }: { product: Product, firestore: Fires
       <TableCell>{product.categoryName}</TableCell>
       <TableCell>${product.price.toFixed(2)}</TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-            <Input 
-                type="number"
-                value={stock}
-                onChange={(e) => setStock(Number(e.target.value))}
-                className="h-8 w-20"
-                disabled={isUpdating}
-            />
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleUpdateStock} disabled={isUpdating || stock === product.stock}>
-                <Save className="h-4 w-4" />
-            </Button>
-        </div>
+        {isAdmin ? (
+            <div className="flex items-center gap-2">
+                <Input 
+                    type="number"
+                    value={stock}
+                    onChange={(e) => setStock(Number(e.target.value))}
+                    className="h-8 w-20"
+                    disabled={isUpdating}
+                />
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleUpdateStock} disabled={isUpdating || stock === product.stock}>
+                    <Save className="h-4 w-4" />
+                </Button>
+            </div>
+        ) : (
+            <span>{stock}</span>
+        )}
       </TableCell>
       <TableCell>
         {product.createdAt?.toDate().toLocaleDateString()}
       </TableCell>
       <TableCell className="text-right">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                product "{product.name}".
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {isAdmin && (
+            <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                <Trash2 className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the
+                    product "{product.name}".
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+            </AlertDialog>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -416,7 +431,7 @@ export default function ProductsPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
+                Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-10 w-10 rounded-md" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -429,7 +444,7 @@ export default function ProductsPage() {
                 ))
               ) : products.length > 0 ? (
                 products.map((product) => (
-                  <ProductRow key={product.id} product={product} firestore={firestore!} />
+                  <ProductRow key={product.id} product={product} firestore={firestore!} isAdmin={isAdmin} />
                 ))
               ) : (
                 <TableRow>

@@ -1,4 +1,13 @@
+
 import type { Timestamp } from "firebase/firestore";
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  creationTime?: Timestamp;
+}
 
 export interface Category {
   id: string;

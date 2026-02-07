@@ -107,26 +107,17 @@ service cloud.firestore {
        * @path /users/{userId}/orders/{orderId}
        */
       match /orders/{orderId} {
-        allow get: if isOwner(userId) || isAdmin();
-        // This rule is for a user listing THEIR OWN orders. It is NOT for admins performing collection group queries.
-        allow list: if isOwner(userId);
+        // This rule allows an admin to perform a collection group query on 'orders'.
+        // It's also evaluated for single-document reads.
+        // Crucially, it does NOT use get() or exists(), making it compatible with collection group queries.
+        allow read: if isOwner(userId) || (request.auth != null && request.auth.token.email == 'drohith7080@gmail.com');
+
+        // Write operations are not part of collection group queries, so they CAN use the `isAdmin()` helper.
         allow create: if isOwner(userId);
         allow update: if isOwner(userId) || isAdmin(); // User can cancel/give feedback, admin can change status.
         allow delete: if isAdmin();
       }
     }
-    
-    /**
-     * @description This rule allows an admin to perform a collection group query on 'orders'.
-     * @path /{path=**}/orders/{orderId}
-     */
-    match /{path=**}/orders/{orderId} {
-        // Collection group queries do not support functions that use `get()` or `exists()`.
-        // Therefore, we cannot use the full `isAdmin()` helper here.
-        // We must rely on checks that only use the `request` object, like checking token claims or a hardcoded email.
-        allow read: if request.auth != null && request.auth.token.email == 'drohith7080@gmail.com';
-    }
-
 
     /**
      * @description Manages product categories. Publicly readable, but only writable by admins.

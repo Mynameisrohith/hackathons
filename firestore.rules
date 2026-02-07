@@ -79,7 +79,7 @@ service cloud.firestore {
     // ----------------------------------------------------------------------
 
     /**
-     * @description Manages user profile documents. Access is restricted to the document owner.
+     * @description Manages user profile documents, cart, and orders. Access is restricted to the document owner.
      * @path /users/{userId}
      */
     match /users/{userId} {
@@ -88,6 +88,23 @@ service cloud.firestore {
       allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
       allow update: if isOwner(userId) && resource != null && userIdIsImmutable();
       allow delete: if isOwner(userId) && resource != null;
+
+      /**
+       * @description User's shopping cart. Only accessible by the owner.
+       * @path /users/{userId}/cart/{cartItemId}
+       */
+      match /cart/{cartItemId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      /**
+       * @description User's orders. Immutable once created.
+       * @path /users/{userId}/orders/{orderId}
+       */
+      match /orders/{orderId} {
+        allow read, create: if isOwner(userId);
+        allow update, delete: if false;
+      }
     }
 
     /**

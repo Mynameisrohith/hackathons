@@ -1,21 +1,24 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { doc, collection, query, where, limit } from 'firebase/firestore';
 import type { Product, Review } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
+import { ShoppingCart, CheckCircle, XCircle, Plus, Minus, Loader2 } from 'lucide-react';
 import { StarRating } from '@/components/StarRating';
 import { ProductCard } from '@/components/ProductCard';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCart } from '@/context/CartContext';
+import { toast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 function ProductDetailsSkeleton() {
   return (
@@ -29,7 +32,10 @@ function ProductDetailsSkeleton() {
           <Skeleton className="h-6 w-1/4" />
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-12 w-48" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-12 w-32" />
+            <Skeleton className="h-12 w-48" />
+          </div>
         </div>
       </div>
     </div>
@@ -125,8 +131,13 @@ function RelatedProducts({ categoryId, currentProductId }: { categoryId: string,
 export default function ProductPage() {
   const { t } = useLanguage();
   const params = useParams();
+  const router = useRouter();
   const productId = params.id as string;
   const firestore = useFirestore();
+  const { user } = useUser();
+  const { addToCart, isUpdating } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
 
   const productDocRef = useMemoFirebase(() => {
     if (!firestore || !productId) return null;
@@ -134,6 +145,33 @@ export default function ProductPage() {
   }, [firestore, productId]);
 
   const { data: product, isLoading } = useDoc<Product>(productDocRef);
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    if (!user) {
+        router.push('/login?redirect=/product/' + productId);
+        return;
+    }
+    setIsAdding(true);
+    try {
+        await addToCart(product, quantity);
+        toast({
+            title: t('addedToCart'),
+            description: t('addedToCartDesc').replace('{qty}', quantity.toString()).replace('{name}', product.name),
+        })
+    } catch(e) {
+        console.error(e);
+        toast({
+            variant: "destructive",
+            title: t('error'),
+            description: t('addToCartError'),
+        })
+    } finally {
+        setIsAdding(false);
+    }
+  }
+
+  const isAddToCartDisabled = isAdding || !product || product.stock === 0 || isUpdating(product.id);
 
   if (isLoading) {
     return <ProductDetailsSkeleton />;
@@ -179,9 +217,19 @@ export default function ProductPage() {
             )}
           </div>
           
-          <div className="mt-10">
-            <Button size="lg" className="w-full max-w-xs gradient-btn shadow-lg" disabled={product.stock === 0}>
-                {t('addToCart')} <ShoppingCart className="ml-2 h-5 w-5" />
+          <div className="mt-10 flex items-center gap-4">
+             <div className="flex items-center">
+              <Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q-1))} disabled={isAddToCartDisabled}>
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="w-16 text-center font-bold">{quantity}</span>
+              <Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.min(product.stock, q + 1))} disabled={isAddToCartDisabled}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button size="lg" className="w-full max-w-xs gradient-btn shadow-lg" disabled={isAddToCartDisabled} onClick={handleAddToCart}>
+                {isAdding ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShoppingCart className="mr-2 h-5 w-5" />}
+                {t('addToCart')}
             </Button>
           </div>
         </div>

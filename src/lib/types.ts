@@ -47,6 +47,33 @@ export interface Review {
   createdAt: Timestamp;
 }
 
+export interface CartItem {
+  id: string; // Document ID from Firestore
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+  stock: number;
+  createdAt: Timestamp;
+}
+
+export interface Order {
+  id: string; // Document ID from Firestore
+  userId: string;
+  items: Omit<CartItem, 'id' | 'createdAt' | 'stock'>[];
+  totalAmount: number;
+  customerName: string;
+  phone: string;
+  address: string;
+  city: string;
+  pincode: string;
+  paymentMethod: 'COD' | 'Card' | 'UPI';
+  paymentStatus: 'Pending' | 'Paid' | 'Failed';
+  createdAt: Timestamp;
+}
+
+
 export interface ReviewAnalysis extends Review {
   isDuplicateComment: boolean;
   isShortComment: boolean;

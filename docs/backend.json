@@ -147,6 +147,7 @@
         "longitude": { "type": "number" },
         "paymentMethod": { "type": "string", "enum": ["COD", "Card", "UPI"] },
         "paymentStatus": { "type": "string", "enum": ["Pending", "Paid", "Failed"] },
+        "paymentId": { "type": "string", "description": "The transaction ID from the payment gateway." },
         "orderStatus": { "type": "string", "enum": ["Pending", "Packed", "Out for Delivery", "Delivered", "Cancelled"] },
         "deliveryStatus": { "type": "string", "enum": ["Assigned", "Picked", "Out for Delivery", "Delivered"] },
         "deliveryBoyLat": { "type": "number" },

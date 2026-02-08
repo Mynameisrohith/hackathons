@@ -29,3 +29,13 @@ If you are using a Gmail account, it is highly recommended to use an **"App Pass
 - [Google App Passwords](https://myaccount.google.com/apppasswords)
 
 This provides a more secure way to grant access to your application. Your app is now configured to use these variables to send emails automatically when orders are created or updated.
+
+### Razorpay Payment Gateway Setup
+
+This project supports Razorpay for Card and UPI payments. To enable it, you need to add your Razorpay Key ID to your environment variables.
+
+1.  **Add your Razorpay Key ID** to the `.env.local` file:
+    ```
+    NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_your_key_here"
+    ```
+2. **Important**: The current implementation uses a client-side only flow for demonstration purposes. For a production environment, you **must** create a backend API endpoint to securely create a Razorpay Order and verify the payment signature.

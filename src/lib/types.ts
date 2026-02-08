@@ -105,6 +105,7 @@ export interface Order {
   longitude: number;
   paymentMethod: 'COD' | 'Card' | 'UPI';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
+  paymentId?: string;
   orderStatus: 'Pending' | 'Packed' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Not Deliverable';
   deliveryStatus?: 'Assigned' | 'Picked' | 'Out for Delivery' | 'Delivered';
   deliveryBoyLat?: number;

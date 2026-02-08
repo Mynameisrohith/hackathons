@@ -23,6 +23,12 @@ import { AddressAutocomplete, GeocodedAddress } from '@/components/AddressAutoco
 import { DealerDiscovery } from '@/components/DealerDiscovery';
 import { sendEmail } from '@/lib/email-client';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const addressSchema = z.object({
   customerName: z.string().min(2, 'Name is required'),
   phone: z.string().regex(/^\d{10}$/, 'Must be a 10-digit phone number'),
@@ -75,10 +81,12 @@ export default function CheckoutPage() {
     }
     setStep('payment');
   };
-
-  const handlePlaceOrder = async () => {
-    if (!user || !firestore || !items || !addressDetails || !selectedDealer || !userProfile) return;
-    setIsProcessing(true);
+  
+  const createOrderInFirestore = async (paymentId?: string) => {
+    if (!user || !firestore || !items || !addressDetails || !selectedDealer || !userProfile) {
+        toast({ title: 'Error', description: 'Missing required information to place order.', variant: 'destructive'});
+        return;
+    };
 
     const addressData = form.getValues();
     const orderItems: Omit<CartItem, 'id' | 'createdAt' | 'stock'>[] = items.map(item => ({
@@ -101,10 +109,11 @@ export default function CheckoutPage() {
       latitude: addressDetails.lat,
       longitude: addressDetails.lng,
       paymentMethod,
-      paymentStatus: 'Pending',
+      paymentStatus: paymentId ? 'Paid' : 'Pending',
+      paymentId: paymentId || '',
       orderStatus: 'Pending',
-      createdAt: new Date() as any, // Will be replaced by server timestamp
-      updatedAt: new Date() as any, // Will be replaced by server timestamp
+      createdAt: new Date() as any, 
+      updatedAt: new Date() as any,
       dealerName: selectedDealer.name,
       dealerAddress: selectedDealer.address,
       dealerLat: selectedDealer.latitude,
@@ -122,23 +131,70 @@ export default function CheckoutPage() {
       }
       
       await batch.commit();
-      
       clearCart();
-      
-      // Send confirmation emails
       await sendEmail({ emailType: 'order-confirmation', order: newOrder, user: userProfile });
-
       router.push(`/my-orders?orderId=${orderRef.id}&success=true`);
 
     } catch (error) {
       console.error('Error placing order:', error);
-      toast({
-        title: t('orderError'),
-        description: t('orderErrorDesc'),
-        variant: 'destructive',
-      });
-      setIsProcessing(false);
+      toast({ title: t('orderError'), description: t('orderErrorDesc'), variant: 'destructive' });
     }
+  };
+
+  const handlePayment = async () => {
+    if (!selectedDealer) {
+        toast({title: 'No Dealer Selected', description: 'Please select a dispatch dealer.', variant: 'destructive'});
+        return;
+    }
+
+    setIsProcessing(true);
+
+    if (paymentMethod === 'COD') {
+        await createOrderInFirestore();
+        setIsProcessing(false);
+        return;
+    }
+    
+    // For Card/UPI, use Razorpay
+    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        toast({ title: 'Configuration Error', description: 'Razorpay is not configured.', variant: 'destructive'});
+        setIsProcessing(false);
+        return;
+    }
+    
+    // In a real app, you'd fetch an order_id from your backend here for security
+    // const orderResponse = await fetch('/api/razorpay/create-order', {..});
+
+    const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: cartTotal * 100, // Amount in paise
+        currency: "INR",
+        name: "RetailSpark",
+        description: "Order Transaction",
+        // order_id: from_backend, 
+        handler: async (response: any) => {
+            // In a real app, verify payment signature on backend before creating Firestore order
+            await createOrderInFirestore(response.razorpay_payment_id);
+        },
+        prefill: {
+            name: user?.displayName || '',
+            email: user?.email || '',
+            contact: form.getValues('phone'),
+        },
+        notes: {
+            address: form.getValues('address'),
+        },
+        theme: {
+            color: "#2563EB", // Blue-500
+        },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', function (response: any){
+        toast({ variant: 'destructive', title: 'Payment Failed', description: response.error.description });
+        setIsProcessing(false);
+    });
+    rzp.open();
   };
 
   const Stepper = () => (
@@ -188,7 +244,7 @@ export default function CheckoutPage() {
               
               <div className="mt-8">
                   <h2 className="mb-4 text-xl font-semibold">{t('paymentMethod')}</h2>
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                  <RadioGroup value={paymentMethod} onValueChange={(val) => setPaymentMethod(val as any)} className="space-y-4">
                       <Label htmlFor="cod" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
                           <RadioGroupItem value="COD" id="cod" />
                           <div className="ml-4">
@@ -197,10 +253,17 @@ export default function CheckoutPage() {
                           </div>
                       </Label>
                       <Label htmlFor="card" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
-                          <RadioGroupItem value="Card" id="card" disabled/>
+                          <RadioGroupItem value="Card" id="card"/>
                           <div className="ml-4">
-                              <p className="font-medium">{t('creditDebitCard')} <span className="text-xs text-muted-foreground">({t('comingSoon')})</span></p>
+                              <p className="font-medium">{t('creditDebitCard')}</p>
                               <p className="text-sm text-muted-foreground">{t('creditDebitCardDesc')}</p>
+                          </div>
+                      </Label>
+                      <Label htmlFor="upi" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
+                          <RadioGroupItem value="UPI" id="upi"/>
+                          <div className="ml-4">
+                              <p className="font-medium">{t('upi')}</p>
+                              <p className="text-sm text-muted-foreground">{t('upiDesc')}</p>
                           </div>
                       </Label>
                   </RadioGroup>
@@ -208,9 +271,9 @@ export default function CheckoutPage() {
                       <Button variant="outline" onClick={() => setStep('address')}>
                           <ArrowLeft className="mr-2 h-4 w-4" /> {t('backToAddress')}
                       </Button>
-                      <Button onClick={handlePlaceOrder} disabled={isProcessing || !selectedDealer} className="w-full">
+                      <Button onClick={handlePayment} disabled={isProcessing || !selectedDealer} className="w-full">
                           {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          {t('placeOrder')} - ${cartTotal.toFixed(2)}
+                          {paymentMethod === 'COD' ? t('placeOrder') : 'Proceed to Pay'} - ${cartTotal.toFixed(2)}
                       </Button>
                   </div>
               </div>

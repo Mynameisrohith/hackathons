@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -11,10 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, MapPin, Phone, User, Clock } from 'lucide-react';
-import { useDeliveryTracker } from '@/lib/delivery-tracker';
+import { Clock, User, Phone } from 'lucide-react';
 import TrackOrderMap from '@/components/TrackOrderMap';
-import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 const deliverySteps = ['Assigned', 'Picked', 'Out for Delivery', 'Delivered'];
@@ -53,8 +50,8 @@ export default function TrackOrderPage() {
 
   const { data: order, isLoading } = useDoc<Order>(orderDocRef);
 
-  // This hook contains the simulation logic
-  useDeliveryTracker(order);
+  // The useDeliveryTracker hook is no longer needed as the delivery partner's device
+  // is the source of truth for location, and useDoc provides real-time updates.
 
   if (isLoading || !order) {
     return <TrackingPageSkeleton />;
@@ -64,7 +61,7 @@ export default function TrackOrderPage() {
   const currentStepIndex = deliverySteps.indexOf(deliveryStatus);
   const progressPercentage = currentStepIndex >= 0 ? ((currentStepIndex + 1) / deliverySteps.length) * 100 : 0;
   
-  const storeLocation = { lat: order.dealerLat, lng: order.dealerLng };
+  const storeLocation = { lat: order.dealerLat!, lng: order.dealerLng! };
   const customerLocation = { lat: order.latitude, lng: order.longitude };
   const deliveryBoyLocation = (order.deliveryBoyLat && order.deliveryBoyLng) 
     ? { lat: order.deliveryBoyLat, lng: order.deliveryBoyLng }

@@ -16,11 +16,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ReassignDealerDialog } from '@/components/admin/ReassignDealerDialog';
 
 const statusVariants: { [key in Order['orderStatus']]: string } = {
     Pending: 'bg-yellow-500/20 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border-yellow-500/30',
@@ -54,12 +56,18 @@ function OrderActions({ order }: { order: Order }) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuLabel>Update Status</DropdownMenuLabel>
                 {['Pending', 'Packed', 'Out for Delivery', 'Delivered', 'Cancelled'].map(status => (
                     <DropdownMenuItem key={status} onClick={() => updateStatus(status as Order['orderStatus'])}>
                         Mark as {status}
                     </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
+                <ReassignDealerDialog order={order}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        Reassign Dealer
+                    </DropdownMenuItem>
+                </ReassignDealerDialog>
             </DropdownMenuContent>
         </DropdownMenu>
     );

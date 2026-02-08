@@ -208,10 +208,7 @@ function mapUsersToRoles(users: UserProfile[] | null, roles: (UserRole & {id: st
       }
   }
 
-  // Filter out the specific user from the list
-  const filteredUsers = users.filter(user => user.email !== 'drohith7080@gmail.com');
-
-  return filteredUsers.map(user => ({
+  return users.map(user => ({
       ...user,
       roleInfo: roleMap.get(user.id),
   })).sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));

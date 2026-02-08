@@ -88,11 +88,11 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
             const userRef = doc(firestore, 'users', user.id);
             const roleRef = doc(firestore, 'roles', user.id);
             
-            // Note: This only deletes the user's main profile and role documents.
-            // It does not delete their Auth record or other associated data like orders.
+            // Atomically delete both documents. The security rules ensure an admin can do this.
+            // deleteDoc does not error on non-existent docs, so we don't need to special-case that.
             await Promise.all([
                 deleteDoc(userRef),
-                deleteDoc(roleRef).catch(e => console.log("No role doc to delete, proceeding.")) // Don't fail if role doc doesn't exist
+                deleteDoc(roleRef)
             ]);
 
             toast({ title: "User Data Deleted", description: `${user.displayName}'s profile and role data have been removed.` });

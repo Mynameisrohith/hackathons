@@ -27,7 +27,7 @@ service cloud.firestore {
     }
     
     function isSuperAdmin() {
-      return request.auth.token.email == 'drohith7080@gmail.com';
+      return request.auth.token.email == 'rohithd891@gmail.com';
     }
 
     // ROLES COLLECTION RULES

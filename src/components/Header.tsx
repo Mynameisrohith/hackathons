@@ -214,18 +214,18 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 p-4">
-      <div className="container mx-auto px-4 py-3 glass-navbar">
-        <div className="flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-background shadow-sm">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <RetailSparkIcon className="size-8 text-primary" />
-              <span className="hidden text-xl font-semibold text-primary sm:block">RetailSpark</span>
+              <span className="hidden text-xl font-semibold text-gray-800 sm:block">RetailSpark</span>
             </Link>
             <NavMenu />
           </div>
 
-          <div className="flex-1 max-w-sm hidden lg:block">
+          <div className="flex-1 max-w-lg hidden lg:block">
             <SearchBar />
           </div>
 
@@ -235,7 +235,7 @@ export function Header() {
                 <Link href="/cart">
                   <ShoppingCart className='h-5 w-5'/>
                   {cartCount > 0 && (
-                    <Badge className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{cartCount}</Badge>
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{cartCount}</Badge>
                   )}
                   <span className="sr-only">{t('cart')}</span>
                 </Link>
@@ -256,7 +256,7 @@ export function Header() {
             )}
           </div>
         </div>
-        <div className="lg:hidden mt-4">
+        <div className="lg:hidden pb-4">
             <SearchBar />
         </div>
       </div>

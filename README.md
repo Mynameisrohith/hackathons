@@ -32,10 +32,15 @@ This provides a more secure way to grant access to your application. Your app is
 
 ### Razorpay Payment Gateway Setup
 
-This project supports Razorpay for Card and UPI payments. To enable it, you need to add your Razorpay Key ID to your environment variables.
+This project supports Razorpay for Card and UPI payments. To enable it, you need to add your Razorpay keys to your environment variables.
 
-1.  **Add your Razorpay Key ID** to the `.env.local` file:
+1.  **Create a `.env.local` file** if it doesn't already exist.
+2.  **Add your Razorpay keys** to the `.env.local` file:
     ```
-    NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_your_key_here"
+    # This is your public Key ID, used on the client-side
+    NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_RxKo8TrmasNC0l"
+    
+    # This is your secret key, for server-side use only
+    RAZORPAY_SECRET="w6tHdOPN9jAqs8Ho5cYow6rN"
     ```
-2. **Important**: The current implementation uses a client-side only flow for demonstration purposes. For a production environment, you **must** create a backend API endpoint to securely create a Razorpay Order and verify the payment signature.
+3. **Important**: The current implementation uses a client-side only flow for demonstration purposes with the public key. For a production environment, you **must** create a backend API endpoint to securely create a Razorpay Order and verify the payment signature using your `RAZORPAY_SECRET`.

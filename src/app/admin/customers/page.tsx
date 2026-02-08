@@ -38,7 +38,7 @@ const statusBadgeVariants: { [key in RoleStatus]: string } = {
 };
 
 // Component to manage role assignment for a user
-function RoleManager({ user, adminUser }: { user: UserWithRole, adminUser: any }) {
+function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, adminUser: any, adminRoleData: UserRole | null }) {
     const firestore = useFirestore();
     const [isUpdating, setIsUpdating] = useState(false);
     const rolesToAssign: UserRoleType[] = ['admin', 'dealer', 'delivery', 'customer'];
@@ -68,13 +68,21 @@ function RoleManager({ user, adminUser }: { user: UserWithRole, adminUser: any }
         }
     };
     
-    const isProtected = user.roleInfo?.isSuperAdmin || user.id === adminUser.uid;
+    const isSuperAdminLoggedIn = adminRoleData?.isSuperAdmin === true;
+    const isTargetSuperAdmin = user.roleInfo?.isSuperAdmin === true;
+
+    // A superadmin can manage anyone but themselves.
+    // A regular admin cannot manage superadmins or themselves.
+    const canManage = isSuperAdminLoggedIn
+      ? user.id !== adminUser.uid
+      : !isTargetSuperAdmin && user.id !== adminUser.uid;
+
     const currentStatus = user.roleInfo?.status;
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || isProtected}>
+                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || !canManage}>
                     <span className="sr-only">Open menu</span>
                     {isUpdating ? <Loader2 className="animate-spin h-4 w-4" /> : <MoreHorizontal className="h-4 w-4" />}
                 </Button>
@@ -111,6 +119,14 @@ function RoleManager({ user, adminUser }: { user: UserWithRole, adminUser: any }
                         <RefreshCw className="mr-2 h-4 w-4" /> Re-open Application
                     </DropdownMenuItem>
                  )}
+                 {(currentStatus === 'active' || currentStatus === 'pending') && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-500" onClick={() => handleRoleUpdate('customer', 'rejected')}>
+                            <XCircle className="mr-2 h-4 w-4" /> Revoke Access
+                        </DropdownMenuItem>
+                    </>
+                 )}
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -126,7 +142,10 @@ function mapUsersToRoles(users: UserProfile[] | null, roles: (UserRole & {id: st
       }
   }
 
-  return users.map(user => ({
+  // Filter out the specific user from the list
+  const filteredUsers = users.filter(user => user.email !== 'drohith7070@gmail.com');
+
+  return filteredUsers.map(user => ({
       ...user,
       roleInfo: roleMap.get(user.id),
   })).sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
@@ -146,7 +165,7 @@ export default function UserManagementPage() {
   const isLoading = loadingUsers || loadingRoles;
   const usersWithRoles = useMemo(() => mapUsersToRoles(users, roles), [users, roles]);
 
-  if (!adminUser) return null;
+  if (!adminUser || !adminRoleData) return null;
 
   return (
     <div className="animate-card-enter">
@@ -203,7 +222,7 @@ export default function UserManagementPage() {
                              </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                              <RoleManager user={user} adminUser={adminUser} />
+                              <RoleManager user={user} adminUser={adminUser} adminRoleData={adminRoleData} />
                           </TableCell>
                         </TableRow>
                     )

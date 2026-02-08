@@ -40,8 +40,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  // stock is now managed in the store documents
-  // stock: number; 
+  stock: number; 
   description: string;
   imageUrl: string;
   categoryId: string;
@@ -74,7 +73,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl: string;
-  // stock: number; // Removed as stock is now store-dependent
+  stock: number;
   createdAt: Timestamp;
 }
 

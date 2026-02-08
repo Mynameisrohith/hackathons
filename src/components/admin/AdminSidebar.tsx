@@ -13,6 +13,7 @@ import {
   BarChart2,
   Users,
   MessageSquare,
+  Warehouse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -21,6 +22,7 @@ import type { TranslationKeys } from '@/lib/translations';
 const navItems = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'dashboard' },
   { href: '/admin/orders', icon: Package, label: 'orders' },
+  { href: '/admin/inventory', icon: Warehouse, label: 'Inventory' },
   { href: '/admin/live-tracking', icon: Map, label: 'liveTracking' },
   { href: '/admin/dealers', icon: Store, label: 'dealers' },
   { href: '/admin/fraud', icon: ShieldAlert, label: 'fraudMonitoring' },
@@ -41,7 +43,7 @@ const NavItem = ({ item }: { item: typeof navItems[0] }) => {
         className="w-full justify-start"
       >
         <item.icon className="mr-2 h-4 w-4" />
-        {t(item.label as TranslationKeys)}
+        {t(item.label as TranslationKeys) || item.label}
       </Button>
     </Link>
   );

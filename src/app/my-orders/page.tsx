@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -340,6 +339,12 @@ export default function MyOrdersPage() {
 
     const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
 
+    const filteredOrders = useMemo(() => {
+        if (!orders) return [];
+        const knownStatuses = Object.keys(statusTimeline);
+        return orders.filter(order => order.orderStatus && knownStatuses.includes(order.orderStatus));
+    }, [orders]);
+
     if (isUserLoading || !user) {
         return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /></div>;
     }
@@ -359,8 +364,8 @@ export default function MyOrdersPage() {
                 <div className="max-w-4xl mx-auto space-y-8">
                     {isLoading ? (
                         [...Array(2)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)
-                    ) : orders && orders.length > 0 ? (
-                        orders.map(order => <OrderCard key={order.id} order={order} userProfile={userProfile} />)
+                    ) : filteredOrders && filteredOrders.length > 0 ? (
+                        filteredOrders.map(order => <OrderCard key={order.id} order={order} userProfile={userProfile} />)
                     ) : (
                         <Card className="text-center p-12">
                              <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground" />

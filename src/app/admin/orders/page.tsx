@@ -85,7 +85,10 @@ export default function OrdersPage() {
 
   const sortedOrders = useMemo(() => {
       if (!orders) return [];
-      return [...orders].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
+      const knownStatuses = Object.keys(statusVariants);
+      return orders
+        .filter(order => order.orderStatus && knownStatuses.includes(order.orderStatus))
+        .sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
   }, [orders]);
 
   return (

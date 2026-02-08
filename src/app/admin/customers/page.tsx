@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, doc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import type { UserProfile, UserRole, RoleStatus, UserRoleType } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,8 +20,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { MoreHorizontal, Loader2, CheckCircle, XCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useRole } from '@/hooks/useAdmin';
@@ -41,6 +52,7 @@ const statusBadgeVariants: { [key in RoleStatus]: string } = {
 function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, adminUser: any, adminRoleData: UserRole | null }) {
     const firestore = useFirestore();
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const rolesToAssign: UserRoleType[] = ['admin', 'dealer', 'delivery', 'customer'];
 
     const handleRoleUpdate = async (newRole?: UserRoleType, newStatus?: RoleStatus) => {
@@ -68,6 +80,30 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
         }
     };
     
+    const handleDeleteUser = async () => {
+        if (!firestore) return;
+        setIsDeleting(true);
+
+        try {
+            const userRef = doc(firestore, 'users', user.id);
+            const roleRef = doc(firestore, 'roles', user.id);
+            
+            // Note: This only deletes the user's main profile and role documents.
+            // It does not delete their Auth record or other associated data like orders.
+            await Promise.all([
+                deleteDoc(userRef),
+                deleteDoc(roleRef).catch(e => console.log("No role doc to delete, proceeding.")) // Don't fail if role doc doesn't exist
+            ]);
+
+            toast({ title: "User Data Deleted", description: `${user.displayName}'s profile and role data have been removed.` });
+        } catch(e) {
+            console.error("Error deleting user data: ", e);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete user data.' });
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+    
     const isSuperAdminLoggedIn = adminRoleData?.isSuperAdmin === true;
     const isTargetSuperAdmin = user.roleInfo?.isSuperAdmin === true;
 
@@ -80,55 +116,85 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
     const currentStatus = user.roleInfo?.status;
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || !canManage}>
-                    <span className="sr-only">Open menu</span>
-                    {isUpdating ? <Loader2 className="animate-spin h-4 w-4" /> : <MoreHorizontal className="h-4 w-4" />}
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {currentStatus === 'pending' && (
-                    <>
-                        <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'active')}>
-                           <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Approve Application
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'rejected')}>
-                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> Reject Application
-                        </DropdownMenuItem>
-                    </>
-                )}
-                 {currentStatus === 'active' && (
-                    <DropdownMenuGroup>
-                        <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                        {rolesToAssign.map(role => (
-                            <DropdownMenuItem
-                                key={role}
-                                disabled={user.roleInfo?.role === role}
-                                onClick={() => handleRoleUpdate(role, 'active')}
-                            >
-                                {role.charAt(0).toUpperCase() + role.slice(1)}
+        <AlertDialog>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0" disabled={isUpdating || isDeleting || !canManage}>
+                        <span className="sr-only">Open menu</span>
+                        {isUpdating || isDeleting ? <Loader2 className="animate-spin h-4 w-4" /> : <MoreHorizontal className="h-4 w-4" />}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    
+                    {currentStatus === 'pending' && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'active')}>
+                               <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Approve Application
                             </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuGroup>
-                )}
-                 {currentStatus === 'rejected' && (
-                     <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'pending')}>
-                        <RefreshCw className="mr-2 h-4 w-4" /> Re-open Application
-                    </DropdownMenuItem>
-                 )}
-                 {(currentStatus === 'active' || currentStatus === 'pending') && (
-                    <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500" onClick={() => handleRoleUpdate('customer', 'rejected')}>
-                            <XCircle className="mr-2 h-4 w-4" /> Revoke Access
+                            <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'rejected')}>
+                                <XCircle className="mr-2 h-4 w-4 text-red-500" /> Reject Application
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                     {currentStatus === 'active' && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                                <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                                {rolesToAssign.map(role => (
+                                    <DropdownMenuItem
+                                        key={role}
+                                        disabled={user.roleInfo?.role === role}
+                                        onClick={() => handleRoleUpdate(role, 'active')}
+                                    >
+                                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuGroup>
+                        </>
+                    )}
+                     {currentStatus === 'rejected' && (
+                        <>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'pending')}>
+                            <RefreshCw className="mr-2 h-4 w-4" /> Re-open Application
                         </DropdownMenuItem>
-                    </>
-                 )}
-            </DropdownMenuContent>
-        </DropdownMenu>
+                        </>
+                     )}
+                     {(currentStatus === 'active' || currentStatus === 'pending') && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-500" onClick={() => handleRoleUpdate('customer', 'rejected')}>
+                                <XCircle className="mr-2 h-4 w-4" /> Revoke Access
+                            </DropdownMenuItem>
+                        </>
+                     )}
+                    <DropdownMenuSeparator />
+                    <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete User Data
+                        </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the user '{user.displayName}' and their associated role data from Firestore. It will not delete their authentication record.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteUser} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting && <Loader2 className="animate-spin mr-2" />}
+                        Yes, delete data
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }
 
@@ -143,7 +209,7 @@ function mapUsersToRoles(users: UserProfile[] | null, roles: (UserRole & {id: st
   }
 
   // Filter out the specific user from the list
-  const filteredUsers = users.filter(user => user.email !== 'drohith7070@gmail.com');
+  const filteredUsers = users.filter(user => user.email !== 'drohith7080@gmail.com');
 
   return filteredUsers.map(user => ({
       ...user,

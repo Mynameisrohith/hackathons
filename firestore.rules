@@ -27,25 +27,20 @@ service cloud.firestore {
     }
     
     function isSuperAdmin() {
-      return request.auth.token.email == 'rohithd891@gmail.com';
+      return request.auth.token.email == 'drohith7080@gmail.com';
+    }
+
+    function isTargetSuperAdmin(userId) {
+      let roleDoc = get(/databases/$(database)/documents/roles/$(userId));
+      return roleDoc != null && roleDoc.data.isSuperAdmin == true;
     }
 
     // ROLES COLLECTION RULES
     match /roles/{userId} {
-      // Any signed-in user can read any role document.
       allow get: if isSignedIn();
-      
-      // Users can only create their own role document upon signup.
       allow create: if isOwner(userId);
-      
-      // Super Admin can update any document.
-      // Regular Admins can only update documents for users that are NOT Super Admins.
       allow update: if isSuperAdmin() || (isAdmin() && resource.data.isSuperAdmin != true);
-
-      // No one can delete role documents.
-      allow delete: if false;
-      
-      // Admins and Super Admins can list all roles.
+      allow delete: if (isAdmin() || isSuperAdmin()) && request.auth.uid != userId && (isSuperAdmin() || !isTargetSuperAdmin(userId));
       allow list: if isAdmin() || isSuperAdmin();
     }
 
@@ -55,7 +50,7 @@ service cloud.firestore {
       allow list: if isAdmin() || isSuperAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
-      allow delete: if false;
+      allow delete: if (isAdmin() || isSuperAdmin()) && request.auth.uid != userId && (isSuperAdmin() || !isTargetSuperAdmin(userId));
 
       match /cart/{cartItemId} {
         allow read, write: if isOwner(userId);

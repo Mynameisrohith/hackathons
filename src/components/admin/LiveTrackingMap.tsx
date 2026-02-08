@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -98,7 +97,7 @@ function LiveTrackingMap({ activeOrders, stores }: LiveTrackingMapProps) {
                         position={{ lat: order.deliveryBoyLat, lng: order.deliveryBoyLng }}
                         mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                     >
-                        <div className='p-2 bg-primary rounded-full shadow-lg animate-pulse'>
+                        <div className='p-2 bg-primary rounded-full shadow-lg transition-all duration-1000 ease-linear'>
                             <DeliveryTruckIcon className="w-6 h-6 text-primary-foreground" />
                         </div>
                     </OverlayView>

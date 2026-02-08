@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -43,11 +42,15 @@ function TrackOrderMap({ storeLocation, customerLocation, deliveryBoyLocation }:
   }, [storeLocation, customerLocation]);
 
   const mapBounds = useMemo(() => {
+    if (!isLoaded) return undefined;
     const bounds = new window.google.maps.LatLngBounds();
     bounds.extend(storeLocation);
     bounds.extend(customerLocation);
+    if(deliveryBoyLocation) {
+        bounds.extend(deliveryBoyLocation);
+    }
     return bounds;
-  }, [storeLocation, customerLocation]);
+  }, [isLoaded, storeLocation, customerLocation, deliveryBoyLocation]);
 
   const routePath = useMemo(() => [storeLocation, customerLocation], [storeLocation, customerLocation]);
   
@@ -59,7 +62,11 @@ function TrackOrderMap({ storeLocation, customerLocation, deliveryBoyLocation }:
       mapContainerStyle={mapContainerStyle}
       center={mapCenter}
       options={mapOptions}
-      onLoad={map => map.fitBounds(mapBounds, 60)} // Add padding
+      onLoad={map => {
+        if(mapBounds && !mapBounds.isEmpty()) {
+            map.fitBounds(mapBounds, 60)
+        }
+      }}
     >
         {/* Store Marker */}
         <MarkerF position={storeLocation} title="Store" icon={{
@@ -87,7 +94,7 @@ function TrackOrderMap({ storeLocation, customerLocation, deliveryBoyLocation }:
                 position={deliveryBoyLocation}
                 mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             >
-                <div className='p-2 bg-primary rounded-full shadow-lg animate-pulse'>
+                <div className='p-2 bg-primary rounded-full shadow-lg transition-all duration-1000 ease-linear'>
                     <DeliveryTruckIcon className="w-6 h-6 text-primary-foreground" />
                 </div>
             </OverlayView>

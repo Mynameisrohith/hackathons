@@ -85,7 +85,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           const roleDocRef = doc(firestore, 'roles', firebaseUser.uid);
           
           // SUPER ADMIN LOGIC: Automatically grant super admin role based on email.
-          if (firebaseUser.email === 'rohithd891@gmail.com') {
+          if (firebaseUser.email === 'drohith7080@gmail.com') {
             try {
               await setDoc(roleDocRef, {
                 role: 'admin',

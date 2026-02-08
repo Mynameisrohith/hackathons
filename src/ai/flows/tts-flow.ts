@@ -5,8 +5,7 @@
  * - convertTextToSpeech - A function that takes text and returns a WAV audio data URI.
  */
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { flow } from 'genkit';
+import { z } from 'zod';
 import wav from 'wav';
 
 async function toWav(
@@ -36,7 +35,7 @@ async function toWav(
   });
 }
 
-export const convertTextToSpeech = flow(
+export const convertTextToSpeech = ai.defineFlow(
   {
     name: 'convertTextToSpeech',
     inputSchema: z.string(),

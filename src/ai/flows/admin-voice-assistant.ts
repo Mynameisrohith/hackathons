@@ -6,16 +6,14 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { getInventoryAnalysis, getSalesSummary } from '../tools/admin-assistant-tools';
-import { flow } from 'genkit';
 
-export const askAdminAssistant = flow(
+export const askAdminAssistant = ai.defineFlow(
   {
     name: 'askAdminAssistant',
     inputSchema: z.string(),
     outputSchema: z.string(),
-    middleware: [],
   },
   async (query) => {
     const llmResponse = await ai.generate({

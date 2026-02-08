@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     // Header & Footer
@@ -155,6 +154,7 @@ export const translations = {
     fraudMonitoring: "Fraud Monitoring",
     customers: "Customers",
     feedbackCenter: "Feedback Center",
+    Inventory: "Smart Inventory",
 
     // Admin Dashboard
     totalRevenue: "Total Revenue",
@@ -199,9 +199,9 @@ export const translations = {
     keyConcerns: "Key Concerns",
     recommendedActions: "Recommended Actions",
     
-    // Admin Analytics
+    // Admin Inventory
     welcomeAdmin: 'Welcome to your Admin Dashboard!',
-    welcomeAdminSubtitle: 'Your analytics dashboard is ready. Add your first product and record a sale to see your business analytics come to life.',
+    welcomeAdminSubtitle: 'Your analytics dashboard is ready. Add your first product to see your business analytics come to life.',
     addProduct: 'Add a Product',
     businessHealth: 'Business Health',
     marketTrends: 'Market Trends',
@@ -531,6 +531,7 @@ export const translations = {
     fraudMonitoring: "ವಂಚನೆ ಮೇಲ್ವಿಚಾರಣೆ",
     customers: "ಗ್ರಾಹಕರು",
     feedbackCenter: "ಪ್ರತಿಕ್ರಿಯೆ ಕೇಂದ್ರ",
+    Inventory: "ಸ್ಮಾರ್ಟ್ ಇನ್ವೆಂಟರಿ",
 
     // Admin Dashboard
     totalRevenue: "ಒಟ್ಟು ಆದಾಯ",
@@ -575,9 +576,9 @@ export const translations = {
     keyConcerns: "ಪ್ರಮುಖ ಕಳವಳಗಳು",
     recommendedActions: "ಶಿಫಾರಸು ಮಾಡಲಾದ ಕ್ರಮಗಳು",
 
-    // Admin Analytics
+    // Admin Inventory
     welcomeAdmin: 'ನಿಮ್ಮ ನಿರ್ವಾಹಕ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಸುಸ್ವಾಗತ!',
-    welcomeAdminSubtitle: 'ನಿಮ್ಮ ವಿಶ್ಲೇಷಣೆ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸಿದ್ಧವಾಗಿದೆ. ನಿಮ್ಮ ವ್ಯಾಪಾರ ವಿಶ್ಲೇಷಣೆಯನ್ನು ಜೀವಂತಗೊಳಿಸಲು ನಿಮ್ಮ ಮೊದಲ ಉತ್ಪನ್ನವನ್ನು ಸೇರಿಸಿ ಮತ್ತು ಮಾರಾಟವನ್ನು ದಾಖಲಿಸಿ.',
+    welcomeAdminSubtitle: 'ನಿಮ್ಮ ವಿಶ್ಲೇಷಣೆ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸಿದ್ಧವಾಗಿದೆ. ನಿಮ್ಮ ವ್ಯಾಪಾರ ವಿಶ್ಲೇಷಣೆಯನ್ನು ಜೀವಂತಗೊಳಿಸಲು ನಿಮ್ಮ ಮೊದಲ ಉತ್ಪನ್ನವನ್ನು ಸೇರಿಸಿ.',
     addProduct: 'ಉತ್ಪನ್ನವನ್ನು ಸೇರಿಸಿ',
     businessHealth: 'ವ್ಯಾಪಾರ ಆರೋಗ್ಯ',
     marketTrends: 'ಮಾರುಕಟ್ಟೆ ಪ್ರವೃತ್ತಿಗಳು',

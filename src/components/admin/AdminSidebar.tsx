@@ -14,6 +14,8 @@ import {
   Users,
   MessageSquare,
   Warehouse,
+  ShoppingBag,
+  List,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -22,6 +24,8 @@ import type { TranslationKeys } from '@/lib/translations';
 const navItems = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'dashboard' },
   { href: '/admin/orders', icon: Package, label: 'orders' },
+  { href: '/admin/products', icon: ShoppingBag, label: 'Products' },
+  { href: '/admin/categories', icon: List, label: 'Categories' },
   { href: '/admin/inventory', icon: Warehouse, label: 'Inventory' },
   { href: '/admin/live-tracking', icon: Map, label: 'liveTracking' },
   { href: '/admin/dealers', icon: Store, label: 'dealers' },

@@ -1,6 +1,5 @@
-
 import type { Order, Product, ProductAnalysis, MarketAnalysis } from '@/lib/types';
-import { sub, differenceInDays } from 'date-fns';
+import { sub } from 'date-fns';
 
 export function analyzeInventory(products: Product[], orders: Order[]) {
     const now = new Date();
@@ -84,11 +83,10 @@ export function analyzeInventory(products: Product[], orders: Order[]) {
 
     const weeklyGrowth = totalSalesPrev7 > 0 ? (totalSalesLast7 - totalSalesPrev7) / totalSalesPrev7 : (totalSalesLast7 > 0 ? 1 : 0);
     
-    // Simplified volatility score
     const salesValues = analyzedProducts.map(p => productSales[p.id].last30);
     const avgSales = salesValues.reduce((a, b) => a + b, 0) / salesValues.length;
     const stdDev = Math.sqrt(salesValues.map(x => Math.pow(x - avgSales, 2)).reduce((a, b) => a + b, 0) / salesValues.length);
-    const cv = avgSales > 0 ? stdDev / avgSales : 0; // Coefficient of Variation
+    const cv = avgSales > 0 ? stdDev / avgSales : 0;
 
     let volatility: MarketAnalysis['volatility'] = 'Stable';
     let businessImpactLabel = "Market is predictable.";

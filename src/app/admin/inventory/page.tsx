@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, collectionGroup } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import type { Order, Product, ProductAnalysis, MarketAnalysis } from '@/lib/types';
+import type { Order, Product } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { analyzeInventory } from '@/lib/inventory-analysis';
@@ -13,6 +13,8 @@ import { TrendingUp, TrendingDown, Package, AlertTriangle, ChevronsRight, Wareho
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/context/LanguageContext';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const riskColors = {
   High: 'text-red-500 border-red-500/30 bg-red-500/10',
@@ -54,19 +56,31 @@ export default function InventoryPage() {
     )
   }
 
-  if (!products?.length || !orders?.length) {
+  if (!products?.length) {
     return (
       <div className="animate-card-enter">
         <PageHeader title="Smart Inventory" subtitle="AI-powered insights to optimize your stock." />
         <main className="p-4 sm:p-6 lg:p-8 text-center">
           <h3 className="text-lg font-semibold">{t('welcomeAdmin')}</h3>
           <p className="text-muted-foreground mt-2">{t('welcomeAdminSubtitle')}</p>
-           <a href="/admin/products?new=true">
-            <Button className="mt-4">{t('addProduct')}</Button>
-          </a>
+           <Button asChild className="mt-4">
+                <Link href="/admin/products?new=true">{t('addProduct')}</Link>
+            </Button>
         </main>
       </div>
     );
+  }
+  
+    if (!orders?.length) {
+    return (
+        <div className="animate-card-enter">
+            <PageHeader title="Smart Inventory" subtitle="AI-powered insights to optimize your stock." />
+            <main className="p-4 sm:p-6 lg:p-8 text-center">
+                <h3 className="text-lg font-semibold">No Sales Data Yet</h3>
+                <p className="text-muted-foreground mt-2">Record your first sale to enable inventory analytics.</p>
+            </main>
+        </div>
+    )
   }
 
   const { marketAnalysis, risingProducts, decliningProducts, atRiskProducts, restockSuggestions, overstockedProducts } = analysis;

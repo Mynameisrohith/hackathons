@@ -19,9 +19,9 @@ service cloud.firestore {
 
     function isRole(role) {
       let userRole = getRoleData(request.auth.uid);
-      return isSignedIn() && userRole != null && userRole.role == role && userRole.status == 'active';
+      return isSignedIn() && userRole != null && userRole.role == role;
     }
-
+    
     function isAdmin() {
       return isRole('admin');
     }
@@ -32,12 +32,20 @@ service cloud.firestore {
 
     function isTargetSuperAdmin(userId) {
       let roleDoc = get(/databases/$(database)/documents/roles/$(userId));
-      return roleDoc != null && roleDoc.data.isSuperAdmin == true;
+      return roleDoc.data.isSuperAdmin == true;
+    }
+
+    function isDealer() {
+        return isRole('dealer');
+    }
+
+    function isDeliveryPartner() {
+        return isRole('delivery');
     }
 
     // ROLES COLLECTION RULES
     match /roles/{userId} {
-      allow get: if isSignedIn();
+      allow get: if isOwner(userId) || isAdmin() || isSuperAdmin();
       allow create: if isOwner(userId);
       allow update: if isSuperAdmin() || (isAdmin() && resource.data.isSuperAdmin != true);
       allow delete: if (isAdmin() || isSuperAdmin()) && request.auth.uid != userId && (isSuperAdmin() || !isTargetSuperAdmin(userId));
@@ -55,16 +63,28 @@ service cloud.firestore {
       match /cart/{cartItemId} {
         allow read, write: if isOwner(userId);
       }
-
-      match /orders/{orderId} {
-        allow read, write: if isOwner(userId) || isAdmin() || isSuperAdmin();
-        allow delete: if false;
-      }
     }
-
+    
     // COLLECTION GROUP FOR ORDERS
     match /{path=**}/orders/{orderId} {
-        allow list: if isAdmin() || isSuperAdmin();
+        allow list: if isAdmin() || isSuperAdmin() || isDeliveryPartner() || isDealer();
+        
+        allow read: if isAdmin() || isSuperAdmin() 
+                      || isOwner(resource.data.userId)
+                      || (isDeliveryPartner() && resource.data.orderStatus == 'Packed')
+                      || (isDeliveryPartner() && resource.data.deliveryBoyId == request.auth.uid)
+                      || (isDealer() && getRoleData(request.auth.uid).storeId != null && get(/databases/$(database)/documents/stores/$(getRoleData(request.auth.uid).storeId)).data.placeId == resource.data.dealerPlaceId);
+
+        allow write: if isAdmin() || isSuperAdmin()
+                      || isOwner(resource.data.userId) // User can cancel their own order or leave feedback
+                      || (isDealer() && getRoleData(request.auth.uid).storeId != null && get(/databases/$(database)/documents/stores/$(getRoleData(request.auth.uid).storeId)).data.placeId == resource.data.dealerPlaceId && request.resource.data.orderStatus == 'Packed')
+                      || (isDeliveryPartner() && (
+                            (resource.data.orderStatus == 'Packed' && request.resource.data.deliveryBoyId == request.auth.uid) // Accepting a job
+                            || (resource.data.deliveryBoyId == request.auth.uid) // Updating an accepted job
+                          )
+                      );
+                      
+        allow delete: if false;
     }
 
     // PUBLIC/ADMIN-WRITABLE COLLECTIONS
@@ -80,7 +100,9 @@ service cloud.firestore {
 
     match /stores/{storeId} {
       allow get, list: if true;
-      allow write: if isAdmin() || isSuperAdmin();
+      allow create, delete: if isAdmin() || isSuperAdmin();
+      // Dealers can update their own store (e.g. for inventory)
+      allow update: if isAdmin() || isSuperAdmin() || (isDealer() && getRoleData(request.auth.uid).storeId == storeId);
     }
 
     match /sales/{saleId} {

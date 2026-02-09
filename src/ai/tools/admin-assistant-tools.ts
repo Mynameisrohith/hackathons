@@ -2,8 +2,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getDocs, collectionGroup, query, getFirestore, collection, where } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { getDocs, collectionGroup, query, collection, where } from 'firebase/firestore';
+import { firestore } from './firebase';
 import { analyzeInventory } from '@/lib/inventory-analysis';
 import type { Order, Product, UserProfile } from '@/lib/types';
 import { endOfDay, startOfDay, sub, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
@@ -33,14 +33,6 @@ export const getInventoryAnalysis = ai.defineTool(
       outputSchema: z.any(),
     },
     async () => {
-        let firestore: any;
-        try {
-          firestore = initializeFirebase().firestore;
-        } catch (e) {
-          console.error("Failed to initialize Firestore for AI tools:", e);
-          throw new Error("Firestore not initialized.");
-        }
-        
         try {
             const productsQuery = query(collection(firestore, 'products'));
             const ordersQuery = query(collectionGroup(firestore, 'orders'));
@@ -87,14 +79,6 @@ export const getSalesSummary = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ period }) => {
-        let firestore: any;
-        try {
-          firestore = initializeFirebase().firestore;
-        } catch (e) {
-          console.error("Failed to initialize Firestore for AI tools:", e);
-          throw new Error("Firestore not initialized.");
-        }
-
         try {
             const ordersQuery = query(collectionGroup(firestore, 'orders'));
             const ordersSnapshot = await getDocs(ordersQuery);
@@ -147,14 +131,6 @@ export const getCustomerSummary = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ period }) => {
-        let firestore: any;
-        try {
-          firestore = initializeFirebase().firestore;
-        } catch (e) {
-          console.error("Failed to initialize Firestore for AI tools:", e);
-          throw new Error("Firestore not initialized.");
-        }
-
         try {
             const usersQuery = query(collection(firestore, 'users'));
             const usersSnapshot = await getDocs(usersQuery);
@@ -200,13 +176,6 @@ export const getOrderDetails = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ orderId }) => {
-        let firestore: any;
-        try {
-          firestore = initializeFirebase().firestore;
-        } catch (e) {
-          console.error("Failed to initialize Firestore for AI tools:", e);
-          throw new Error("Firestore not initialized.");
-        }
         if (!orderId || orderId.length < 5) return "Please provide a valid, full order ID.";
 
         try {

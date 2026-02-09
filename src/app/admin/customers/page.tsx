@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, query, doc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import type { UserProfile, UserRole, RoleStatus, UserRoleType } from '@/lib/types';
+import type { UserProfile, UserRole, RoleStatus, UserRoleType, Store } from '@/lib/types';
 import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,6 +35,8 @@ import { MoreHorizontal, Loader2, CheckCircle, XCircle, RefreshCw, Trash2 } from
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useRole } from '@/hooks/useAdmin';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type UserWithRole = UserProfile & {
@@ -48,14 +49,61 @@ const statusBadgeVariants: { [key in RoleStatus]: string } = {
     rejected: 'bg-red-500/20 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-500/30',
 };
 
+
+function AssignStoreDialog({ onAssign, stores, isLoadingStores, children }: { onAssign: (storeId: string) => void, stores: Store[] | null, isLoadingStores: boolean, children: React.ReactNode }) {
+    const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleAssign = () => {
+        if(selectedStoreId) {
+            onAssign(selectedStoreId);
+            setIsOpen(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Assign Dealer to Store</DialogTitle>
+                    <DialogDescription>
+                        To complete the dealer registration, please assign them to a physical store from the list below.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                     <Select onValueChange={setSelectedStoreId} disabled={isLoadingStores}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a store..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {isLoadingStores ? (
+                                <SelectItem value="loading" disabled>Loading stores...</SelectItem>
+                            ) : (
+                                stores?.map(store => (
+                                    <SelectItem key={store.id} value={store.id}>{store.name} - {store.address}</SelectItem>
+                                ))
+                            )}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                    <Button onClick={handleAssign} disabled={!selectedStoreId}>Assign Store</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 // Component to manage role assignment for a user
-function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, adminUser: any, adminRoleData: UserRole | null }) {
+function RoleManager({ user, adminUser, adminRoleData, stores, isLoadingStores }: { user: UserWithRole, adminUser: any, adminRoleData: UserRole | null, stores: Store[] | null, isLoadingStores: boolean }) {
     const firestore = useFirestore();
     const [isUpdating, setIsUpdating] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const rolesToAssign: UserRoleType[] = ['admin', 'dealer', 'delivery', 'customer'];
 
-    const handleRoleUpdate = async (newRole?: UserRoleType, newStatus?: RoleStatus) => {
+    const handleRoleUpdate = async (newRole?: UserRoleType, newStatus?: RoleStatus, storeId?: string) => {
         if (!firestore) return;
         setIsUpdating(true);
 
@@ -68,6 +116,10 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
             assignedAt: serverTimestamp() as any,
             assignedBy: adminUser.uid,
         };
+
+        if (storeId) {
+            payload.storeId = storeId;
+        }
 
         try {
             await setDoc(roleRef, payload, { merge: true });
@@ -88,8 +140,6 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
             const userRef = doc(firestore, 'users', user.id);
             const roleRef = doc(firestore, 'roles', user.id);
             
-            // Atomically delete both documents. The security rules ensure an admin can do this.
-            // deleteDoc does not error on non-existent docs, so we don't need to special-case that.
             await Promise.all([
                 deleteDoc(userRef),
                 deleteDoc(roleRef)
@@ -107,13 +157,13 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
     const isSuperAdminLoggedIn = adminRoleData?.isSuperAdmin === true;
     const isTargetSuperAdmin = user.roleInfo?.isSuperAdmin === true;
 
-    // A superadmin can manage anyone but themselves.
-    // A regular admin cannot manage superadmins or themselves.
     const canManage = isSuperAdminLoggedIn
       ? user.id !== adminUser.uid
       : !isTargetSuperAdmin && user.id !== adminUser.uid;
 
     const currentStatus = user.roleInfo?.status;
+    const isDealerApplication = user.roleInfo?.role === 'dealer' && currentStatus === 'pending';
+
 
     return (
         <AlertDialog>
@@ -127,7 +177,7 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     
-                    {currentStatus === 'pending' && (
+                    {currentStatus === 'pending' && !isDealerApplication && (
                         <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'active')}>
@@ -138,6 +188,25 @@ function RoleManager({ user, adminUser, adminRoleData }: { user: UserWithRole, a
                             </DropdownMenuItem>
                         </>
                     )}
+                    
+                    {isDealerApplication && (
+                         <>
+                            <DropdownMenuSeparator />
+                            <AssignStoreDialog
+                                stores={stores}
+                                isLoadingStores={isLoadingStores}
+                                onAssign={(storeId) => handleRoleUpdate('dealer', 'active', storeId)}
+                            >
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                   <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Approve & Assign Store
+                                </DropdownMenuItem>
+                            </AssignStoreDialog>
+                            <DropdownMenuItem onClick={() => handleRoleUpdate(undefined, 'rejected')}>
+                                <XCircle className="mr-2 h-4 w-4 text-red-500" /> Reject Application
+                            </DropdownMenuItem>
+                        </>
+                    )}
+
                      {currentStatus === 'active' && (
                         <>
                             <DropdownMenuSeparator />
@@ -216,16 +285,18 @@ function mapUsersToRoles(users: UserProfile[] | null, roles: (UserRole & {id: st
 
 export default function UserManagementPage() {
   const firestore = useFirestore();
-  // useRole provides details for the currently logged-in admin
   const { user: adminUser, roleData: adminRoleData } = useRole();
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const rolesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'roles')) : null, [firestore]);
+  const storesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'stores')) : null, [firestore]);
 
   const { data: users, isLoading: loadingUsers } = useCollection<UserProfile>(usersQuery);
   const { data: roles, isLoading: loadingRoles } = useCollection<(UserRole & { id: string })>(rolesQuery);
+  const { data: stores, isLoading: loadingStores } = useCollection<Store>(storesQuery);
 
-  const isLoading = loadingUsers || loadingRoles;
+
+  const isLoading = loadingUsers || loadingRoles || loadingStores;
   const usersWithRoles = useMemo(() => mapUsersToRoles(users, roles), [users, roles]);
 
   if (!adminUser || !adminRoleData) return null;
@@ -285,7 +356,7 @@ export default function UserManagementPage() {
                              </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                              <RoleManager user={user} adminUser={adminUser} adminRoleData={adminRoleData} />
+                              <RoleManager user={user} adminUser={adminUser} adminRoleData={adminRoleData} stores={stores} isLoadingStores={loadingStores} />
                           </TableCell>
                         </TableRow>
                     )

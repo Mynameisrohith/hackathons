@@ -1,6 +1,18 @@
 import type { Order, Product, ProductAnalysis, MarketAnalysis } from '@/lib/types';
 import { sub } from 'date-fns';
 
+function toDate(timestamp: any): Date {
+    if (!timestamp) return new Date(0);
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate();
+    }
+    if (timestamp && typeof timestamp.seconds === 'number') {
+        return new Date(timestamp.seconds * 1000);
+    }
+    // Fallback for unexpected formats
+    return new Date(0); 
+}
+
 export function analyzeInventory(products: Product[], orders: Order[]) {
     const now = new Date();
     const thirtyDaysAgo = sub(now, { days: 30 });
@@ -14,7 +26,7 @@ export function analyzeInventory(products: Product[], orders: Order[]) {
     }
 
     for (const order of orders) {
-        const orderDate = order.createdAt.toDate();
+        const orderDate = toDate(order.createdAt);
         for (const item of order.items) {
             if (productSales[item.productId]) {
                 productSales[item.productId].total += item.quantity;
@@ -71,12 +83,12 @@ export function analyzeInventory(products: Product[], orders: Order[]) {
     });
 
     const totalSalesLast7 = orders
-        .filter(o => o.createdAt.toDate() > sevenDaysAgo && o.orderStatus !== 'Cancelled')
+        .filter(o => toDate(o.createdAt) > sevenDaysAgo && o.orderStatus !== 'Cancelled')
         .reduce((sum, o) => sum + o.totalAmount, 0);
     
     const totalSalesPrev7 = orders
         .filter(o => {
-            const date = o.createdAt.toDate();
+            const date = toDate(o.createdAt);
             return date > fourteenDaysAgo && date <= sevenDaysAgo && o.orderStatus !== 'Cancelled';
         })
         .reduce((sum, o) => sum + o.totalAmount, 0);

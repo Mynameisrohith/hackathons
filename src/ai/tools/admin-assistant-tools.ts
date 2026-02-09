@@ -2,10 +2,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getDocs, collectionGroup, query, getFirestore } from 'firebase/firestore';
+import { getDocs, collectionGroup, query, getFirestore, collection, where } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { analyzeInventory } from '@/lib/inventory-analysis';
-import type { Order, Product } from '@/lib/types';
+import type { Order, Product, UserProfile } from '@/lib/types';
 import { endOfDay, startOfDay, sub, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 
 // Initialize Firestore instance for server-side tool usage
@@ -14,6 +14,23 @@ try {
   firestore = initializeFirebase().firestore;
 } catch (e) {
   console.error("Failed to initialize Firestore for AI tools:", e);
+}
+
+/**
+ * Safely converts a Firestore Timestamp or a serialized timestamp object to a Date.
+ * @param timestamp The value to convert.
+ * @returns A Date object, or a zero-date if conversion fails.
+ */
+function toDate(timestamp: any): Date {
+    if (!timestamp) return new Date(0);
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate();
+    }
+    if (timestamp && typeof timestamp.seconds === 'number') {
+        return new Date(timestamp.seconds * 1000);
+    }
+    // Fallback for unexpected formats
+    return new Date(0); 
 }
 
 export const getInventoryAnalysis = ai.defineTool(
@@ -27,7 +44,7 @@ export const getInventoryAnalysis = ai.defineTool(
         if (!firestore) throw new Error("Firestore not initialized.");
         
         try {
-            const productsQuery = query(collectionGroup(firestore, 'products'));
+            const productsQuery = query(collection(firestore, 'products'));
             const ordersQuery = query(collectionGroup(firestore, 'orders'));
 
             const [productsSnapshot, ordersSnapshot] = await Promise.all([
@@ -98,7 +115,7 @@ export const getSalesSummary = ai.defineTool(
             }
 
             const filteredOrders = orders.filter(order => {
-                const orderDate = order.createdAt.toDate();
+                const orderDate = toDate(order.createdAt);
                 return orderDate >= startDate && order.orderStatus !== 'Cancelled';
             });
 
@@ -112,6 +129,98 @@ export const getSalesSummary = ai.defineTool(
         } catch (error: any) {
             console.error("Error in getSalesSummary tool:", error);
             return `Error fetching sales data: ${error.message}`;
+        }
+    }
+);
+
+export const getCustomerSummary = ai.defineTool(
+    {
+        name: 'getCustomerSummary',
+        description: 'Provides a summary of customer statistics, including total customers and new customers for a given period.',
+        inputSchema: z.object({
+            period: z.enum(['this week', 'this month', 'all time']).describe("The time period for the new customer summary. 'all time' returns total customers only."),
+        }),
+        outputSchema: z.any(),
+    },
+    async ({ period }) => {
+        if (!firestore) throw new Error("Firestore not initialized.");
+
+        try {
+            const usersQuery = query(collection(firestore, 'users'));
+            const usersSnapshot = await getDocs(usersQuery);
+            const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+
+            const now = new Date();
+            let startDate: Date | null = null;
+            let periodString = "since the beginning";
+
+            if (period === 'this week') {
+                startDate = startOfWeek(now);
+                periodString = "this week";
+            } else if (period === 'this month') {
+                startDate = startOfMonth(now);
+                periodString = "this month";
+            }
+            
+            const newCustomers = startDate 
+                ? users.filter(user => user.creationTime && toDate(user.creationTime) >= startDate!).length
+                : 0;
+
+            let response = `Total customers: ${users.length}.`;
+            if (period !== 'all time') {
+                response += `\n- New customers ${periodString}: ${newCustomers}.`;
+            }
+            
+            return response;
+
+        } catch (error: any) {
+            console.error("Error in getCustomerSummary tool:", error);
+            return `Error fetching customer data: ${error.message}`;
+        }
+    }
+);
+
+export const getOrderDetails = ai.defineTool(
+    {
+        name: 'getOrderDetails',
+        description: 'Retrieves the details for a specific order by its full ID.',
+        inputSchema: z.object({
+            orderId: z.string().describe("The full ID of the order to retrieve."),
+        }),
+        outputSchema: z.any(),
+    },
+    async ({ orderId }) => {
+        if (!firestore) throw new Error("Firestore not initialized.");
+        if (!orderId || orderId.length < 5) return "Please provide a valid, full order ID.";
+
+        try {
+            const ordersQuery = query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
+            const ordersSnapshot = await getDocs(ordersQuery);
+
+            if (ordersSnapshot.empty) {
+                return `Order with ID ${orderId} not found. Please ensure you are using the full order ID.`;
+            }
+            
+            const orderDoc = ordersSnapshot.docs[0];
+            const orderData = { id: orderDoc.id, ...orderDoc.data() } as Order;
+
+            const orderSummary = {
+                id: orderData.id,
+                customerName: orderData.customerName,
+                totalAmount: orderData.totalAmount,
+                orderStatus: orderData.orderStatus,
+                paymentStatus: orderData.paymentStatus,
+                itemCount: orderData.items.length,
+                items: orderData.items.map(item => `${item.productName} (x${item.quantity})`).join(', '),
+                dealerName: orderData.dealerName,
+                createdAt: toDate(orderData.createdAt).toLocaleString(),
+            };
+
+            return `Here are the details for order ${orderId}: ${JSON.stringify(orderSummary, null, 2)}`;
+
+        } catch (error: any) {
+            console.error("Error in getOrderDetails tool:", error);
+            return `Error fetching order data: ${error.message}`;
         }
     }
 );

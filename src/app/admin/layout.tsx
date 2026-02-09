@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
@@ -8,7 +7,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Loader2, ShieldX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { VoiceAssistant } from '@/components/admin/VoiceAssistant';
+import { AiAssistant } from '@/components/admin/VoiceAssistant';
 
 function AdminAccessDenied() {
     const router = useRouter();
@@ -47,29 +46,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // After loading, if a user exists but their role is not 'admin' or their status is not 'active', deny access.
-  // The central /auth/redirect page should handle most of these cases, but this is a final safeguard.
-  if (user && (roleData?.role !== 'admin' || roleData?.status !== 'active')) {
+  // If not an active admin, deny access. This covers all cases: no user, wrong role, or inactive status.
+  if (!user || roleData?.role !== 'admin' || roleData?.status !== 'active') {
     return <AdminAccessDenied />;
   }
 
   // If user exists and is an active admin, show the layout
-  if (user && roleData?.role === 'admin' && roleData?.status === 'active') {
-      return (
-        <div className="flex min-h-screen bg-secondary/50">
-          <AdminSidebar />
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
-          <VoiceAssistant />
-        </div>
-      );
-  }
-
-  // Fallback case, typically shown while redirecting or if auth state is indeterminate
   return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
+    <div className="flex min-h-screen bg-secondary/50">
+      <AdminSidebar />
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
+      <AiAssistant />
+    </div>
+  );
 }

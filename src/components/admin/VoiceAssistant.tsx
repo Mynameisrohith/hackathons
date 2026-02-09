@@ -3,71 +3,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Mic, MicOff, Bot, Loader2, Volume2, User, Sparkles } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Bot, Loader2, User, Sparkles, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { askAdminAssistant } from '@/ai/flows/admin-voice-assistant';
-import { convertTextToSpeech } from '@/ai/flows/tts-flow';
 
 type Message = {
     sender: 'user' | 'ai';
     text: string;
 };
 
-export function VoiceAssistant() {
+export function AiAssistant() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isListening, setIsListening] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [conversation, setConversation] = useState<Message[]>([]);
-    const recognitionRef = useRef<any>(null);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const [input, setInput] = useState('');
+    const conversationEndRef = useRef<HTMLDivElement | null>(null);
 
-    // Initialize SpeechRecognition
+     useEffect(() => {
+        if (isOpen && conversation.length === 0) {
+            setConversation([{sender: 'ai', text: "Hello! I'm your admin assistant. How can I help you with the store today?"}]);
+        }
+    }, [isOpen, conversation]);
+
     useEffect(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = false;
-            recognitionRef.current.lang = 'en-US';
-            recognitionRef.current.interimResults = false;
+        conversationEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [conversation]);
 
-            recognitionRef.current.onresult = (event: any) => {
-                const transcript = event.results[0][0].transcript;
-                setConversation(prev => [...prev, { sender: 'user', text: transcript }]);
-                handleQuery(transcript);
-                setIsListening(false);
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error('Speech recognition error:', event.error);
-                setIsListening(false);
-            };
-        }
-    }, []);
-
-    const toggleListening = () => {
-        if (!recognitionRef.current) return;
-
-        if (isListening) {
-            recognitionRef.current.stop();
-            setIsListening(false);
-        } else {
-            recognitionRef.current.start();
-            setIsListening(true);
-        }
-    };
 
     const handleQuery = async (query: string) => {
+        if (!query.trim()) return;
+        
+        setConversation(prev => [...prev, { sender: 'user', text: query }]);
         setIsProcessing(true);
         try {
             const aiResponseText = await askAdminAssistant(query);
             setConversation(prev => [...prev, { sender: 'ai', text: aiResponseText }]);
             
-            const audioDataUri = await convertTextToSpeech(aiResponseText);
-            if (audioRef.current) {
-                audioRef.current.src = audioDataUri;
-                audioRef.current.play();
-            }
-
         } catch (error) {
             console.error('AI assistant error:', error);
             const errorMessage = "I'm sorry, I encountered an error. Please try again.";
@@ -76,6 +48,12 @@ export function VoiceAssistant() {
             setIsProcessing(false);
         }
     };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleQuery(input);
+        setInput('');
+    }
     
     return (
         <>
@@ -87,13 +65,13 @@ export function VoiceAssistant() {
                 <Sparkles className="h-8 w-8" />
             </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-[425px] card-glass">
+                <DialogContent className="sm:max-w-md card-glass">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                            <Bot /> AI Admin Assistant
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="h-80 space-y-4 overflow-y-auto p-4 rounded-md bg-background/50">
+                    <div className="h-96 space-y-4 overflow-y-auto p-4 rounded-md bg-background/50">
                         {conversation.map((msg, index) => (
                             <div key={index} className={cn("flex items-start gap-2", msg.sender === 'user' ? "justify-end" : "justify-start")}>
                                 {msg.sender === 'ai' && <Bot className="h-5 w-5 text-primary flex-shrink-0" />}
@@ -111,25 +89,24 @@ export function VoiceAssistant() {
                                 </div>
                             </div>
                         )}
+                        <div ref={conversationEndRef} />
                     </div>
                     <DialogFooter>
-                        <div className='w-full flex justify-center'>
-                             <Button
-                                size="icon"
-                                onClick={toggleListening}
-                                disabled={isProcessing || !recognitionRef.current}
-                                className={cn(
-                                    "h-16 w-16 rounded-full transition-all duration-300",
-                                    isListening ? "bg-red-500 hover:bg-red-600 scale-110" : "gradient-btn"
-                                )}
-                            >
-                                {isListening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+                        <form onSubmit={handleSubmit} className="w-full flex items-center gap-2">
+                            <Input 
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Ask about sales, inventory..."
+                                disabled={isProcessing}
+                                autoFocus
+                            />
+                            <Button type="submit" size="icon" disabled={isProcessing || !input.trim()}>
+                                <Send className="h-4 w-4" />
                             </Button>
-                        </div>
+                        </form>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <audio ref={audioRef} className="hidden" />
         </>
     );
 }

@@ -56,6 +56,19 @@ export default function CheckoutPage() {
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
 
+  useEffect(() => {
+    const scriptId = 'razorpay-checkout-script';
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    
+    if (!script) {
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+    }
+  }, []);
+
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
     defaultValues: {

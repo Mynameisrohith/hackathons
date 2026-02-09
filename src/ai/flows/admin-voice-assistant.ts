@@ -20,7 +20,7 @@ export const askAdminAssistant = ai.defineFlow(
       prompt: `You are a helpful and concise admin assistant for an e-commerce store called RetailSpark. Answer the user's query based on the information provided by the available tools. Be friendly and professional.
 
 User query: "${query}"`,
-      model: 'googleai/gemini-1.5-flash-latest',
+      model: 'googleai/gemini-1.5-flash',
       tools: [getInventoryAnalysis, getSalesSummary, getCustomerSummary, getOrderDetails],
       config: {
         temperature: 0.3,

@@ -8,14 +8,6 @@ import { analyzeInventory } from '@/lib/inventory-analysis';
 import type { Order, Product, UserProfile } from '@/lib/types';
 import { endOfDay, startOfDay, sub, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 
-// Initialize Firestore instance for server-side tool usage
-let firestore: any;
-try {
-  firestore = initializeFirebase().firestore;
-} catch (e) {
-  console.error("Failed to initialize Firestore for AI tools:", e);
-}
-
 /**
  * Safely converts a Firestore Timestamp or a serialized timestamp object to a Date.
  * @param timestamp The value to convert.
@@ -41,7 +33,13 @@ export const getInventoryAnalysis = ai.defineTool(
       outputSchema: z.any(),
     },
     async () => {
-        if (!firestore) throw new Error("Firestore not initialized.");
+        let firestore: any;
+        try {
+          firestore = initializeFirebase().firestore;
+        } catch (e) {
+          console.error("Failed to initialize Firestore for AI tools:", e);
+          throw new Error("Firestore not initialized.");
+        }
         
         try {
             const productsQuery = query(collection(firestore, 'products'));
@@ -89,7 +87,13 @@ export const getSalesSummary = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ period }) => {
-        if (!firestore) throw new Error("Firestore not initialized.");
+        let firestore: any;
+        try {
+          firestore = initializeFirebase().firestore;
+        } catch (e) {
+          console.error("Failed to initialize Firestore for AI tools:", e);
+          throw new Error("Firestore not initialized.");
+        }
 
         try {
             const ordersQuery = query(collectionGroup(firestore, 'orders'));
@@ -143,7 +147,13 @@ export const getCustomerSummary = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ period }) => {
-        if (!firestore) throw new Error("Firestore not initialized.");
+        let firestore: any;
+        try {
+          firestore = initializeFirebase().firestore;
+        } catch (e) {
+          console.error("Failed to initialize Firestore for AI tools:", e);
+          throw new Error("Firestore not initialized.");
+        }
 
         try {
             const usersQuery = query(collection(firestore, 'users'));
@@ -190,7 +200,13 @@ export const getOrderDetails = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ orderId }) => {
-        if (!firestore) throw new Error("Firestore not initialized.");
+        let firestore: any;
+        try {
+          firestore = initializeFirebase().firestore;
+        } catch (e) {
+          console.error("Failed to initialize Firestore for AI tools:", e);
+          throw new Error("Firestore not initialized.");
+        }
         if (!orderId || orderId.length < 5) return "Please provide a valid, full order ID.";
 
         try {

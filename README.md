@@ -4,12 +4,37 @@ This is a NextJS starter in Firebase Studio.
 
 To get started, take a look at src/app/page.tsx.
 
-## Email Notification Setup
+## Environment Setup
+
+To run this project, you will need to set up a few environment variables for external services. Create a `.env.local` file in the root of your project and add the variables as described below.
+
+### Generative AI (Gemini) Setup
+
+This project uses Google's Gemini models for its AI-powered features, such as the Admin Assistant and Fraud Analysis. To enable these features, you need to provide a Gemini API key.
+
+1.  **Generate an API key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  **Add the key** to your `.env.local` file:
+    ```
+    # Your Google AI Studio API key for Gemini
+    GEMINI_API_KEY="your-gemini-api-key"
+    ```
+
+### Google Maps API Setup
+
+The application uses the Google Maps Places API for dealer discovery and address autocompletion.
+
+1.  **Enable the Maps JavaScript API and Places API** in your [Google Cloud Console](https://console.cloud.google.com/google/maps-apis/overview).
+2.  **Add your API key** to your `.env.local` file:
+    ```
+    # Your public Google Maps API Key
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
+    ```
+
+### Email Notification Setup
 
 This project uses **Nodemailer** to send emails for order notifications through a Next.js API route. To enable this, you need to configure environment variables for the email service.
 
-1.  **Create a `.env.local` file** in the root of your project if it doesn't already exist.
-2.  **Add the following variables** to the `.env.local` file, replacing the placeholder values with your actual email provider credentials:
+1.  **Add the following variables** to your `.env.local` file, replacing the placeholder values with your actual email provider credentials:
 
     ```
     # Your email service username (e.g., your Gmail address)
@@ -25,7 +50,7 @@ This project uses **Nodemailer** to send emails for order notifications through 
     SUPER_ADMIN_EMAIL="drohith7080@gmail.com"
     ```
 
-### Using Gmail for Development
+#### Using Gmail for Development
 
 If you are using a Gmail account, it is highly recommended to use an **"App Password"** for `EMAIL_PASS`, not your regular Google account password. You can generate one here:
 
@@ -37,8 +62,7 @@ This provides a more secure way to grant access to your application. Your app is
 
 This project supports Razorpay for Card and UPI payments. To enable it, you need to add your Razorpay keys to your environment variables.
 
-1.  **Create a `.env.local` file** if it doesn't already exist.
-2.  **Add your Razorpay keys** to the `.env.local` file:
+1.  **Add your Razorpay keys** to the `.env.local` file:
     ```
     # This is your public Key ID, used on the client-side
     NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_RxKo8TrmasNC0l"
@@ -46,4 +70,4 @@ This project supports Razorpay for Card and UPI payments. To enable it, you need
     # This is your secret key, for server-side use only
     RAZORPAY_SECRET="w6tHdOPN9jAqs8Ho5cYow6rN"
     ```
-3. **Important**: The current implementation uses a client-side only flow for demonstration purposes with the public key. For a production environment, you **must** create a backend API endpoint to securely create a Razorpay Order and verify the payment signature using your `RAZORPAY_SECRET`.
+2. **Important**: The current implementation uses a client-side only flow for demonstration purposes with the public key. For a production environment, you **must** create a backend API endpoint to securely create a Razorpay Order and verify the payment signature using your `RAZORPAY_SECRET`.

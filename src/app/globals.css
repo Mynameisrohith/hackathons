@@ -78,6 +78,15 @@ body {
   }
 }
 
+@layer components {
+    .card-glass {
+        @apply bg-card/60 backdrop-blur-lg border-border/20;
+    }
+    .gradient-btn {
+        @apply bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90;
+    }
+}
+
 @layer utilities {
     .animate-card-enter {
         animation: card-enter 0.7s ease-out forwards;

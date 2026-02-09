@@ -20,6 +20,9 @@ This project uses **Nodemailer** to send emails for order notifications through 
 
     # The admin email address to receive order notifications
     ADMIN_EMAIL="your-admin-email@example.com"
+
+    # The super admin email address to also receive new order notifications
+    SUPER_ADMIN_EMAIL="drohith7080@gmail.com"
     ```
 
 ### Using Gmail for Development

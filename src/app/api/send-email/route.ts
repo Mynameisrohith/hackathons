@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     const { 
         EMAIL_USER, 
         EMAIL_PASS, 
-        ADMIN_EMAIL 
+        ADMIN_EMAIL,
+        SUPER_ADMIN_EMAIL
     } = process.env;
 
     if (!EMAIL_USER || !EMAIL_PASS || !ADMIN_EMAIL) {
@@ -42,10 +43,17 @@ export async function POST(request: Request) {
                     subject: `Your RetailSpark Order #${order.id} is Confirmed!`,
                     html: orderConfirmationTemplate(order, user),
                 });
-                // Send notification email to admin
+                
+                // Prepare list of admin recipients
+                const adminRecipients = [ADMIN_EMAIL];
+                if (SUPER_ADMIN_EMAIL) {
+                    adminRecipients.push(SUPER_ADMIN_EMAIL);
+                }
+
+                // Send notification email to admin and super admin
                 await transporter.sendMail({
                     from: `"RetailSpark" <${EMAIL_USER}>`,
-                    to: ADMIN_EMAIL,
+                    to: adminRecipients,
                     subject: `New Order Received #${order.id}`,
                     html: newOrderAdminNotificationTemplate(order, user),
                 });

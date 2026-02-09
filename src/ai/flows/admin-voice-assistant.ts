@@ -6,6 +6,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 import { getInventoryAnalysis, getSalesSummary, getCustomerSummary, getOrderDetails } from '../tools/admin-assistant-tools';
 
@@ -17,7 +18,7 @@ export const askAdminAssistant = ai.defineFlow(
   },
   async (query) => {
     const llmResponse = await ai.generate({
-      model: 'googleai/gemini-pro',
+      model: googleAI.model('gemini-pro'),
       prompt: `You are a helpful and concise admin assistant for an e-commerce store called RetailSpark. Answer the user's query based on the information provided by the available tools. Be friendly and professional.
 
 User query: "${query}"`,

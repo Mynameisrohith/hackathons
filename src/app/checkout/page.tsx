@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -239,7 +238,7 @@ export default function CheckoutPage() {
         
         <div className='space-y-8'>
             <div className={cn(step === 'payment' && 'hidden')}>
-                <h2 className="mb-4 text-xl font-semibold">{t('address')}</h2>
+                <h2 className="text-xl font-semibold">{t('address')}</h2>
                 <AddressAutocomplete
                     form={form}
                     onAddressSelect={setAddressDetails}
@@ -256,7 +255,7 @@ export default function CheckoutPage() {
               )}
               
               <div className="mt-8">
-                  <h2 className="mb-4 text-xl font-semibold">{t('paymentMethod')}</h2>
+                  <h2 className="text-xl font-semibold">{t('paymentMethod')}</h2>
                   <RadioGroup value={paymentMethod} onValueChange={(val) => setPaymentMethod(val as any)} className="space-y-4">
                       <Label htmlFor="cod" className="flex cursor-pointer items-center rounded-lg border p-4 has-[:checked]:border-primary">
                           <RadioGroupItem value="COD" id="cod" />

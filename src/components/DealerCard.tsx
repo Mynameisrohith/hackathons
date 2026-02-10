@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -22,7 +21,7 @@ interface DealerCardProps {
 
 export function DealerCard({ dealer, isSelected, onSelect }: DealerCardProps) {
   const { t } = useLanguage();
-  const { role } = useRole();
+  const { roleData } = useRole();
   const firestore = useFirestore();
   const [isAdding, setIsAdding] = useState(false);
 
@@ -70,7 +69,7 @@ export function DealerCard({ dealer, isSelected, onSelect }: DealerCardProps) {
         )}
       </CardContent>
       <CardFooter>
-        {role === 'admin' && !isRegistered && (
+        {roleData?.role === 'admin' && !isRegistered && (
           <Button variant="outline" size="sm" className="w-full" onClick={handleAddDealer} disabled={isAdding}>
             <PlusCircle className="mr-2 h-4 w-4" />
             {isAdding ? t('adding') : t('addAsDealer')}

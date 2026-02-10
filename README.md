@@ -8,18 +8,18 @@ To get started, take a look at src/app/page.tsx.
 
 To run this project, you will need to set up a few environment variables for external services. Create a `.env.local` file in the root of your project and add the variables as described below.
 
-### Generative AI (Google AI) Setup
+### Google AI (Vertex AI & Gemini) Setup
 
-This project uses Google's Generative AI models (like Gemini) for its AI-powered features. To enable these features, you need to provide an API key.
+This project uses Google's Generative AI models for its AI-powered features. To enable these, you need to provide an API key. The application uses the `GEMINI_API_KEY` environment variable, which is the standard name used by the underlying SDK for keys from both **Vertex AI** and **Google AI Studio**.
 
-You can get an API key from either Google AI Studio or a Google Cloud project with the Vertex AI API enabled.
+You can get an API key from either source:
 
 1.  **Generate an API key**:
-    *   **For Google AI Studio:** Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate your key.
-    *   **For Vertex AI:** Go to the [Credentials page](https://console.cloud.google.com/apis/credentials) in your Google Cloud project, create an API key, and ensure the Vertex AI API is enabled.
-2.  **Add the key** to your `.env.local` file:
+    *   **For Vertex AI (Recommended for Production):** Go to the [Credentials page](https://console.cloud.google.com/apis/credentials) in your Google Cloud project, create an API key, and ensure the Vertex AI API is enabled.
+    *   **For Google AI Studio (for Prototyping):** Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate your key.
+2.  **Add the key** to your `.env.local` file under the `GEMINI_API_KEY` variable name:
     ```
-    # Your Google AI API key for Gemini/Vertex AI
+    # Your Google AI API key from Vertex AI or Google AI Studio
     GEMINI_API_KEY="your-google-ai-api-key"
     ```
 

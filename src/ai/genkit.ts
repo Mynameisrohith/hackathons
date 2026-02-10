@@ -1,10 +1,8 @@
 import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
-import { firebaseConfig } from '@/firebase/config';
+import {vertexAI} from '@genkit-ai/vertexai';
 
 export const ai = genkit({
-  plugins: [googleAI({
-    projectId: firebaseConfig.projectId,
+  plugins: [vertexAI({
     location: 'us-central1'
   })],
 });

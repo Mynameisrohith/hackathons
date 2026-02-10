@@ -93,10 +93,6 @@ export default {
             from: { opacity: '0', transform: 'translateY(10px) scale(0.98)' },
             to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
-        glow: {
-            '0%, 100%': { boxShadow: '0 0 5px hsl(var(--glow-color-high)), 0 0 10px hsl(var(--glow-color-high))' },
-            '50%': { boxShadow: '0 0 15px hsl(var(--glow-color-high)), 0 0 25px hsl(var(--glow-color-high))' },
-        },
         'subtle-pulse': {
           '0%, 100%': { transform: 'scale(1)', opacity: '1' },
           '50%': { transform: 'scale(1.02)', opacity: '0.9' },
@@ -104,15 +100,32 @@ export default {
         'fraud-glow': {
             '0%, 100%': { boxShadow: '0 0 10px rgba(239, 68, 68, 0.4), 0 0 20px rgba(239, 68, 68, 0.3)' },
             '50%': { boxShadow: '0 0 25px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4)' },
-        }
+        },
+        'gradient-animation': {
+          '0%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+          '100%': { 'background-position': '0% 50%' },
+        },
+        'count-up': {
+          from: {
+            '--num': '0',
+          },
+        },
+        'border-spin': {
+          '100%': {
+            transform: 'rotate(360deg)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'card-enter': 'card-enter 0.5s ease-out forwards',
-        glow: 'glow 2.5s ease-in-out infinite',
         'subtle-pulse': 'subtle-pulse 2.5s ease-in-out infinite',
         'fraud-glow': 'fraud-glow 2s ease-in-out infinite',
+        'gradient-bg': 'gradient-animation 15s ease infinite',
+        'count-up': 'count-up 1s ease-out forwards',
+        'border-spin': 'border-spin 7s linear infinite',
       },
       backgroundImage: {
         'grid-slate-900': `linear-gradient(white 2px, transparent 2px), linear-gradient(to right, white 2px, hsl(var(--background)) 2px)`,

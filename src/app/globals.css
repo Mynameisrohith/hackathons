@@ -9,60 +9,61 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 6% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 6% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 10%;
-    --primary: 210 40% 48%; /* Amazon-like Blue */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
-    --muted: 240 5% 90%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 36 100% 50%; /* Amazon Yellow/Orange */
-    --accent-foreground: 240 6% 10%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 210 40% 48%;
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 33% 13%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 224 33% 13%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 216 34% 17%;
+    --muted-foreground: 215 28% 65%;
+    --accent: 188 92% 50%;
+    --accent-foreground: 224 71% 4%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 217 91% 60%;
     --radius: 0.5rem;
 
-    --chart-1: 210 40% 48%;
-    --chart-2: 36 100% 50%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 188 92% 50%;
+    --chart-3: 36 96% 59%;
+    --chart-4: 270 90% 65%;
+    --chart-5: 340 90% 65%;
   }
 
   .dark {
-    --background: 240 6% 10%;
-    --foreground: 0 0% 98%;
-    --card: 240 4% 16%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 210 40% 58%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 20%;
-    --muted-foreground: 240 4% 65%;
-    --accent: 36 100% 55%;
-    --accent-foreground: 240 6% 10%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 20%;
-    --input: 240 4% 20%;
-    --ring: 210 40% 58%;
-    
-    --chart-1: 210 40% 58%;
-    --chart-2: 36 100% 55%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+     /* Using same as root for a dark-first theme */
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 33% 13%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 224 33% 13%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 216 34% 17%;
+    --muted-foreground: 215 28% 65%;
+    --accent: 188 92% 50%;
+    --accent-foreground: 224 71% 4%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 217 91% 60%;
+
+    --chart-1: 217 91% 60%;
+    --chart-2: 188 92% 50%;
+    --chart-3: 36 96% 59%;
+    --chart-4: 270 90% 65%;
+    --chart-5: 340 90% 65%;
   }
 }
 
@@ -71,7 +72,7 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-secondary/60 text-foreground;
+    @apply bg-background text-foreground;
   }
   html {
     scroll-behavior: smooth;
@@ -94,6 +95,11 @@ body {
     .chat-bubble {
         @apply backdrop-blur-sm;
     }
+
+    .animated-gradient {
+        background-size: 200% 200%;
+        animation: gradient-animation 15s ease infinite;
+    }
 }
 
 @layer utilities {
@@ -104,4 +110,13 @@ body {
     .hover-lift {
         @apply transition-transform duration-300 ease-in-out hover:-translate-y-1;
     }
+    .text-glow {
+        text-shadow: 0 0 8px hsl(var(--primary) / 0.5), 0 0 20px hsl(var(--accent) / 0.3);
+    }
+}
+
+@keyframes gradient-animation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }

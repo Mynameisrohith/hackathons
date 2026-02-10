@@ -30,13 +30,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 function LanguageSwitcher() {
     const { language, setLanguage } = useLanguage();
   
     return (
-      <div className="flex items-center gap-1 rounded-md border bg-background p-1 text-sm">
+      <div className="flex items-center gap-1 rounded-md border bg-transparent border-border/50 p-1 text-sm">
         <button
           onClick={() => setLanguage('en')}
           className={`px-2 py-0.5 rounded-sm transition-colors ${
@@ -45,7 +47,7 @@ function LanguageSwitcher() {
         >
           EN
         </button>
-        <div className="h-4 w-px bg-border" />
+        <div className="h-4 w-px bg-border/50" />
         <button
           onClick={() => setLanguage('kn')}
           className={`px-2 py-0.5 rounded-sm transition-colors ${
@@ -62,7 +64,7 @@ function UserButton() {
   const { t } = useLanguage();
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const { role, isLoading: isRoleLoading } = useRole();
+  const { roleData, isLoading: isRoleLoading } = useRole();
 
   const handleLogout = () => {
     if (auth) {
@@ -118,11 +120,11 @@ function UserButton() {
                         <span>{t('myOrders')}</span>
                     </Link>
                 </DropdownMenuItem>
-                {role === 'admin' && (
+                 {(roleData?.role === 'admin' || roleData?.role === 'dealer' || roleData?.role === 'delivery') && (
                     <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard">
+                        <Link href="/auth/redirect">
                             <Shield className="mr-2 h-4 w-4" />
-                            <span>{t('adminPanel')}</span>
+                            <span>Portal</span>
                         </Link>
                     </DropdownMenuItem>
                 )}
@@ -212,20 +214,39 @@ export function Header() {
   const { cartCount } = useCart();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
+  const isLandingPage = pathname === '/';
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background shadow-sm">
+    <header className={cn(
+      "sticky top-0 z-50 w-full transition-colors duration-300",
+      (isScrolled || !isLandingPage) 
+        ? "bg-background/80 backdrop-blur-lg border-b border-border"
+        : "bg-transparent border-b border-transparent"
+    )}>
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <RetailSparkIcon className="size-8 text-primary" />
-              <span className="hidden text-xl font-semibold text-gray-800 sm:block">RetailSpark</span>
+              <span className={cn(
+                "hidden text-xl font-semibold sm:block",
+                 isLandingPage && !isScrolled ? "text-white" : "text-foreground"
+              )}>RetailSpark</span>
             </Link>
             <NavMenu />
           </div>
 
-          <div className="flex-1 max-w-lg hidden lg:block">
+          <div className={cn("flex-1 max-w-lg hidden lg:block", isLandingPage && "hidden")}>
             <SearchBar />
           </div>
 
@@ -255,9 +276,6 @@ export function Header() {
                 </Sheet>
             )}
           </div>
-        </div>
-        <div className="lg:hidden pb-4">
-            <SearchBar />
         </div>
       </div>
     </header>

@@ -78,36 +78,41 @@ const FeatureCard = ({
   return (
     <motion.div
       variants={cardVariants}
-      className="relative rounded-2xl p-px"
-      style={{
-        background: "radial-gradient(40% 40% at 50% 50%, hsl(var(--primary)/0.2), transparent)",
-      }}
+      className="relative h-full"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
+      whileHover={{ y: -8, scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 300, damping: 15 }}
     >
       <div
         className={cn(
-          "h-full w-full rounded-[15px] p-6 sm:p-8",
-          "card-glass border-transparent"
+          "relative h-full w-full rounded-2xl p-6 sm:p-8 card-glass border border-border/20 overflow-hidden"
         )}
       >
-        <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <feature.Icon className="h-6 w-6" />
-          <motion.div
-            className="absolute inset-0 rounded-lg"
-            animate={{
-              boxShadow: isHovered
-                ? "0 0 20px hsl(var(--primary)/0.5)"
-                : "0 0 0px hsl(var(--primary)/0)",
-            }}
-          />
+        <motion.div
+          className="absolute inset-0"
+          animate={{
+            boxShadow: isHovered
+              ? "0 0 30px 5px hsl(var(--primary)/0.2), inset 0 0 15px hsl(var(--primary)/0.1)"
+              : "0 0 0px 0px hsl(var(--primary)/0), inset 0 0 0px hsl(var(--primary)/0)",
+          }}
+          transition={{ duration: 0.3 }}
+        />
+        <div className="relative z-10">
+          <motion.div 
+            className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary"
+            animate={{ scale: isHovered ? 1.15 : 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+          >
+            <feature.Icon className="h-6 w-6" />
+          </motion.div>
+          <h3 className="mt-6 text-lg font-semibold text-white">
+            {feature.title}
+          </h3>
+          <p className="mt-2 text-base text-muted-foreground">
+            {feature.description}
+          </p>
         </div>
-        <h3 className="mt-6 text-lg font-semibold text-white">
-          {feature.title}
-        </h3>
-        <p className="mt-2 text-base text-muted-foreground">
-          {feature.description}
-        </p>
       </div>
     </motion.div>
   );

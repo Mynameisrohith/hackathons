@@ -1,33 +1,33 @@
 'use client';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, Firestore } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
-import type { Place } from '@/lib/types';
+import type { Dealer } from '@/lib/types';
 
-export async function addPlaceAsStore(firestore: Firestore, place: Place) {
-    if (!place.place_id) {
+export async function addPlaceAsStore(firestore: Firestore, dealer: Dealer) {
+    if (!dealer.placeId) {
         toast({ variant: 'destructive', title: 'Error', description: 'Place has no ID.' });
         return;
     }
 
     const storesRef = collection(firestore, 'stores');
-    const q = query(storesRef, where('placeId', '==', place.place_id));
+    const q = query(storesRef, where('placeId', '==', dealer.placeId));
 
     try {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
             await addDoc(storesRef, {
-                name: place.name,
-                address: place.vicinity,
-                latitude: place.geometry.location.lat,
-                longitude: place.geometry.location.lng,
-                placeId: place.place_id,
+                name: dealer.name,
+                address: dealer.address,
+                latitude: dealer.latitude,
+                longitude: dealer.longitude,
+                placeId: dealer.placeId,
                 active: true,
                 createdAt: serverTimestamp(),
-                phone: place.formatted_phone_number || '',
+                phone: '', // phone is not on Dealer type, so empty string is ok.
                 stock: {}, // Initialize with empty stock
             });
-            toast({ title: 'Success', description: `${place.name} has been added as a registered dealer.` });
+            toast({ title: 'Success', description: `${dealer.name} has been added as a registered dealer.` });
         } else {
             toast({ variant: 'default', title: 'Already Registered', description: 'This dealer is already in your list.' });
         }

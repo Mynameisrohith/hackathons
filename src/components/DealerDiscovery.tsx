@@ -51,11 +51,13 @@ export function DealerDiscovery({ userLocation, onDealerSelect }: DealerDiscover
       setDiscoveredDealers([]);
       setSelectedDealerId(null);
 
+      const userCoords = { latitude: userLocation.lat, longitude: userLocation.lng };
+
       // 1. Process registered stores from Firestore
       const registeredDealerList: Dealer[] = (registeredStores || []).map(store => ({
         ...store,
         status: 'Registered',
-        distance: getHaversineDistance(userLocation, store),
+        distance: getHaversineDistance(userCoords, store),
       }));
 
       // 2. Check if any registered store is within 20km
@@ -99,7 +101,7 @@ export function DealerDiscovery({ userLocation, onDealerSelect }: DealerDiscover
                     rating: place.rating,
                     userRatingsTotal: place.user_ratings_total,
                     status: isRegistered ? 'Registered' : 'New',
-                    distance: getHaversineDistance(userLocation, {
+                    distance: getHaversineDistance(userCoords, {
                         latitude: place.geometry.location.lat,
                         longitude: place.geometry.location.lng,
                     }),

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Order, UserProfile, DeliveryDelayPrediction } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { PageHeader } from '@/components/PageHeader';
@@ -96,17 +96,39 @@ function FeedbackForm({ order, userProfile }: { order: Order, userProfile: UserP
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!firestore) return;
         setIsSubmitting(true);
+        
+        const batch = writeBatch(firestore);
+
+        // 1. Update the order itself with the feedback
         const orderRef = doc(firestore, 'users', order.userId, 'orders', order.id);
-        try {
-            await updateDoc(orderRef, {
-                rating,
-                feedback: comment,
-                updatedAt: serverTimestamp(),
+        batch.update(orderRef, {
+            rating,
+            feedback: comment,
+            updatedAt: serverTimestamp(),
+        });
+
+        // 2. Create a review document for each product in the order
+        const reviewsCollection = collection(firestore, 'reviews');
+        for (const item of order.items) {
+            const reviewRef = doc(reviewsCollection); // Create a new doc with a random ID
+            batch.set(reviewRef, {
+                productId: item.productId,
+                productName: item.productName,
+                rating: rating,
+                comment: comment,
+                userId: order.userId,
+                createdAt: serverTimestamp(),
             });
+        }
+        
+        try {
+            await batch.commit();
             toast({ title: t('feedbackSubmitted') });
         } catch (error) {
-             toast({ variant: 'destructive', title: 'Error', description: t('feedbackError') });
+            console.error("Error submitting feedback batch:", error);
+            toast({ variant: 'destructive', title: 'Error', description: t('feedbackError') });
         } finally {
             setIsSubmitting(false);
         }

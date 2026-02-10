@@ -8,15 +8,19 @@ To get started, take a look at src/app/page.tsx.
 
 To run this project, you will need to set up a few environment variables for external services. Create a `.env.local` file in the root of your project and add the variables as described below.
 
-### Generative AI (Gemini) Setup
+### Generative AI (Google AI) Setup
 
-This project uses Google's Gemini models for its AI-powered features, such as the Admin Assistant and Fraud Analysis. To enable these features, you need to provide a Gemini API key.
+This project uses Google's Generative AI models (like Gemini) for its AI-powered features. To enable these features, you need to provide an API key.
 
-1.  **Generate an API key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
+You can get an API key from either Google AI Studio or a Google Cloud project with the Vertex AI API enabled.
+
+1.  **Generate an API key**:
+    *   **For Google AI Studio:** Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate your key.
+    *   **For Vertex AI:** Go to the [Credentials page](https://console.cloud.google.com/apis/credentials) in your Google Cloud project, create an API key, and ensure the Vertex AI API is enabled.
 2.  **Add the key** to your `.env.local` file:
     ```
-    # Your Google AI Studio API key for Gemini
-    GEMINI_API_KEY="your-gemini-api-key"
+    # Your Google AI API key for Gemini/Vertex AI
+    GEMINI_API_KEY="your-google-ai-api-key"
     ```
 
 ### Google Maps API Setup

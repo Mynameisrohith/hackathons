@@ -20,26 +20,78 @@ type ReviewAnalysis = Review & {
 };
 
 function calculateFraudMetrics(reviews: Review[] | null, orders: Order[] | null, users: UserProfile[] | null) {
-    if (!reviews || !orders || !users) return null;
+    if (!reviews || !orders || !users || reviews.length === 0) return null;
 
+    const toDate = (timestamp: any): Date => {
+        if (!timestamp) return new Date(0);
+        if (timestamp.seconds !== undefined && timestamp.nanoseconds !== undefined) {
+            return new Date(timestamp.seconds * 1000);
+        }
+        return new Date(timestamp); // Fallback for strings or date objects
+    };
+
+    const now = new Date();
+
+    // --- Metric 1: Duplicate Comments ---
     const commentCounts = new Map<string, number>();
     reviews.forEach(r => commentCounts.set(r.comment, (commentCounts.get(r.comment) || 0) + 1));
+    const duplicateCommentsCount = reviews.filter(r => (commentCounts.get(r.comment) || 0) > 1).length;
     
-    const userReviewCounts = new Map<string, number>();
-    reviews.forEach(r => userReviewCounts.set(r.userId, (userReviewCounts.get(r.userId) || 0) + 1));
+    // --- Metric 2: Short Comments ---
+    const shortCommentsCount = reviews.filter(r => r.comment.length < 15).length;
+    
+    // --- Metric 3: Rapid Reviews ---
+    const userReviewsMap = new Map<string, Review[]>();
+    reviews.forEach(r => {
+        const userReviewList = userReviewsMap.get(r.userId) || [];
+        userReviewList.push(r);
+        userReviewsMap.set(r.userId, userReviewList);
+    });
 
-    const analyzedReviews: ReviewAnalysis[] = reviews.map(r => ({
-        ...r,
-        isDuplicateComment: (commentCounts.get(r.comment) || 0) > 1,
-        isShortComment: r.comment.length < 15,
-        isRapidReview: false, // More complex check needed
-    }));
+    const rapidReviewIds = new Set<string>();
+    userReviewsMap.forEach(userReviewsList => {
+        userReviewsList.sort((a, b) => toDate(a.createdAt).getTime() - toDate(b.createdAt).getTime());
+        for (let i = 1; i < userReviewsList.length; i++) {
+            const diffMinutes = (toDate(userReviewsList[i].createdAt).getTime() - toDate(userReviewsList[i-1].createdAt).getTime()) / (1000 * 60);
+            if (diffMinutes < 5) { // If a review is posted less than 5 mins after the previous one
+                rapidReviewIds.add(userReviewsList[i].id);
+                rapidReviewIds.add(userReviewsList[i-1].id); // Mark both as part of a rapid sequence
+            }
+        }
+    });
+    const rapidReviewsCount = rapidReviewIds.size;
 
-    let score = 0;
-    const duplicateComments = analyzedReviews.filter(r => r.isDuplicateComment).length;
-    const shortComments = analyzedReviews.filter(r => r.isShortComment).length;
+    // --- Metric 4 & 5: Abnormal Frequency & Rating Spike ---
+    const reviewsByDay: { [key: string]: { count: number, fiveStarCount: number } } = {};
+    reviews.forEach(r => {
+        const day = toDate(r.createdAt).toISOString().split('T')[0];
+        if (!reviewsByDay[day]) {
+            reviewsByDay[day] = { count: 0, fiveStarCount: 0 };
+        }
+        reviewsByDay[day].count++;
+        if (r.rating === 5) {
+            reviewsByDay[day].fiveStarCount++;
+        }
+    });
+
+    const todayStr = now.toISOString().split('T')[0];
+    const todaysReviewsCount = reviewsByDay[todayStr]?.count || 0;
+    const todaysFiveStarCount = reviewsByDay[todayStr]?.fiveStarCount || 0;
+
+    const historicalDays = Object.keys(reviewsByDay).filter(day => day !== todayStr);
+    const avgReviewsPerDay = historicalDays.length > 0
+        ? historicalDays.reduce((sum, day) => sum + reviewsByDay[day].count, 0) / historicalDays.length
+        : 0;
+    
+    const avgFiveStarsPerDay = historicalDays.length > 0
+        ? historicalDays.reduce((sum, day) => sum + reviewsByDay[day].fiveStarCount, 0) / historicalDays.length
+        : 0;
+
+    const isAbnormalFrequency = todaysReviewsCount > 5 && (avgReviewsPerDay === 0 || todaysReviewsCount > avgReviewsPerDay * 3);
+    const isRatingSpike = todaysFiveStarCount > 5 && (avgFiveStarsPerDay === 0 || todaysFiveStarCount > avgFiveStarsPerDay * 3);
+
+    // --- Metric 6: High Cancellation Rate Users ---
     const highCancellationUsers = new Map<string, { total: number; cancelled: number }>();
-
     orders.forEach(o => {
         const stats = highCancellationUsers.get(o.userId) || { total: 0, cancelled: 0 };
         stats.total++;
@@ -48,34 +100,47 @@ function calculateFraudMetrics(reviews: Review[] | null, orders: Order[] | null,
     });
     
     const highCancellationRateUsers = Array.from(highCancellationUsers.entries())
-        .filter(([_, stats]) => stats.total > 2 && (stats.cancelled / stats.total) > 0.5)
+        .filter(([_, stats]) => stats.total > 3 && (stats.cancelled / stats.total) > 0.6)
         .map(([userId]) => userId);
 
-    if (duplicateComments > 5) score += 20;
-    if (shortComments > 10) score += 15;
-    if (highCancellationRateUsers.length > 0) score += (highCancellationRateUsers.length * 10);
+    // --- Scoring ---
+    let score = 0;
+    if (duplicateCommentsCount > 5) score += 20;
+    if (shortCommentsCount > 10) score += 15;
+    if (rapidReviewsCount > 3) score += 25;
+    if (isAbnormalFrequency) score += 15;
+    if (isRatingSpike) score += 10;
+    if (highCancellationRateUsers.length > 0) score += (highCancellationRateUsers.length * 15);
     score = Math.min(100, score);
     
+    // --- Risk Level ---
     let riskLevel: 'Low' | 'Medium' | 'High' = 'Low';
-    if (score > 60) riskLevel = 'High';
-    else if (score > 30) riskLevel = 'Medium';
+    if (score > 70) riskLevel = 'High';
+    else if (score > 40) riskLevel = 'Medium';
 
     const metrics: FraudMetricsInput = {
       fraudScore: score,
       suspiciousPatterns: {
-        duplicateComments: duplicateComments,
-        ratingSpike: false, // placeholder
-        shortComments: shortComments,
-        rapidReviews: 0, // placeholder
-        abnormalFrequency: false, // placeholder
+        duplicateComments: duplicateCommentsCount,
+        ratingSpike: isRatingSpike,
+        shortComments: shortCommentsCount,
+        rapidReviews: rapidReviewsCount,
+        abnormalFrequency: isAbnormalFrequency,
       },
     };
+    
+    const analyzedReviews: ReviewAnalysis[] = reviews.map(r => ({
+        ...r,
+        isDuplicateComment: (commentCounts.get(r.comment) || 0) > 1,
+        isShortComment: r.comment.length < 15,
+        isRapidReview: rapidReviewIds.has(r.id),
+    }));
 
     return {
       metrics,
       riskLevel,
       highCancellationRateUsers,
-      suspiciousReviews: analyzedReviews.filter(r => r.isDuplicateComment || r.isShortComment).slice(0, 5),
+      suspiciousReviews: analyzedReviews.filter(r => r.isDuplicateComment || r.isShortComment || r.isRapidReview).slice(0, 5),
     };
 }
 
@@ -91,21 +156,26 @@ function RiskBadge({ level }: { level: 'Low' | 'Medium' | 'High' }) {
 
 function AIReport({ metrics }: { metrics: FraudMetricsInput }) {
     const [report, setReport] = React.useState<AIFraudReportOutput | null>(null);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
 
-    const getReport = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const res = await explainFraudMetrics(metrics);
-            setReport(res);
-        } catch (e) {
-            setError("Failed to generate AI insight.");
-        } finally {
-            setIsLoading(false);
-        }
-    }
+    React.useEffect(() => {
+        const getReport = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const res = await explainFraudMetrics(metrics);
+                setReport(res);
+            } catch (e) {
+                setError("Failed to generate AI insight.");
+                console.error(e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        getReport();
+    }, [metrics]);
 
     return (
         <Card className="card-glass">
@@ -115,7 +185,7 @@ function AIReport({ metrics }: { metrics: FraudMetricsInput }) {
             <CardContent>
                 {isLoading && <Skeleton className="h-24 w-full" />}
                 {error && <p className="text-destructive">{error}</p>}
-                {report && (
+                {!isLoading && !error && report && (
                     <div className="space-y-4">
                         <p className="font-semibold italic">"{report.fraudSummary}"</p>
                         <div>
@@ -133,9 +203,6 @@ function AIReport({ metrics }: { metrics: FraudMetricsInput }) {
                     </div>
                 )}
             </CardContent>
-            <CardFooter>
-                <Button onClick={getReport} disabled={isLoading}>Generate AI Insight</Button>
-            </CardFooter>
         </Card>
     );
 }
@@ -190,7 +257,7 @@ export default function FraudPage() {
                             <ul className="space-y-2">
                                 {fraudData.suspiciousReviews.map(r => (
                                     <li key={r.id} className="text-sm p-2 rounded-md bg-muted/50">
-                                        <p>"{r.comment}" on {r.productName} <Badge variant="outline">{r.isDuplicateComment ? "Duplicate" : "Short"}</Badge></p>
+                                        <p>"{r.comment}" on {r.productName} <Badge variant="outline">{r.isDuplicateComment ? "Duplicate" : r.isRapidReview ? "Rapid" : "Short"}</Badge></p>
                                     </li>
                                 ))}
                             </ul>

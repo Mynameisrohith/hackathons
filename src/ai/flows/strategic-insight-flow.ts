@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow that generates a high-level strategic summary for the business.
@@ -78,7 +79,7 @@ ${context}
     
     // 5. Call Genkit AI
     const llmResponse = await ai.generate({
-        model: 'gemini-pro',
+        model: 'gemini-1.5-flash',
         prompt: prompt,
         config: {
             temperature: 0.4,

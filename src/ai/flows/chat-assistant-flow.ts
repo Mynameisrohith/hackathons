@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow for the customer-facing chat assistant.
@@ -71,7 +72,7 @@ ${context}
     const prompt = `${systemInstruction}\n\nUser Question: "${message}"`;
 
     const llmResponse = await ai.generate({
-      model: 'gemini-pro',
+      model: 'gemini-1.5-flash',
       prompt: prompt,
       config: {
         temperature: 0.3,

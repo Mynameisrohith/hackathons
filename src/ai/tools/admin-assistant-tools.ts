@@ -7,23 +7,8 @@ import { firestore } from './firebase';
 import { analyzeInventory } from '@/lib/inventory-analysis';
 import type { Order, Product, UserProfile } from '@/lib/types';
 import { endOfDay, startOfDay, sub, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { toDate } from '@/lib/date-utils';
 
-/**
- * Safely converts a Firestore Timestamp or a serialized timestamp object to a Date.
- * @param timestamp The value to convert.
- * @returns A Date object, or a zero-date if conversion fails.
- */
-function toDate(timestamp: any): Date {
-    if (!timestamp) return new Date(0);
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
-    if (timestamp && typeof timestamp.seconds === 'number') {
-        return new Date(timestamp.seconds * 1000);
-    }
-    // Fallback for unexpected formats
-    return new Date(0); 
-}
 
 export const getInventoryAnalysis = ai.defineTool(
     {
@@ -145,7 +130,7 @@ export const getCustomerSummary = ai.defineTool(
                 periodString = "this week";
             } else if (period === 'this month') {
                 startDate = startOfMonth(now);
-                periodString = "this month";
+                periodString = "this week";
             }
             
             const newCustomers = startDate 

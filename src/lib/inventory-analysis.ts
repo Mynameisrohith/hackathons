@@ -1,17 +1,7 @@
 import type { Order, Product, ProductAnalysis, MarketAnalysis } from '@/lib/types';
 import { sub } from 'date-fns';
+import { toDate } from '@/lib/date-utils';
 
-function toDate(timestamp: any): Date {
-    if (!timestamp) return new Date(0);
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
-    if (timestamp && typeof timestamp.seconds === 'number') {
-        return new Date(timestamp.seconds * 1000);
-    }
-    // Fallback for unexpected formats
-    return new Date(0); 
-}
 
 export function analyzeInventory(products: Product[], orders: Order[]) {
     const now = new Date();

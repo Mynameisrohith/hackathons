@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, TrendingDown } from 'lucide-react';
+import { AlertCircle, TrendingDown, Sparkles, Loader2 } from 'lucide-react';
 import { explainFraudMetrics, type AIFraudReportOutput, type FraudMetricsInput } from '@/ai/flows/explain-fraud-flow';
 import { Button } from '@/components/ui/button';
 
@@ -156,35 +156,46 @@ function RiskBadge({ level }: { level: 'Low' | 'Medium' | 'High' }) {
 
 function AIReport({ metrics }: { metrics: FraudMetricsInput }) {
     const [report, setReport] = React.useState<AIFraudReportOutput | null>(null);
-    const [isLoading, setIsLoading] = React.useState(true);
+    const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
 
-    React.useEffect(() => {
-        const getReport = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const res = await explainFraudMetrics(metrics);
-                setReport(res);
-            } catch (e) {
-                setError("Failed to generate AI insight.");
-                console.error(e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        getReport();
-    }, [metrics]);
+    const getReport = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await explainFraudMetrics(metrics);
+            setReport(res);
+        } catch (e) {
+            setError("Failed to generate AI insight.");
+            console.error(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <Card className="card-glass">
+        <Card className="card-glass flex flex-col">
             <CardHeader>
                 <CardTitle>AI Risk Insight</CardTitle>
             </CardHeader>
-            <CardContent>
-                {isLoading && <Skeleton className="h-24 w-full" />}
-                {error && <p className="text-destructive">{error}</p>}
+            <CardContent className="flex-grow">
+                {error && <p className="text-destructive text-center">{error}</p>}
+                
+                {!report && !isLoading && !error && (
+                    <div className="text-center text-muted-foreground p-4 h-full flex items-center justify-center">
+                        <p>Click the button below to generate an AI-powered analysis of the current fraud metrics.</p>
+                    </div>
+                )}
+                
+                {isLoading && (
+                     <div className="space-y-4">
+                        <p className="text-center text-muted-foreground">Analyzing data...</p>
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-4/5" />
+                        <Skeleton className="h-4 w-full" />
+                     </div>
+                )}
+
                 {!isLoading && !error && report && (
                     <div className="space-y-4">
                         <p className="font-semibold italic">"{report.fraudSummary}"</p>
@@ -203,6 +214,12 @@ function AIReport({ metrics }: { metrics: FraudMetricsInput }) {
                     </div>
                 )}
             </CardContent>
+            <CardFooter>
+                 <Button onClick={getReport} disabled={isLoading} className="w-full">
+                    {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2 h-4 w-4"/>}
+                    {report ? 'Regenerate Insight' : 'Generate AI Insight'}
+                </Button>
+            </CardFooter>
         </Card>
     );
 }

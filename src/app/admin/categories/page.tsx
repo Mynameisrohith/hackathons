@@ -24,7 +24,6 @@ import Image from 'next/image';
 const categorySchema = z.object({
     name: z.string().min(2, 'Name is required'),
     description: z.string().min(10, 'Description is required'),
-    imageUrl: z.string().url('A valid image URL is required'),
 });
 
 export default function CategoriesAdminPage() {
@@ -37,15 +36,17 @@ export default function CategoriesAdminPage() {
 
     const form = useForm<z.infer<typeof categorySchema>>({
         resolver: zodResolver(categorySchema),
-        defaultValues: { name: '', description: '', imageUrl: '' },
+        defaultValues: { name: '', description: '' },
     });
 
     const onSubmit = async (values: z.infer<typeof categorySchema>) => {
         if (!firestore) return;
         setIsSubmitting(true);
         try {
+            const imageUrl = `https://picsum.photos/seed/${values.name.replace(/\s/g, '')}/400`;
             await addDoc(collection(firestore, 'categories'), {
                 ...values,
+                imageUrl,
                 createdAt: serverTimestamp(),
             });
             toast({ title: 'Category Added' });
@@ -60,8 +61,12 @@ export default function CategoriesAdminPage() {
     const handleDelete = async (id: string, name: string) => {
         if(!firestore) return;
         if(confirm(t('deleteCategoryWarning').replace('{name}', name))) {
-            await deleteDoc(doc(firestore, 'categories', id));
-            toast({title: 'Category Deleted'});
+            try {
+                await deleteDoc(doc(firestore, 'categories', id));
+                toast({title: 'Category Deleted'});
+            } catch (error) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not delete category.'});
+            }
         }
     }
 
@@ -80,9 +85,6 @@ export default function CategoriesAdminPage() {
                                     )} />
                                     <FormField name="description" control={form.control} render={({ field }) => (
                                         <FormItem><FormLabel>{t('description')}</FormLabel><FormControl><Textarea placeholder={t('categoryDescPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                                    )} />
-                                    <FormField name="imageUrl" control={form.control} render={({ field }) => (
-                                        <FormItem><FormLabel>{t('imageUrl')}</FormLabel><FormControl><Input placeholder="https://..." {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <Button type="submit" disabled={isSubmitting} className="w-full">
                                         {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <PlusCircle className="mr-2" />}

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useMemo, Suspense } from 'react';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, collectionGroup, query, where } from 'firebase/firestore';
+import { collection, collectionGroup, query } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Order, Review, Store } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,17 +22,35 @@ function calculateMetrics(
   stores: Store[] | null,
   reviews: Review[] | null
 ) {
-  const deliveredOrders = orders?.filter(o => o.orderStatus === 'Delivered') || [];
+   if (!orders || !stores || !reviews) {
+      return { totalRevenue: 0, totalOrders: 0, activeDealers: 0, fraudAlerts: 0, avgDeliveryTime: 0 };
+  }
   
+  // Total Orders
+  const totalOrders = orders.length;
+
+  // Active Dealers
+  const activeDealers = stores.filter(s => s.active === true).length;
+
+  // Total Revenue (from delivered orders)
+  const deliveredOrders = orders.filter(o => o.orderStatus === 'Delivered');
   const totalRevenue = deliveredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const totalOrders = orders?.length || 0;
-  const activeDealers = stores?.length || 0;
-  
-  // Using short comments as a proxy for fraud alerts detected
-  const fraudAlerts = reviews?.filter(r => r.comment.length < 15).length || 0;
-  
-  // Mock avg delivery time as it's complex to calculate accurately without more data
-  const avgDeliveryTime = 28;
+
+  // Average Delivery Time (in minutes)
+  let totalDeliveryMinutes = 0;
+  let deliveredCount = 0;
+  deliveredOrders.forEach(order => {
+      const createdAt = order.createdAt?.seconds;
+      const updatedAt = order.updatedAt?.seconds;
+      if (createdAt && updatedAt && updatedAt > createdAt) {
+          totalDeliveryMinutes += (updatedAt - createdAt) / 60;
+          deliveredCount++;
+      }
+  });
+  const avgDeliveryTime = deliveredCount > 0 ? Math.round(totalDeliveryMinutes / deliveredCount) : 0;
+
+  // Fraud Alerts (Proxy: count reviews with a rating of 1)
+  const fraudAlerts = reviews.filter(r => r.rating === 1).length;
 
   return { totalRevenue, totalOrders, activeDealers, fraudAlerts, avgDeliveryTime };
 }

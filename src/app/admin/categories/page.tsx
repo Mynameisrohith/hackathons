@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -20,6 +21,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const categorySchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -58,15 +70,13 @@ export default function CategoriesAdminPage() {
         }
     };
     
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = async (id: string) => {
         if(!firestore) return;
-        if(confirm(t('deleteCategoryWarning').replace('{name}', name))) {
-            try {
-                await deleteDoc(doc(firestore, 'categories', id));
-                toast({title: 'Category Deleted'});
-            } catch (error) {
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not delete category.'});
-            }
+        try {
+            await deleteDoc(doc(firestore, 'categories', id));
+            toast({title: 'Category Deleted'});
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete category.'});
         }
     }
 
@@ -124,9 +134,27 @@ export default function CategoriesAdminPage() {
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground truncate max-w-xs">{cat.description}</TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(cat.id, cat.name)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="text-destructive">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>{t('deleteConfirm')}</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    {t('deleteCategoryWarning').replace('{name}', cat.name)}
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                    {t('delete')}
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 </TableCell>
                                             </TableRow>
                                         ))}

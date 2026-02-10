@@ -65,14 +65,6 @@ const explainFraudFlow = ai.defineFlow(
     outputSchema: AIFraudReportOutputSchema,
   },
   async input => {
-    if (input.fraudScore < 10) {
-        return {
-            fraudSummary: "Fraud risk is currently very low.",
-            keyConcerns: ["No significant concerns detected."],
-            recommendedActions: ["Continue standard monitoring of reviews and sales patterns."]
-        };
-    }
-
     const {output} = await prompt(input);
     return output!;
   }

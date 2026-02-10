@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { firestore } from '@/ai/tools/firebase'; // Re-use the server-side firestore instance
 import { collection, query, getDocs, collectionGroup } from 'firebase/firestore';
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
              return NextResponse.json({ error: 'Firebase Project ID is not configured.' }, { status: 500 });
         }
 
-        const VERTEX_ENDPOINT = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent`;
+        const VERTEX_ENDPOINT = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-pro:generateContent`;
 
         // 2. Fetch all necessary data from Firestore
         const [ordersSnapshot, productsSnapshot, reviewsSnapshot, usersSnapshot, storesSnapshot] = await Promise.all([

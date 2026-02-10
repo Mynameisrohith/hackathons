@@ -8,6 +8,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CartProvider } from "@/context/CartContext";
+import { AIChatAssistant } from "@/components/AIChatAssistant";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -41,6 +42,7 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
+              <AIChatAssistant />
             </CartProvider>
           </LanguageProvider>
         </FirebaseClientProvider>

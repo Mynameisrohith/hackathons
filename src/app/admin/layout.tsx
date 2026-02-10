@@ -7,7 +7,6 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Loader2, ShieldX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AiAssistant } from '@/components/admin/VoiceAssistant';
 
 function AdminAccessDenied() {
     const router = useRouter();
@@ -58,7 +57,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
-      <AiAssistant />
     </div>
   );
 }

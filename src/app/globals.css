@@ -85,6 +85,15 @@ body {
     .gradient-btn {
         @apply bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90;
     }
+    .chat-gradient-background {
+        @apply bg-gradient-to-br from-gray-900 to-gray-800;
+    }
+    .neon-border {
+        @apply border border-blue-500/50 shadow-lg shadow-blue-500/10;
+    }
+    .chat-bubble {
+        @apply backdrop-blur-sm;
+    }
 }
 
 @layer utilities {

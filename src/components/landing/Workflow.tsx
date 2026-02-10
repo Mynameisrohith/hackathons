@@ -10,7 +10,6 @@ import {
   Truck,
   MapPin,
   MessageSquare,
-  ArrowRight,
 } from "lucide-react";
 
 const workflowSteps = [
@@ -48,9 +47,10 @@ const arrowVariants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: {
         pathLength: 1,
-        opacity: 0.5,
+        opacity: 0.7,
         transition: {
-            duration: 0.7,
+            delay: 0.3,
+            duration: 1.2,
             ease: 'easeInOut'
         }
     }
@@ -98,14 +98,14 @@ export default function WorkflowSection() {
               <div className="hidden sm:block absolute top-8 left-0 w-full h-px -z-0">
                   <svg width="100%" height="100%" className="overflow-visible">
                     <motion.line 
-                        x1={`${index * 20 + 12}%`}
+                        x1={`${(index / (workflowSteps.length - 1)) * 100 + 6}%`}
                         y1="0"
-                        x2={`${(index + 1) * 20 - 12}%`}
+                        x2={`${((index + 1) / (workflowSteps.length - 1)) * 100 - 6}%`}
                         y2="0"
-                        stroke="hsl(var(--border))"
-                        strokeWidth="1"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth="1.5"
                         variants={arrowVariants}
-                        strokeDasharray="4 4"
+                        style={{ filter: 'drop-shadow(0 0 3px hsl(var(--primary)/0.8))' }}
                     />
                   </svg>
               </div>

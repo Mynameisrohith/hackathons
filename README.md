@@ -8,17 +8,17 @@ To get started, take a look at src/app/page.tsx.
 
 To run this project, you will need to set up a few environment variables for external services. Create a `.env.local` file in the root of your project and add the variables as described below.
 
-### Google AI (Gemini) Setup
+### AI Assistant (Vertex AI) Setup
 
-This project uses the Gemini API via Google AI Studio for its generative AI features, such as the AI Chat Assistant.
+This project's AI Chat Assistant uses **Vertex AI**, which requires service account authentication to work in a local development environment. When deployed to Firebase App Hosting or another Google Cloud environment, authentication is handled automatically.
 
-**Action Required:**
-1.  **Generate an API key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
-2.  **Add the key** to your `.env.local` file under the `GOOGLE_GENAI_API_KEY` variable:
+**Action Required for Local Development:**
+1.  **Install the Google Cloud CLI**: Follow the instructions to [install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
+2.  **Authenticate the CLI**: Run the following command in your terminal and follow the prompts to log in with your Google account:
+    ```bash
+    gcloud auth application-default login
     ```
-    # Your Google Generative AI API key from Google AI Studio
-    GOOGLE_GENAI_API_KEY="your-google-ai-api-key"
-    ```
+This command creates a credentials file on your local machine that the application will automatically use for authenticating with Vertex AI, without needing an API key.
 
 ### Google Maps API Setup
 

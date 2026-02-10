@@ -3,3 +3,5 @@
 import './flows/explain-fraud-flow';
 import './flows/admin-voice-assistant';
 import './flows/tts-flow';
+import './flows/chat-assistant-flow';
+import './flows/strategic-insight-flow';

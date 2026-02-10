@@ -1,34 +1,36 @@
 
 "use client";
 
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect, useRef } from "react";
-import { useSpring, animated } from "@react-spring/web";
 
 interface NumberTickerProps {
   value: number;
-  direction?: "up" | "down";
   className?: string;
 }
 
 export default function NumberTicker({
   value,
-  direction = "up",
   className,
 }: NumberTickerProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString("en-US"));
 
-  const { number } = useSpring({
-    from: { number: 0 },
-    to: { number: isInView ? value : 0 },
-    delay: 200,
-    config: { mass: 1, tension: 20, friction: 10 },
-  });
+  useEffect(() => {
+    if (isInView) {
+      const controls = animate(count, value, {
+        duration: 1.5,
+        ease: "easeOut",
+      });
+      return controls.stop;
+    }
+  }, [isInView, value, count]);
 
   return (
-    <animated.span ref={ref} className={className}>
-      {number.to((n) => n.toLocaleString("en-US", { maximumFractionDigits: 0 }))}
-    </animated.span>
+    <motion.span ref={ref} className={className}>
+      {rounded}
+    </motion.span>
   );
 }

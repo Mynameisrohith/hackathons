@@ -10,16 +10,26 @@ To run this project, you will need to set up a few environment variables for ext
 
 ### Google AI (Vertex AI & Gemini) Setup
 
-This project uses Google's Generative AI models for its AI-powered features. To enable these, you need to provide an API key. The application uses the `GEMINI_API_KEY` environment variable, which is the standard name used by the underlying SDK for keys from both **Vertex AI** and **Google AI Studio**.
+This project uses Google's Generative AI models. The authentication method depends on which service you are targeting.
 
-You can get an API key from either source:
+#### Option 1: Using Vertex AI (Recommended for Production)
 
-1.  **Generate an API key**:
-    *   **For Vertex AI (Recommended for Production):** Go to the [Credentials page](https://console.cloud.google.com/apis/credentials) in your Google Cloud project, create an API key, and ensure the Vertex AI API is enabled.
-    *   **For Google AI Studio (for Prototyping):** Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate your key.
-2.  **Add the key** to your `.env.local` file under the `GEMINI_API_KEY` variable name:
+For enterprise-grade applications using Vertex AI, authentication is handled automatically by Application Default Credentials (ADC) in the secure cloud environment.
+
+**Action Required:**
+*   Ensure that the `GEMINI_API_KEY` variable is **NOT** set in your `.env.local` file. If it exists, remove it.
+
+The application is already configured to connect to your project's Vertex AI instance when no API key is present.
+
+#### Option 2: Using Google AI Studio (for Prototyping)
+
+For rapid prototyping with the Gemini API via Google AI Studio, you will use an API key.
+
+**Action Required:**
+1.  **Generate an API key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  **Add the key** to your `.env.local` file:
     ```
-    # Your Google AI API key from Vertex AI or Google AI Studio
+    # Your Google AI API key from Google AI Studio
     GEMINI_API_KEY="your-google-ai-api-key"
     ```
 

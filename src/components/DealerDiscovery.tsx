@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { GeocodedAddress, Dealer, Place } from '@/lib/types';
+import type { GeocodedAddress, Dealer, Place, CartItem } from '@/lib/types';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { useFirestore } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, doc, getDoc } from 'firebase/firestore';
 import type { Store } from '@/lib/types';
 import { getHaversineDistance } from '@/lib/geolocation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,9 +17,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
 interface DealerDiscoveryProps {
   userLocation: GeocodedAddress;
   onDealerSelect: (dealer: Dealer | null) => void;
+  items: CartItem[];
 }
 
-export function DealerDiscovery({ userLocation, onDealerSelect }: DealerDiscoveryProps) {
+export function DealerDiscovery({ userLocation, onDealerSelect, items }: DealerDiscoveryProps) {
   const { t } = useLanguage();
   const firestore = useFirestore();
   const [discoveredDealers, setDiscoveredDealers] = useState<Dealer[]>([]);
@@ -59,8 +60,23 @@ export function DealerDiscovery({ userLocation, onDealerSelect }: DealerDiscover
         status: 'Registered',
         distance: getHaversineDistance(userCoords, store),
       }));
+      
+      // 2. Determine keyword for Google Places search
+      let keyword = 'supermarket|grocery|electronics|pharmacy|store'; // Default keyword
+      if (items.length > 0 && items[0].categoryId && firestore) {
+        try {
+            const categoryRef = doc(firestore, 'categories', items[0].categoryId);
+            const categorySnap = await getDoc(categoryRef);
+            if (categorySnap.exists()) {
+                const categoryName = categorySnap.data().name.toLowerCase();
+                keyword = encodeURIComponent(categoryName);
+            }
+        } catch (e) {
+            console.warn("Could not fetch category name for keyword search, using default.", e);
+        }
+      }
 
-      // 2. Check if any registered store is within 20km
+      // 3. Check if any registered store is within 20km
       const nearbyRegistered = registeredDealerList.filter(d => d.distance <= 20);
 
       if (nearbyRegistered.length > 0) {
@@ -71,9 +87,9 @@ export function DealerDiscovery({ userLocation, onDealerSelect }: DealerDiscover
         return;
       }
       
-      // 3. If no nearby registered stores, fetch from Google Places API
+      // 4. If no nearby registered stores, fetch from Google Places API
       try {
-        const response = await fetch(`/api/places?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+        const response = await fetch(`/api/places?lat=${userLocation.lat}&lng=${userLocation.lng}&keyword=${keyword}`);
         if (!response.ok) throw new Error('Failed to fetch from Places API');
         
         const data = await response.json();
@@ -127,7 +143,7 @@ export function DealerDiscovery({ userLocation, onDealerSelect }: DealerDiscover
     if (userLocation && !isLoadingStores) {
       findDealers();
     }
-  }, [userLocation, registeredStores, isLoadingStores, t]);
+  }, [userLocation, registeredStores, isLoadingStores, t, items, firestore]);
 
 
   if (isLoading || isLoadingStores) {

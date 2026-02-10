@@ -61,6 +61,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 quantity: quantity,
                 imageUrl: product.imageUrl,
                 stock: product.stock,
+                categoryId: product.categoryId,
                 createdAt: serverTimestamp(),
             });
         }

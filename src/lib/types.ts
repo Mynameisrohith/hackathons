@@ -73,6 +73,7 @@ export interface CartItem {
   quantity: number;
   imageUrl: string;
   stock: number;
+  categoryId: string;
   createdAt: Timestamp;
 }
 

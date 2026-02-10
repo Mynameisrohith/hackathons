@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
   let radius = searchParams.get('radius') || '5000'; // Default radius 5km
+  const keywordParam = searchParams.get('keyword');
 
   if (!lat || !lng) {
     return NextResponse.json({ error: 'Latitude and longitude are required' }, { status: 400 });
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'API key is missing' }, { status: 500 });
   }
 
-  const keyword = 'supermarket|grocery|electronics|pharmacy|store';
+  const keyword = keywordParam || 'supermarket|grocery|electronics|pharmacy|store';
   const type = 'store';
 
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&keyword=${keyword}&key=${apiKey}`;

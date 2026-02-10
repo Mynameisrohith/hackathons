@@ -107,6 +107,7 @@ export default function CheckoutPage() {
       price: item.price,
       quantity: item.quantity,
       imageUrl: item.imageUrl,
+      categoryId: item.categoryId,
     }));
 
     const orderRef = doc(collection(firestore, 'users', user.uid, 'orders'));
@@ -251,6 +252,7 @@ export default function CheckoutPage() {
                 <DealerDiscovery
                   userLocation={addressDetails}
                   onDealerSelect={setSelectedDealer}
+                  items={items || []}
                 />
               )}
               

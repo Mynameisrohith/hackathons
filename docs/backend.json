@@ -111,9 +111,10 @@
         "quantity": { "type": "number" },
         "imageUrl": { "type": "string", "format": "uri" },
         "stock": { "type": "number" },
+        "categoryId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["productId", "productName", "price", "quantity", "imageUrl", "stock"]
+      "required": ["productId", "productName", "price", "quantity", "imageUrl", "stock", "categoryId"]
     },
     "Store": {
         "title": "Store",

@@ -23,7 +23,7 @@ import Autoplay from "embla-carousel-autoplay";
 const heroSlides = [
   {
     image: 'https://picsum.photos/seed/sale1/1600/600',
-    title: 'Republic Day Super Sale',
+    title: 'Weekend Super Sale',
     subtitle: 'Up to 70% off on Electronics, Fashion & More!',
     imageHint: "sale event"
   },

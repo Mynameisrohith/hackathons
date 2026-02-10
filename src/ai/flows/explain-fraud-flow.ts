@@ -36,7 +36,7 @@ export async function explainFraudMetrics(input: FraudMetricsInput): Promise<AIF
 
 const prompt = ai.definePrompt({
   name: 'explainFraudPrompt',
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: FraudMetricsInputSchema},
   output: {schema: AIFraudReportOutputSchema},
   prompt: `You are a Retail Fraud Analyst AI. Your task is to analyze fraud metrics from an e-commerce platform and provide a clear, concise report for the business owner.
@@ -52,7 +52,7 @@ Analyze the following fraud metrics:
 
 Based on this data, generate a structured report.
 - **fraudSummary**: A single sentence that summarizes the current fraud risk. (e.g., "Fraud risk is currently low, with only minor irregularities detected.")
-- **keyConcerns**: Identify the top 2-3 most pressing issues. If the score is low, you can state that there are no major concerns.
+- **keyConcerns**: Identify the top 2-3 most pressing issues. If the score is low, state that there are no major concerns.
 - **recommendedActions**: Suggest concrete, actionable steps the owner can take. For example, "Manually review reviews from users X, Y, and Z," or "Monitor products A and B for further unusual activity." If there are no concerns, suggest something like "Continue monitoring standard metrics."
 
 Keep your language clear, direct, and business-focused. Avoid technical jargon.`,

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo, Suspense } from 'react';
@@ -14,7 +13,6 @@ const MetricsSection = React.lazy(() => import('@/components/landing/Metrics'));
 const FeaturesSection = React.lazy(() => import('@/components/landing/Features'));
 const DashboardPreview = React.lazy(() => import('@/components/landing/DashboardPreview'));
 const WorkflowSection = React.lazy(() => import('@/components/landing/Workflow'));
-const HeatmapSection = React.lazy(() => import('@/components/landing/Heatmap'));
 const TrustSection = React.lazy(() => import('@/components/landing/Trust'));
 
 function calculateMetrics(
@@ -72,9 +70,6 @@ export default function HomePage() {
         </Suspense>
         <Suspense fallback={<Skeleton className="h-64 w-full my-24" />}>
           <WorkflowSection />
-        </Suspense>
-        <Suspense fallback={<Skeleton className="h-96 w-full my-24" />}>
-          <HeatmapSection />
         </Suspense>
         <Suspense fallback={<Skeleton className="h-64 w-full my-24" />}>
           <TrustSection />

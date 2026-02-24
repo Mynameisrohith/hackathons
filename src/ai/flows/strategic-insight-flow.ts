@@ -79,7 +79,7 @@ ${context}
     
     // 5. Call Genkit AI
     const llmResponse = await ai.generate({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-pro',
         prompt: prompt,
         config: {
             temperature: 0.4,

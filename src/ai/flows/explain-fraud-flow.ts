@@ -36,7 +36,7 @@ export async function explainFraudMetrics(input: FraudMetricsInput): Promise<AIF
 
 const prompt = ai.definePrompt({
   name: 'explainFraudPrompt',
-  model: 'gemini-1.5-flash',
+  model: 'gemini-pro',
   input: {schema: FraudMetricsInputSchema},
   output: {schema: AIFraudReportOutputSchema},
   prompt: `You are a Retail Fraud Analyst AI. Your task is to analyze fraud metrics from an e-commerce platform and provide a clear, concise report for the business owner.

@@ -72,7 +72,7 @@ ${context}
     const prompt = `${systemInstruction}\n\nUser Question: "${message}"`;
 
     const llmResponse = await ai.generate({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-pro',
       prompt: prompt,
       config: {
         temperature: 0.3,

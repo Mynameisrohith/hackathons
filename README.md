@@ -22,14 +22,35 @@ This command creates a credentials file on your local machine that the applicati
 
 ### Google Maps API Setup
 
-The application uses the Google Maps Places API for dealer discovery and address autocompletion.
+The application uses the Google Maps JavaScript API, Places API, and Geocoding API for features like address autocompletion and live tracking. A valid API key is required.
 
-1.  **Enable the Maps JavaScript API and Places API** in your [Google Cloud Console](https://console.cloud.google.com/google/maps-apis/overview).
-2.  **Add your API key** to your `.env.local` file:
+**Action Required:**
+1.  **Get an API Key**:
+    *   Go to the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis/overview).
+    *   Select your project (or create a new one).
+    *   Go to the **APIs & Services > Credentials** page.
+    *   Click **Create Credentials > API key**. Copy the key.
+
+2.  **Enable APIs**:
+    *   Go to the [API Library](https://console.cloud.google.com/apis/library).
+    *   Search for and enable the following APIs for your project:
+        *   **Maps JavaScript API**
+        *   **Places API**
+        *   **Geocoding API**
+
+3.  **Configure Environment Variable**:
+    *   Create a file named `.env.local` in the root of your project (if it doesn't exist).
+    *   Add your API key to this file:
     ```
     # Your public Google Maps API Key
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
     ```
+    *Replace `YOUR_GOOGLE_MAPS_API_KEY` with the key you copied in Step 1.*
+
+4.  **Troubleshooting the `ApiTargetBlockedMapError`**:
+    *   This common error means your API key is either invalid or restricted in a way that blocks your application.
+    *   **Check API Restrictions**: In the Cloud Console Credentials page, click on your API key. Under **Application restrictions**, ensure that you have either selected "None" (not recommended for production) or have added your development URL (e.g., `localhost:9002` or your specific port) to the list of allowed "HTTP referrers". For production, you will need to add your deployed application's domain.
+    *   **Check API Enablement**: Double-check that all three APIs listed in Step 2 are enabled for your project. It can sometimes take a few minutes for the changes to propagate after enabling an API.
 
 ### Email Notification Setup
 

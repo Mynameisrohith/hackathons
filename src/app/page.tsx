@@ -18,41 +18,20 @@ const HeatmapSection = React.lazy(() => import('@/components/landing/Heatmap'));
 const TrustSection = React.lazy(() => import('@/components/landing/Trust'));
 
 function calculateMetrics(
-  orders: Order[] | null,
   stores: Store[] | null,
   reviews: Review[] | null
 ) {
-   if (!orders || !stores || !reviews) {
-      return { totalRevenue: 0, totalOrders: 0, activeDealers: 0, fraudAlerts: 0, avgDeliveryTime: 0 };
+   if (!stores || !reviews) {
+      return { activeDealers: 0, fraudAlerts: 0 };
   }
   
-  // Total Orders
-  const totalOrders = orders.length;
-
   // Active Dealers
   const activeDealers = stores.filter(s => s.active === true).length;
-
-  // Total Revenue (from delivered orders)
-  const deliveredOrders = orders.filter(o => o.orderStatus === 'Delivered');
-  const totalRevenue = deliveredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-  // Average Delivery Time (in minutes)
-  let totalDeliveryMinutes = 0;
-  let deliveredCount = 0;
-  deliveredOrders.forEach(order => {
-      const createdAt = order.createdAt?.seconds;
-      const updatedAt = order.updatedAt?.seconds;
-      if (createdAt && updatedAt && updatedAt > createdAt) {
-          totalDeliveryMinutes += (updatedAt - createdAt) / 60;
-          deliveredCount++;
-      }
-  });
-  const avgDeliveryTime = deliveredCount > 0 ? Math.round(totalDeliveryMinutes / deliveredCount) : 0;
 
   // Fraud Alerts (Proxy: count reviews with a rating of 1)
   const fraudAlerts = reviews.filter(r => r.rating === 1).length;
 
-  return { totalRevenue, totalOrders, activeDealers, fraudAlerts, avgDeliveryTime };
+  return { activeDealers, fraudAlerts };
 }
 
 export default function HomePage() {
@@ -66,16 +45,14 @@ export default function HomePage() {
     };
   }, []);
 
-  const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
   const storesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'stores')) : null, [firestore]);
   const reviewsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reviews')) : null, [firestore]);
 
-  const { data: orders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
   const { data: stores, isLoading: loadingStores } = useCollection<Store>(storesQuery);
   const { data: reviews, isLoading: loadingReviews } = useCollection<Review>(reviewsQuery);
 
-  const metrics = useMemo(() => calculateMetrics(orders, stores, reviews), [orders, stores, reviews]);
-  const isLoading = loadingOrders || loadingStores || loadingReviews;
+  const metrics = useMemo(() => calculateMetrics(stores, reviews), [stores, reviews]);
+  const isLoading = loadingStores || loadingReviews;
 
   return (
     <div className="bg-background text-foreground overflow-x-hidden">

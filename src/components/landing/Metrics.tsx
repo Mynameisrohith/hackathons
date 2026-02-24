@@ -2,18 +2,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { DollarSign, Package, ShieldAlert, Truck, Users } from "lucide-react";
+import { ShieldAlert, Users } from "lucide-react";
 import React from "react";
 import { Skeleton } from "../ui/skeleton";
 import NumberTicker from "./NumberTicker";
 import ShineBorder from "./ShineBorder";
 
 interface Metrics {
-  totalRevenue: number;
-  totalOrders: number;
   activeDealers: number;
   fraudAlerts: number;
-  avgDeliveryTime: number;
 }
 
 interface MetricsSectionProps {
@@ -22,11 +19,8 @@ interface MetricsSectionProps {
 }
 
 const metricItems = (metrics: Metrics) => [
-  { icon: DollarSign, label: "Total Revenue", value: metrics.totalRevenue, isCurrency: true },
-  { icon: Package, label: "Orders Processed", value: metrics.totalOrders },
   { icon: Users, label: "Active Dealers", value: metrics.activeDealers },
   { icon: ShieldAlert, label: "Fraud Alerts", value: metrics.fraudAlerts },
-  { icon: Truck, label: "Avg. Delivery Time", value: metrics.avgDeliveryTime, unit: "min" },
 ];
 
 const containerVariants = {
@@ -67,8 +61,8 @@ export default function MetricsSection({ metrics, isLoading }: MetricsSectionPro
   if (isLoading) {
     return (
       <section className="py-24 sm:py-32">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
+        <div className="grid grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
         </div>
       </section>
     )
@@ -81,7 +75,7 @@ export default function MetricsSection({ metrics, isLoading }: MetricsSectionPro
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
-        className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5"
+        className="grid grid-cols-2 gap-4"
       >
         {metricItems(metrics).map((item) => (
           <MetricCard key={item.label} item={item} />

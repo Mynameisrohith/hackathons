@@ -65,7 +65,7 @@ service cloud.firestore {
       }
 
       match /orders/{orderId} {
-        allow read, create, update: if isOwner(userId) || isAdmin() || isSuperAdmin();
+        allow list, read, create, update: if isOwner(userId) || isAdmin() || isSuperAdmin();
         allow delete: if false;
       }
     }

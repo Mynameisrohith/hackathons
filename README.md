@@ -1,3 +1,4 @@
+
 # Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
@@ -7,6 +8,22 @@ To get started, take a look at src/app/page.tsx.
 ## Environment Setup
 
 To run this project, you will need to set up a few environment variables for external services. Create a `.env.local` file in the root of your project and add the variables as described below.
+
+### Amazon SageMaker Endpoint Setup
+
+The AI Demand Forecasting feature requires a deployed Amazon SageMaker endpoint. You must provide the name of this endpoint in your environment variables.
+
+**Action Required:**
+1.  **Navigate to SageMaker**: Open the [Amazon SageMaker Console](https://console.aws.amazon.com/sagemaker/).
+2.  **Go to Endpoints**: In the left-hand navigation pane, under the **Inference** section, click on **Endpoints**.
+3.  **Copy Endpoint Name**: Find the endpoint you have deployed for this project. The status should be **InService**. Copy the full **Endpoint name**.
+4.  **Configure Environment Variable**:
+    *   Open your `.env.local` file.
+    *   Find the `SAGEMAKER_ENDPOINT_NAME` variable and paste the name you copied:
+    ```
+    SAGEMAKER_ENDPOINT_NAME="your-sagemaker-endpoint-name"
+    ```
+    *Replace `your-sagemaker-endpoint-name` with the actual name from the SageMaker console.*
 
 ### AI Assistant (Vertex AI) Setup
 

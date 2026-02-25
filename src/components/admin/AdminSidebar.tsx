@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -16,6 +17,7 @@ import {
   Warehouse,
   ShoppingBag,
   List,
+  BrainCircuit,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -33,6 +35,7 @@ const navItems = [
   { href: '/admin/analytics', icon: BarChart2, label: 'analytics' },
   { href: '/admin/customers', icon: Users, label: 'customers' },
   { href: '/admin/feedback', icon: MessageSquare, label: 'feedbackCenter' },
+  { href: '/admin/bedrock-test', icon: BrainCircuit, label: 'Bedrock AI' },
 ];
 
 const NavItem = ({ item }: { item: typeof navItems[0] }) => {

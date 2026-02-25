@@ -73,7 +73,7 @@ app.get('/user/role', requireAuth, async (req, res) => {
 // ============================================
 //             Product Routes
 // ============================================
-app.get('/products', async (req, res) => {
+app.get('/products', requireAuth, async (req, res) => {
     try {
         const products = await dbService.getProducts();
         res.status(200).json(products);

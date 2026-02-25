@@ -49,6 +49,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    // This is for local development only.
+    // In production, Firebase Hosting will handle the rewrites.
+    if (process.env.NODE_ENV === 'development') {
+        return [
+            {
+                source: '/api/:path*',
+                destination: 'http://127.0.0.1:5001/studio-1170291343-515ee/us-central1/api/:path*',
+            },
+        ];
+    }
+    return [];
+  },
 };
 
 export default nextConfig;

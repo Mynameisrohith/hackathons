@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   List,
   BrainCircuit,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/admin/products', icon: ShoppingBag, label: 'Products' },
   { href: '/admin/categories', icon: List, label: 'Categories' },
   { href: '/admin/inventory', icon: Warehouse, label: 'Inventory' },
+  { href: '/admin/ai-demand', icon: TrendingUp, label: 'AI Demand' },
   { href: '/admin/live-tracking', icon: Map, label: 'liveTracking' },
   { href: '/admin/dealers', icon: Store, label: 'dealers' },
   { href: '/admin/fraud', icon: ShieldAlert, label: 'fraudMonitoring' },

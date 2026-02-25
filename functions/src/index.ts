@@ -1,3 +1,4 @@
+
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as express from 'express';
@@ -45,9 +46,9 @@ const requireAdmin = async (req: express.Request, res: express.Response, next: e
         } else {
             return res.status(403).send('Forbidden: Insufficient permissions');
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error checking admin role:', error);
-        return res.status(500).send('Internal Server Error');
+        return res.status(500).send(`Internal Server Error: ${error.message}`);
     }
 };
 
@@ -63,9 +64,9 @@ app.get('/user/role', requireAuth, async (req, res) => {
         } else {
             res.status(404).send('Role not found');
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching user role:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).send(`Internal Server Error: ${error.message}`);
     }
 });
 
@@ -77,9 +78,9 @@ app.get('/products', requireAuth, async (req, res) => {
     try {
         const products = await dbService.getProducts();
         res.status(200).json(products);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching products:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).send(`Internal Server Error: ${error.message}`);
     }
 });
 

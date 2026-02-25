@@ -1,0 +1,128 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates S3 bucket and IAM Role for the RetailSpark SageMaker pipeline.
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: A globally unique name for the S3 bucket to store model artifacts and data.
+  ProjectName:
+    Type: String
+    Default: RetailSpark
+    Description: A name for the project to prefix resources.
+
+Resources:
+  # S3 Bucket for all SageMaker artifacts, data, and models
+  SageMakerS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - '*'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # IAM Role for SageMaker to access S3 and run training jobs
+  SageMakerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-SageMakerExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-SageMakerS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt SageMakerS3Bucket.Arn
+                  - !Sub ${SageMakerS3Bucket.Arn}/*
+        - PolicyName: !Sub ${ProjectName}-SageMakerTrainingAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sagemaker:CreateTrainingJob
+                  - sagemaker:DescribeTrainingJob
+                  - sagemaker:CreateProcessingJob
+                  - sagemaker:DescribeProcessingJob
+                  - sagemaker:CreateModel
+                  - sagemaker:CreateEndpointConfig
+                  - sagemaker:CreateEndpoint
+                  - sagemaker:InvokeEndpoint
+                  - sagemaker:CreateTransformJob
+                  - iam:PassRole
+                Resource: '*' # Scoped to what's needed for SageMaker jobs
+        - PolicyName: !Sub ${ProjectName}-SageMakerLoggingAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:*:*:*'
+
+  # OPTIONAL: SageMaker Serverless Endpoint
+  # This provides real-time inference but incurs costs.
+  # It is commented out by default to adhere to the cost-optimized strategy.
+  # To enable, uncomment this section and update the 'EndpointConfigName' in sagemaker_pipeline.py
+  #
+  # SageMakerModel:
+  #   Type: AWS::SageMaker::Model
+  #   Properties:
+  #     ModelName: !Sub ${ProjectName}-BestDemandModel
+  #     PrimaryContainer:
+  #       Image: <ECR-IMAGE-URI-FOR-XGBOOST> # You need to get this from AWS documentation for your region
+  #       ModelDataUrl: !Sub s3://${S3BucketName}/models/best-model/model.tar.gz
+  #     ExecutionRoleArn: !GetAtt SageMakerExecutionRole.Arn
+
+  # SageMakerEndpointConfig:
+  #   Type: AWS::SageMaker::EndpointConfig
+  #   Properties:
+  #     EndpointConfigName: !Sub ${ProjectName}-ServerlessEndpointConfig
+  #     ProductionVariants:
+  #       - ModelName: !Ref SageMakerModel
+  #         VariantName: AllTraffic
+  #         ServerlessConfig:
+  #           MemorySizeInMB: 2048
+  #           MaxConcurrency: 5
+  
+  # SageMakerServerlessEndpoint:
+  #   Type: AWS::SageMaker::Endpoint
+  #   Properties:
+  #     EndpointName: !Sub ${ProjectName}-DemandForecastEndpoint
+  #     EndpointConfigName: !Ref SageMakerEndpointConfig
+
+Outputs:
+  S3BucketName:
+    Description: Name of the S3 bucket created for SageMaker artifacts.
+    Value: !Ref SageMakerS3Bucket
+  SageMakerExecutionRoleArn:
+    Description: ARN of the IAM role for SageMaker execution.
+    Value: !GetAtt SageMakerExecutionRole.Arn

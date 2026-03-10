@@ -1,95 +1,161 @@
-# Firebase Studio
+# RetailSpark - A Full-Stack AI-Powered E-commerce Platform
 
-This is a NextJS starter in Firebase Studio.
+Welcome to RetailSpark, a comprehensive, full-stack e-commerce SaaS platform built with Next.js, Firebase, and a powerful suite of AWS services for machine learning and data processing. This project is designed to be a robust, scalable, and cost-effective solution for modern retail, optimized for students and startups to run and experiment with locally.
 
-To get started, take a look at src/app/page.tsx.
+## Core Architecture (Hybrid Cloud Model)
 
-## Environment Setup
+This project demonstrates a powerful hybrid cloud strategy:
 
-To run this project, you will need to set up a few environment variables for external services. Create a `.env.local` file in the root of your project and add the variables as described below.
+-   **Frontend:** Next.js, React, TypeScript, and Tailwind CSS for a fast, modern, and responsive user experience.
+-   **Backend & Auth:** Firebase Cloud Functions (Node.js/Express) and Firebase Authentication provide a secure, serverless backend and a seamless user login experience.
+-   **Primary Database:** Firestore is used for storing application metadata, user data, and pre-computed AI predictions, offering real-time updates to the frontend.
+-   **ML Training & Inference:** Amazon SageMaker is used for its powerful, cost-effective model training capabilities, including support for Spot Instances. The primary inference method is **batch prediction** to minimize costs, with an optional path to deploy serverless endpoints.
+-   **Data Lake & Model Storage:** Amazon S3 serves as the central repository for raw training data, processed datasets, and trained model artifacts.
 
-### AI Assistant (Vertex AI) Setup
+## Key Features
 
-This project's AI Chat Assistant uses **Vertex AI**, which requires service account authentication to work in a local development environment. When deployed to Firebase App Hosting or another Google Cloud environment, authentication is handled automatically.
+-   **AI Demand Forecasting:** A premium dashboard for admins to visualize future product demand, stockout risks, and other key metrics predicted by a SageMaker model.
+-   **Cost-Optimized ML:** The architecture defaults to using SageMaker Batch Transform jobs for inference, avoiding the cost of a continuously running real-time endpoint.
+-   **Full-Stack Type Safety:** End-to-end TypeScript coverage from the frontend to the Firebase backend.
+-   **Enterprise-Grade Admin Panel:** A secure, role-based dashboard for managing products, orders, users, and viewing AI-driven analytics.
+-   **Hybrid Data Model:** Leverages the best of both worlds—Firestore for low-latency metadata and UI state, and S3 for large-scale data and model storage.
 
-**Action Required for Local Development:**
-1.  **Install the Google Cloud CLI**: Follow the instructions to [install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
-2.  **Authenticate the CLI**: Run the following command in your terminal and follow the prompts to log in with your Google account:
+---
+
+## Local Development Setup
+
+Follow these steps to get the entire full-stack application running on your local machine.
+
+### 1. Prerequisites
+
+-   [Node.js](https://nodejs.org/) (v20 or later)
+-   [Python](https://www.python.org/downloads/) (v3.9 or later) and `pip`
+-   [AWS CLI](https://aws.amazon.com/cli/) installed and configured with your credentials.
+-   [Firebase CLI](https://firebase.google.com/docs/cli) installed and logged in.
+-   An active AWS account and a Firebase project.
+
+### 2. Environment Variable Setup
+
+This is the most critical step. The application will not run without the correct credentials.
+
+1.  **Create the environment file:**
+    In the root of the project, rename the `.env.example` file to `.env`
+
+2.  **Fill in the AWS Credentials:**
+    Open the new `.env` file and replace the placeholder values with your actual AWS credentials.
+
     ```bash
-    gcloud auth application-default login
-    ```
-This command creates a credentials file on your local machine that the application will automatically use for authenticating with Vertex AI, without needing an API key.
+    # .env
 
-### Google Maps API Setup
+    # Your AWS Access Key ID
+    AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
 
-The application uses the Google Maps JavaScript API, Places API, and Geocoding API for features like address autocompletion and live tracking. A valid API key is required.
+    # Your AWS Secret Access Key
+    AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY"
 
-**Action Required:**
-1.  **Get an API Key**:
-    *   Go to the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis/overview).
-    *   Select your project (or create a new one).
-    *   Go to the **APIs & Services > Credentials** page.
-    *   Click **Create Credentials > API key**. Copy the key.
+    # The AWS region you are working in (e.g., us-east-1)
+    AWS_REGION="us-east-1"
 
-2.  **Enable APIs**:
-    *   Go to the [API Library](https://console.cloud.google.com/apis/library).
-    *   Search for and enable the following APIs for your project:
-        *   **Maps JavaScript API**
-        *   **Places API**
-        *   **Geocoding API**
+    # A unique name for the S3 bucket that will be created
+    AWS_S3_BUCKET_NAME="your-unique-retailspark-sagemaker-bucket"
 
-3.  **Configure Environment Variable**:
-    *   Create a file named `.env.local` in the root of your project (if it doesn't exist).
-    *   Add your API key to this file:
-    ```
-    # Your public Google Maps API Key
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
-    ```
-    *Replace `YOUR_GOOGLE_MAPS_API_KEY` with the key you copied in Step 1.*
+    # Leave this as is for now. It will be set after training.
+    SAGEMAKER_ENDPOINT_NAME="your-sagemaker-endpoint-name"
 
-4.  **Troubleshooting the `ApiTargetBlockedMapError`**:
-    *   This common error means your API key is either invalid or restricted in a way that blocks your application.
-    *   **Check API Restrictions**: In the Cloud Console Credentials page, click on your API key. Under **Application restrictions**, ensure that you have either selected "None" (not recommended for production) or have added your development URL (e.g., `localhost:9002` or your specific port) to the list of allowed "HTTP referrers". For production, you will need to add your deployed application's domain.
-    *   **Check API Enablement**: Double-check that all three APIs listed in Step 2 are enabled for your project. It can sometimes take a few minutes for the changes to propagate after enabling an API.
-
-### Email Notification Setup
-
-This project uses **Nodemailer** to send emails for order notifications through a Next.js API route. To enable this, you need to configure environment variables for the email service.
-
-1.  **Add the following variables** to your `.env.local` file, replacing the placeholder values with your actual email provider credentials:
-
-    ```
-    # Your email service username (e.g., your Gmail address)
-    EMAIL_USER="your-email@example.com"
-    
-    # Your email service password or app-specific password
-    EMAIL_PASS="your-app-password"
-
-    # The admin email address to receive order notifications
-    ADMIN_EMAIL="your-admin-email@example.com"
-
-    # The super admin email address to also receive new order notifications
-    SUPER_ADMIN_EMAIL="drohith7080@gmail.com"
+    # Optional: Bedrock Model ID for AI Summaries
+    BEDROCK_MODEL_ID="anthropic.claude-3-sonnet-20240229-v1:0"
     ```
 
-#### Using Gmail for Development
+### 3. Install Dependencies
 
-If you are using a Gmail account, it is highly recommended to use an **"App Password"** for `EMAIL_PASS`, not your regular Google account password. You can generate one here:
+Open two terminal windows in the project root.
 
-- [Google App Passwords](https://myaccount.google.com/apppasswords)
-
-This provides a more secure way to grant access to your application. Your app is now configured to use these variables to send emails automatically when orders are created or updated.
-
-### Razorpay Payment Gateway Setup
-
-This project supports Razorpay for Card and UPI payments. To enable it, you need to add your Razorpay keys to your environment variables.
-
-1.  **Add your Razorpay keys** to the `.env.local` file:
+-   **Terminal 1 (Frontend & General):**
+    ```bash
+    npm install
     ```
-    # This is your public Key ID, used on the client-side
-    NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_RxKo8TrmasNC0l"
-    
-    # This is your secret key, for server-side use only
-    RAZORPAY_SECRET="w6tHdOPN9jAqs8Ho5cYow6rN"
+
+-   **Terminal 2 (Firebase Functions):**
+    ```bash
+    cd functions
+    npm install
     ```
-2. **Important**: The current implementation uses a client-side only flow for demonstration purposes with the public key. For a production environment, you **must** create a backend API endpoint to securely create a Razorpay Order and verify the payment signature using your `RAZORPAY_SECRET`.
+
+### 4. Run the Application
+
+-   **Terminal 1 (Frontend):** Start the Next.js development server.
+    ```bash
+    npm run dev
+    ```
+    Your Next.js app will be available at `http://localhost:9002`.
+
+-   **Terminal 2 (Backend):** Start the Firebase Functions emulator.
+    ```bash
+    npm run serve
+    ```
+    This will start the local server for your API functions, typically on port `5001`. The Next.js app is pre-configured to proxy API requests to this server.
+
+### 5. SageMaker and Machine Learning Setup
+
+The machine learning components are located in the `/sagemaker-demand` directory.
+
+1.  **Install Python Dependencies:**
+    ```bash
+    cd sagemaker-demand
+    pip install -r requirements.txt
+    ```
+
+2.  **Deploy AWS Infrastructure:**
+    Use the provided CloudFormation template to create your S3 bucket and IAM roles.
+    ```bash
+    aws cloudformation create-stack --stack-name RetailSpark-SageMaker-Stack --template-body file://infra.yaml --capabilities CAPABILITY_IAM
+    ```
+
+3.  **Run the SageMaker Pipeline:**
+    Execute the pipeline script. This will start the entire ML workflow on AWS, including data processing, model training (using Spot Instances to save costs), and evaluation.
+    ```bash
+    python sagemaker_pipeline.py
+    ```
+    This process will take some time. You can monitor the progress in the `AWS SageMaker > Training > Training Jobs` section of the AWS Console.
+
+4.  **Run a Batch Prediction:**
+    Once the training is complete and the best model is saved, run the batch prediction script. This simulates a daily or weekly job that generates forecasts.
+    ```bash
+    python batch_predict.py
+    ```
+    This script will save a `predictions.json` file in the `sagemaker-demand` directory.
+
+5.  **Upload Predictions to Firebase:**
+    Run the Node.js script to upload the batch predictions into your Firestore database so the frontend can access them.
+    ```bash
+    # Make sure you are in the root directory
+    node scripts/upload-predictions.js
+    ```
+
+Now, when you visit the "AI Demand Forecasting" dashboard in the admin panel, it will display the predictions you just generated and uploaded.
+
+---
+
+## Architecture Explained
+
+### Cost-Optimized ML Inference
+
+Instead of deploying a 24/7 real-time SageMaker endpoint (which incurs hourly costs), our primary strategy is **batch prediction**.
+
+1.  The `sagemaker_pipeline.py` runs on a schedule (e.g., daily via a GitHub Action or cron job).
+2.  It trains the model on fresh data and selects the best performer.
+3.  The `batch_predict.py` script uses this model to generate forecasts for all products for the upcoming week.
+4.  These predictions are saved to a JSON file.
+5.  The `upload-predictions.js` script pushes these forecasts into a `ai_reports` collection in Firestore.
+
+When the admin dashboard loads, it simply reads the **latest pre-computed prediction** from Firestore. This is extremely fast, scalable, and costs virtually nothing in terms of ML inference.
+
+### Upgrading to Enterprise (Real-Time)
+
+For businesses that require instant predictions, the architecture can be easily upgraded:
+
+1.  **Deploy a Serverless Endpoint:** In `infra.yaml`, uncomment the `SageMakerServerlessEndpoint` resource and re-deploy the CloudFormation stack.
+2.  **Update the Firebase Function:** In `firebase-backend/functions/src/predictDemand.ts`, comment out the Firestore-reading logic and uncomment the `invokeSageMakerEndpoint` block.
+3.  **Re-deploy the function:** `firebase deploy --only functions`
+
+The frontend code does not need to change. This architectural flexibility allows the platform to scale from a cost-effective startup model to a high-throughput enterprise solution.
